@@ -6,7 +6,7 @@ import { getRoot } from '../config/env.js';
 import type { Theme } from '../types/index.js';
 
 const THEMES_DIR = 'themes';
-const DEFAULT_THEME_ID = 'default';
+const DEFAULT_THEME_ID = 'ciiic';
 
 /**
  * Get the themes directory path
