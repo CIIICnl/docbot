@@ -48,6 +48,7 @@ function extractToc(tokens: ReturnType<typeof md.parse>): TocEntry[] {
 
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
+    if (!token) continue;
     if (token.type === 'heading_open') {
       const level = parseInt(token.tag.slice(1), 10);
       // Only include h2 and h3 in TOC
@@ -75,6 +76,7 @@ function extractToc(tokens: ReturnType<typeof md.parse>): TocEntry[] {
 function extractTitle(tokens: ReturnType<typeof md.parse>): string | undefined {
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
+    if (!token) continue;
     if (token.type === 'heading_open' && token.tag === 'h1') {
       const contentToken = tokens[i + 1];
       if (contentToken && contentToken.type === 'inline') {
@@ -136,7 +138,7 @@ function escapeHtml(text: string): string {
     '"': '&quot;',
     "'": '&#39;',
   };
-  return text.replace(/[&<>"']/g, (char) => escapeMap[char]);
+  return text.replace(/[&<>"']/g, (char) => escapeMap[char] ?? char);
 }
 
 /**

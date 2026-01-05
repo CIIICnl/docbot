@@ -1,7 +1,6 @@
 // Document template builder
 // Combines theme styles, fonts, and content into a complete HTML document
 
-import type { Theme } from '../types/index.js';
 import {
   getTheme,
   getThemeStyles,
@@ -99,7 +98,7 @@ function escapeHtml(text: string): string {
     '"': '&quot;',
     "'": '&#39;',
   };
-  return text.replace(/[&<>"']/g, (char) => escapeMap[char]);
+  return text.replace(/[&<>"']/g, (char) => escapeMap[char] ?? char);
 }
 
 /**

@@ -28,7 +28,7 @@ export async function handleThemes(ctx: ApiContext): Promise<boolean> {
 
   // GET /api/themes/:id - Get theme details
   const themeMatch = matchPath('/api/themes/:id', path);
-  if (themeMatch && req.method === 'GET') {
+  if (themeMatch?.id && req.method === 'GET') {
     const theme = await getTheme(themeMatch.id);
 
     if (!theme) {
@@ -42,7 +42,7 @@ export async function handleThemes(ctx: ApiContext): Promise<boolean> {
 
   // GET /api/themes/:id/styles - Get theme CSS
   const stylesMatch = matchPath('/api/themes/:id/styles', path);
-  if (stylesMatch && req.method === 'GET') {
+  if (stylesMatch?.id && req.method === 'GET') {
     const styles = await getThemeStyles(stylesMatch.id);
 
     if (!styles) {

@@ -119,6 +119,10 @@ export function matchPath(pattern: string, pathname: string): Record<string, str
     const patternPart = patternParts[i];
     const pathPart = pathParts[i];
 
+    if (!patternPart || !pathPart) {
+      return null;
+    }
+
     if (patternPart.startsWith(':')) {
       params[patternPart.slice(1)] = decodeURIComponent(pathPart);
     } else if (patternPart !== pathPart) {

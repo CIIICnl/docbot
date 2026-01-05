@@ -3,7 +3,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { getRoot } from '../config/env.js';
-import type { Theme, FontDefinition } from '../types/index.js';
+import type { Theme } from '../types/index.js';
 
 const THEMES_DIR = 'themes';
 const DEFAULT_THEME_ID = 'default';
