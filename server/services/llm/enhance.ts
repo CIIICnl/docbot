@@ -48,6 +48,7 @@ export async function enhanceMarkdown(request: LlmEnhanceRequest): Promise<LlmEn
     improveReadability: request.improveReadability,
     getSuggestions: request.getSuggestions,
     globalContext: request.globalContext,
+    language: request.language,
   });
 
   const userContent = buildEnhanceUserPrompt(cleaned, request.documentContext);

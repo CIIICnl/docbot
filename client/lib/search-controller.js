@@ -6,6 +6,7 @@
 import { h } from './dom.js';
 import { slInput } from './shoelace.js';
 import { SEARCH } from './constants.js';
+import { t } from './i18n.js';
 
 /**
  * Base search controller class
@@ -22,7 +23,7 @@ export class SearchController {
 
   _createUI() {
     this.input = slInput({
-      placeholder: 'Search...',
+      placeholder: t('search.placeholder'),
       size: 'small',
       clearable: true,
       className: 'panel-search-input',
@@ -32,13 +33,13 @@ export class SearchController {
 
     this.prevBtn = h('sl-icon-button', {
       name: 'chevron-up',
-      label: 'Previous',
+      label: t('search.previous'),
       disabled: true,
     });
 
     this.nextBtn = h('sl-icon-button', {
       name: 'chevron-down',
-      label: 'Next',
+      label: t('search.next'),
       disabled: true,
     });
 
@@ -52,7 +53,7 @@ export class SearchController {
 
     this.toggle = h('sl-icon-button', {
       name: 'search',
-      label: 'Search',
+      label: t('search.toggle'),
       class: 'panel-search-toggle',
     });
   }
@@ -75,7 +76,13 @@ export class SearchController {
 
   search(query) {
     if (!query || query.length < SEARCH.MIN_LENGTH) {
-      this.clear();
+      // Clear highlights and matches but NOT the input value
+      this.clearHighlights();
+      this.matches = [];
+      this.currentIndex = -1;
+      this.count.textContent = '';
+      this.prevBtn.disabled = true;
+      this.nextBtn.disabled = true;
       return;
     }
 
@@ -101,11 +108,11 @@ export class SearchController {
   _updateUI() {
     const matchCount = this.matches.length;
     if (matchCount === 0) {
-      this.count.textContent = 'No matches';
+      this.count.textContent = t('search.noMatches');
       this.prevBtn.disabled = true;
       this.nextBtn.disabled = true;
     } else {
-      this.count.textContent = `${this.currentIndex + 1} of ${matchCount}`;
+      this.count.textContent = t('search.count', { current: this.currentIndex + 1, total: matchCount });
       this.prevBtn.disabled = matchCount <= 1;
       this.nextBtn.disabled = matchCount <= 1;
     }
@@ -172,16 +179,23 @@ export class TextSearchController extends SearchController {
     const pos = this.matches[this.currentIndex];
     const query = this.input.value;
 
-    // Select the match
-    innerTextarea.focus();
-    innerTextarea.setSelectionRange(pos, pos + query.length);
+    // Check if search input currently has focus (user is typing)
+    const searchHasFocus = document.activeElement === this.input ||
+      this.input.shadowRoot?.activeElement != null;
 
-    // Scroll to selection
+    // Scroll to match position
     const text = innerTextarea.value.substring(0, pos);
     const lines = text.split('\n');
     const lineHeight = parseInt(getComputedStyle(innerTextarea).lineHeight) || SEARCH.DEFAULT_LINE_HEIGHT;
     const scrollTop = (lines.length - 1) * lineHeight - innerTextarea.clientHeight / 2;
     innerTextarea.scrollTop = Math.max(0, scrollTop);
+
+    // Only focus textarea and show selection when navigating (not typing)
+    // This prevents stealing focus while user is still entering search query
+    if (!searchHasFocus) {
+      innerTextarea.focus();
+      innerTextarea.setSelectionRange(pos, pos + query.length);
+    }
   }
 }
 

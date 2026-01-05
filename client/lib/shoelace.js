@@ -3,22 +3,8 @@
  * Factory functions for creating Shoelace components with common patterns.
  */
 
-// Import Shoelace components we use (esbuild will bundle these)
-import '@shoelace-style/shoelace/dist/components/alert/alert.js';
-import '@shoelace-style/shoelace/dist/components/button/button.js';
-import '@shoelace-style/shoelace/dist/components/dialog/dialog.js';
-import '@shoelace-style/shoelace/dist/components/dropdown/dropdown.js';
-import '@shoelace-style/shoelace/dist/components/icon/icon.js';
-import '@shoelace-style/shoelace/dist/components/icon-button/icon-button.js';
-import '@shoelace-style/shoelace/dist/components/input/input.js';
-import '@shoelace-style/shoelace/dist/components/menu/menu.js';
-import '@shoelace-style/shoelace/dist/components/menu-item/menu-item.js';
-import '@shoelace-style/shoelace/dist/components/option/option.js';
-import '@shoelace-style/shoelace/dist/components/select/select.js';
-import '@shoelace-style/shoelace/dist/components/spinner/spinner.js';
-import '@shoelace-style/shoelace/dist/components/switch/switch.js';
-import '@shoelace-style/shoelace/dist/components/textarea/textarea.js';
-import '@shoelace-style/shoelace/dist/components/tooltip/tooltip.js';
+// Import all Shoelace components
+import '@shoelace-style/shoelace/dist/shoelace.js';
 
 // Set base path for Shoelace assets (icons, etc.)
 import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path.js';
@@ -35,6 +21,10 @@ export function sl(tag, props = {}, children = []) {
   const el = document.createElement(tag);
 
   for (const [key, value] of Object.entries(props)) {
+    if (value === null || value === undefined || value === false) {
+      continue;
+    }
+
     if (key === 'class' || key === 'className') {
       el.className = value;
     } else if (key.startsWith('on')) {
@@ -42,8 +32,12 @@ export function sl(tag, props = {}, children = []) {
       el.addEventListener(event, value);
     } else if (key === 'style' && typeof value === 'object') {
       Object.assign(el.style, value);
+    } else if (value === true) {
+      // Boolean attributes
+      el.setAttribute(key, '');
     } else {
-      el[key] = value;
+      // Set as attribute for custom elements to ensure they work before upgrade
+      el.setAttribute(key, String(value));
     }
   }
 

@@ -9,6 +9,7 @@ export interface EnhancePromptOptions {
   improveReadability?: boolean;
   getSuggestions?: boolean;
   globalContext?: string;
+  language?: 'en' | 'nl';
 }
 
 const STRUCTURE_PROMPT = `## Document Structure Improvements
@@ -67,7 +68,14 @@ Do NOT make these changes yourself - just note them as suggestions. The author w
 
 `;
 
-const OUTPUT_FORMAT = (willModify: boolean) => `## Output Format
+const OUTPUT_FORMAT = (willModify: boolean, language?: 'en' | 'nl') => {
+  const languageInstruction = language === 'nl'
+    ? `
+
+IMPORTANT: Write all change descriptions and suggestions in Dutch (Nederlands). The "description" and "text" fields must be in Dutch so the user can understand them in their preferred language.`
+    : '';
+
+  return `## Output Format
 Return a JSON object with these fields:
 1. "markdown": ${willModify ? 'The improved markdown content' : 'The original markdown content unchanged'}
 2. "changes": An array of objects describing each change made (empty if no modifications were requested), each with:
@@ -80,13 +88,14 @@ Return a JSON object with these fields:
    - "text": The suggestion or question in a helpful, constructive tone
    - "location": Where in the document this applies (e.g., "Methods section", "paragraph about pricing")
 
-Only include substantive changes in the changes array, not minor whitespace adjustments.`;
+Only include substantive changes in the changes array, not minor whitespace adjustments.${languageInstruction}`;
+};
 
 /**
  * Build the system prompt for markdown enhancement
  */
 export function buildEnhanceSystemPrompt(options: EnhancePromptOptions): string {
-  const { fixStructure, fixTypos, improveReadability, getSuggestions, globalContext } = options;
+  const { fixStructure, fixTypos, improveReadability, getSuggestions, globalContext, language } = options;
 
   let prompt = `You are a document expert helping improve a markdown document. `;
 
@@ -128,7 +137,7 @@ In addition to making the above changes, also provide suggestions for improvemen
   }
 
   // Output format
-  prompt += OUTPUT_FORMAT(!!willModify);
+  prompt += OUTPUT_FORMAT(!!willModify, language);
 
   if (globalContext) {
     prompt += `\n\n## Additional Context\nOrganization's style preferences:\n${globalContext}`;

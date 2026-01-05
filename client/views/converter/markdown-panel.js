@@ -6,7 +6,7 @@
 import { h } from '../../lib/dom.js';
 import { slTextarea, slIcon } from '../../lib/shoelace.js';
 import { TextSearchController } from '../../lib/search-controller.js';
-import { PLACEHOLDERS } from '../../lib/constants.js';
+import { t } from '../../lib/i18n.js';
 
 /**
  * Create the markdown editor panel
@@ -17,7 +17,7 @@ import { PLACEHOLDERS } from '../../lib/constants.js';
 export function createMarkdownPanel({ store, onContentChange }) {
   // Textarea
   const textarea = slTextarea({
-    placeholder: PLACEHOLDERS.MARKDOWN_EDITOR,
+    placeholder: t('placeholders.markdownEditor'),
     rows: 20,
     resize: 'vertical',
     className: 'markdown-editor-textarea',
@@ -36,8 +36,8 @@ export function createMarkdownPanel({ store, onContentChange }) {
   const element = h('div', { class: 'markdown-editor-panel' }, [
     h('div', { class: 'panel-header' }, [
       slIcon({ name: 'markdown', className: 'panel-icon' }),
-      h('span', { class: 'panel-title' }, ['Markdown']),
-      h('span', { class: 'panel-subtitle text-muted' }, ['Editable']),
+      h('span', { class: 'panel-title' }, [t('markdown.title')]),
+      h('span', { class: 'panel-subtitle text-muted' }, [t('markdown.subtitle')]),
       h('div', { class: 'panel-header-spacer' }),
       search.toggle,
     ]),
