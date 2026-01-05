@@ -137,6 +137,7 @@ export async function renderConverter(container) {
     }),
     sl('sl-menu', { class: 'drafts-menu' }, []),
   ]);
+  const draftsTriggerBtn = draftsDropdown.querySelector('[slot="trigger"]');
   const draftsMenu = draftsDropdown.querySelector('sl-menu');
   updateDraftsMenu();
 
@@ -411,12 +412,13 @@ export async function renderConverter(container) {
     empty(draftsMenu);
 
     if (drafts.length === 0) {
-      const emptyItem = sl('sl-menu-item', { disabled: true, class: 'drafts-empty-item' }, [
-        'No saved drafts',
-      ]);
-      draftsMenu.appendChild(emptyItem);
+      // Hide dropdown when no drafts, show disabled button instead
+      draftsDropdown.style.display = 'none';
       return;
     }
+
+    // Show dropdown when drafts exist
+    draftsDropdown.style.display = '';
 
     for (const draft of drafts) {
       const date = new Date(draft.savedAt);
