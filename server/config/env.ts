@@ -8,7 +8,11 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '../..');
+
+// When running from dist/server/config/env.js, we need to go up 3 levels
+// When running from server/config/env.ts (dev), we need to go up 2 levels
+const isInDist = __dirname.includes('/dist/');
+const ROOT = isInDist ? join(__dirname, '../../..') : join(__dirname, '../..');
 
 /**
  * Load .env file into process.env
