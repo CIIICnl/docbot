@@ -6,6 +6,7 @@
 import { h } from '../lib/dom.js';
 import { login, me, devLogin, isDevBypassAvailable } from '../lib/auth.js';
 import { navigate } from '../lib/router.js';
+import { t } from '../lib/i18n.js';
 
 export async function renderLogin(root) {
   const url = new URL(location.href);
@@ -29,15 +30,15 @@ export async function renderLogin(root) {
 
   const card = h('sl-card', { class: 'login-card' }, [
     h('div', { slot: 'header' }, [
-      h('h2', { class: 'login-title' }, ['Sign in to DreamDocs']),
+      h('h2', { class: 'login-title' }, [t('login.title')]),
     ]),
 
     h('form', { class: 'login-form', onsubmit: handleSubmit }, [
       h('sl-input', {
         id: 'email',
         type: 'email',
-        label: 'Email',
-        placeholder: 'your@email.com',
+        label: t('login.emailLabel'),
+        placeholder: t('login.emailPlaceholder'),
         autocomplete: 'username',
         required: true,
       }),
@@ -45,8 +46,8 @@ export async function renderLogin(root) {
       h('sl-input', {
         id: 'password',
         type: 'password',
-        label: 'Password',
-        placeholder: 'Password',
+        label: t('login.passwordLabel'),
+        placeholder: t('login.passwordPlaceholder'),
         autocomplete: 'current-password',
         required: true,
         'password-toggle': true,
@@ -59,7 +60,7 @@ export async function renderLogin(root) {
         type: 'submit',
         variant: 'primary',
         class: 'login-submit',
-      }, ['Sign in']),
+      }, [t('login.submit')]),
 
       h('sl-button', {
         id: 'dev-btn',
@@ -67,7 +68,7 @@ export async function renderLogin(root) {
         class: 'login-dev',
         style: 'display: none',
         onclick: handleDevLogin,
-      }, ['Continue without signing in (dev)']),
+      }, [t('login.devBypass')]),
     ]),
   ]);
 
@@ -142,11 +143,11 @@ export async function renderLogin(root) {
     const password = passwordInput?.value || '';
 
     if (!email || !password) {
-      statusEl.textContent = 'Please enter email and password';
+      statusEl.textContent = t('login.errorRequired');
       return;
     }
 
-    statusEl.textContent = 'Signing in...';
+    statusEl.textContent = t('login.signingIn');
     submitBtn.loading = true;
     emailInput.disabled = true;
     passwordInput.disabled = true;
@@ -155,7 +156,7 @@ export async function renderLogin(root) {
       await login(email, password);
       navigate(returnTo);
     } catch (err) {
-      statusEl.textContent = err.message || 'Login failed';
+      statusEl.textContent = err.message || t('login.errorFailed');
       submitBtn.loading = false;
       emailInput.disabled = false;
       passwordInput.disabled = false;
@@ -168,14 +169,14 @@ export async function renderLogin(root) {
     const statusEl = root.querySelector('#login-status');
     const devBtn = root.querySelector('#dev-btn');
 
-    statusEl.textContent = 'Dev login...';
+    statusEl.textContent = t('login.devLogin');
     devBtn.loading = true;
 
     try {
       await devLogin();
       navigate(returnTo);
     } catch (err) {
-      statusEl.textContent = err.message || 'Dev login failed';
+      statusEl.textContent = err.message || t('login.devLoginFailed');
       devBtn.loading = false;
     }
   }

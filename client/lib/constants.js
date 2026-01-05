@@ -8,6 +8,7 @@ export const STORAGE_KEYS = {
   DRAFTS: 'dreamdocs_drafts',
   DEFAULT_PROVIDER: 'dreamdocs_default_provider',
   GLOBAL_CONTEXT: 'dreamdocs_global_context',
+  LANGUAGE: 'dreamdocs_language',
 };
 
 // Default values

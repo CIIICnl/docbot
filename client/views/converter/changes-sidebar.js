@@ -6,6 +6,7 @@
 import { h, empty } from '../../lib/dom.js';
 import { success } from '../../lib/toast.js';
 import { slButton, slIcon } from '../../lib/shoelace.js';
+import { t } from '../../lib/i18n.js';
 
 /**
  * Create the changes sidebar
@@ -22,18 +23,18 @@ export function createChangesSidebar({ store, onUndo }) {
     size: 'small',
     outline: true,
     icon: 'arrow-counterclockwise',
-    text: 'Undo All Changes',
+    text: t('changes.undoAll'),
   });
 
   undoAllBtn.addEventListener('click', () => {
     onUndo();
-    success('Changes reverted');
+    success(t('changes.reverted'));
   });
 
   const element = h('div', { class: 'changes-sidebar' }, [
     h('div', { class: 'changes-sidebar-header' }, [
       slIcon({ name: 'magic', className: 'changes-sidebar-icon' }),
-      h('span', { class: 'changes-sidebar-title' }, ['AI Changes']),
+      h('span', { class: 'changes-sidebar-title' }, [t('changes.title')]),
       changesCount,
     ]),
     changesList,
@@ -135,10 +136,10 @@ export function createChangesSidebar({ store, onUndo }) {
   }
 
   const CATEGORY_LABELS = {
-    structure: 'Structure',
-    typo: 'Typos',
-    readability: 'Readability',
-    other: 'Other',
+    structure: t('changes.categoryStructure'),
+    typo: t('changes.categoryTypos'),
+    readability: t('changes.categoryReadability'),
+    other: t('changes.categoryOther'),
   };
 
   /**
@@ -151,7 +152,7 @@ export function createChangesSidebar({ store, onUndo }) {
 
     if (totalCount === 0) {
       changesList.appendChild(
-        h('div', { class: 'changes-empty' }, ['No changes or suggestions'])
+        h('div', { class: 'changes-empty' }, [t('changes.noChanges')])
       );
       changesCount.textContent = '0';
       return;
@@ -161,7 +162,7 @@ export function createChangesSidebar({ store, onUndo }) {
 
     if (changes.length > 0) {
       changesList.appendChild(
-        h('div', { class: 'changes-section-header' }, ['Changes Made'])
+        h('div', { class: 'changes-section-header' }, [t('changes.changesMade')])
       );
 
       const groups = groupSimilarChanges(changes);
@@ -216,7 +217,7 @@ export function createChangesSidebar({ store, onUndo }) {
 
     if (suggestions.length > 0) {
       changesList.appendChild(
-        h('div', { class: 'changes-section-header suggestions-header' }, ['Suggestions & Questions'])
+        h('div', { class: 'changes-section-header suggestions-header' }, [t('changes.suggestions')])
       );
       for (const suggestion of suggestions) {
         const item = h('div', { class: 'change-item suggestion-item' }, [

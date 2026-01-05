@@ -7,6 +7,7 @@ import { h } from '../../lib/dom.js';
 import { post } from '../../lib/api.js';
 import { slIcon } from '../../lib/shoelace.js';
 import { DOMSearchController, SEARCH_HIGHLIGHT_CSS } from '../../lib/search-controller.js';
+import { t } from '../../lib/i18n.js';
 
 /**
  * Create the preview panel
@@ -18,14 +19,14 @@ export function createPreviewPanel({ store }) {
   const iframe = h('iframe', {
     class: 'preview-iframe',
     sandbox: 'allow-same-origin allow-scripts',
-    title: 'Document Preview',
+    title: t('preview.title'),
   });
   iframe.hidden = true;
 
   // Empty state
   const emptyState = h('div', { class: 'preview-empty' }, [
     slIcon({ name: 'eye', className: 'preview-empty-icon' }),
-    h('p', {}, ['Preview will appear here']),
+    h('p', {}, [t('preview.empty')]),
   ]);
 
   // Loading state
@@ -40,7 +41,7 @@ export function createPreviewPanel({ store }) {
   // Refresh button
   const refreshBtn = h('sl-icon-button', {
     name: 'arrow-clockwise',
-    label: 'Refresh Preview',
+    label: t('preview.refresh'),
     class: 'preview-refresh-btn',
   });
 
@@ -95,7 +96,7 @@ export function createPreviewPanel({ store }) {
   const element = h('div', { class: 'preview-panel' }, [
     h('div', { class: 'panel-header' }, [
       slIcon({ name: 'eye', className: 'panel-icon' }),
-      h('span', { class: 'panel-title' }, ['Preview']),
+      h('span', { class: 'panel-title' }, [t('preview.panelTitle')]),
       h('div', { class: 'panel-header-spacer' }),
       search.toggle,
       refreshBtn,

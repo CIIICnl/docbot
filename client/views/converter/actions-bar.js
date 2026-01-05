@@ -8,9 +8,9 @@ import { post } from '../../lib/api.js';
 import { success, error, warning } from '../../lib/toast.js';
 import { showLoading, updateLoadingMessage } from '../../lib/loading.js';
 import { slButton, slSelect, slSwitch, sl } from '../../lib/shoelace.js';
-import { ENHANCE_MESSAGES, SUGGESTION_MESSAGES, pickRandom } from '../../lib/messages.js';
 import { exportDocument, getExportConfig } from '../../lib/export-service.js';
 import { getProvider, getGlobalContext } from './state.js';
+import { t, tRandom, getLocale } from '../../lib/i18n.js';
 
 /**
  * Create the actions bar
@@ -26,41 +26,41 @@ export function createActionsBar({ store, onEnhanceComplete }) {
   const enhanceSuggestionsCheck = slSwitch({ checked: false, size: 'small' });
 
   // Enhancement dialog
-  const enhanceDialog = sl('sl-dialog', { label: 'Enhance with AI' }, [
+  const enhanceDialog = sl('sl-dialog', { label: t('enhance.dialogTitle') }, [
     h('div', { class: 'enhance-options' }, [
       h('label', { class: 'enhance-option' }, [
         enhanceStructureCheck,
         h('div', { class: 'enhance-option-content' }, [
-          h('span', { class: 'enhance-option-title' }, ['Document Structure']),
+          h('span', { class: 'enhance-option-title' }, [t('enhance.structureTitle')]),
           h('span', { class: 'enhance-option-desc' }, [
-            'Fix headings, lists, tables, and whitespace formatting',
+            t('enhance.structureDesc'),
           ]),
         ]),
       ]),
       h('label', { class: 'enhance-option' }, [
         enhanceTyposCheck,
         h('div', { class: 'enhance-option-content' }, [
-          h('span', { class: 'enhance-option-title' }, ['Fix Typos']),
+          h('span', { class: 'enhance-option-title' }, [t('enhance.typosTitle')]),
           h('span', { class: 'enhance-option-desc' }, [
-            'Correct spelling errors, double spaces, and punctuation',
+            t('enhance.typosDesc'),
           ]),
         ]),
       ]),
       h('label', { class: 'enhance-option' }, [
         enhanceReadabilityCheck,
         h('div', { class: 'enhance-option-content' }, [
-          h('span', { class: 'enhance-option-title' }, ['Improve Readability']),
+          h('span', { class: 'enhance-option-title' }, [t('enhance.readabilityTitle')]),
           h('span', { class: 'enhance-option-desc' }, [
-            'Reorder words and sentences for clarity without changing meaning',
+            t('enhance.readabilityDesc'),
           ]),
         ]),
       ]),
       h('label', { class: 'enhance-option' }, [
         enhanceSuggestionsCheck,
         h('div', { class: 'enhance-option-content' }, [
-          h('span', { class: 'enhance-option-title' }, ['Get Suggestions']),
+          h('span', { class: 'enhance-option-title' }, [t('enhance.suggestionsTitle')]),
           h('span', { class: 'enhance-option-desc' }, [
-            'Receive feedback and questions without modifying the document',
+            t('enhance.suggestionsDesc'),
           ]),
         ]),
       ]),
@@ -68,13 +68,13 @@ export function createActionsBar({ store, onEnhanceComplete }) {
     h('div', { slot: 'footer', class: 'enhance-dialog-footer' }, [
       slButton({
         variant: 'default',
-        text: 'Cancel',
+        text: t('enhance.cancel'),
         onClick: () => enhanceDialog.hide(),
       }),
       slButton({
         variant: 'primary',
         icon: 'magic',
-        text: 'Enhance',
+        text: t('enhance.enhance'),
         onClick: () => {
           enhanceDialog.hide();
           handleEnhance();
@@ -86,7 +86,7 @@ export function createActionsBar({ store, onEnhanceComplete }) {
   const enhanceBtn = slButton({
     variant: 'default',
     icon: 'magic',
-    text: 'Enhance with AI',
+    text: t('actions.enhance'),
     onClick: () => enhanceDialog.show(),
   });
 
@@ -99,13 +99,13 @@ export function createActionsBar({ store, onEnhanceComplete }) {
     style: 'width: 110px;',
     hoist: true,
   });
-  translateDirectionSelect.appendChild(sl('sl-option', { value: 'nl-to-en' }, ['NL → EN']));
-  translateDirectionSelect.appendChild(sl('sl-option', { value: 'en-to-nl' }, ['EN → NL']));
+  translateDirectionSelect.appendChild(sl('sl-option', { value: 'nl-to-en' }, [t('actions.translateNlEn')]));
+  translateDirectionSelect.appendChild(sl('sl-option', { value: 'en-to-nl' }, [t('actions.translateEnNl')]));
 
   const translateBtn = slButton({
     variant: 'default',
     icon: 'translate',
-    text: 'Translate',
+    text: t('actions.translate'),
     onClick: () => handleTranslate(),
   });
 
@@ -118,14 +118,14 @@ export function createActionsBar({ store, onEnhanceComplete }) {
   const exportPdfBtn = slButton({
     variant: 'primary',
     icon: 'file-pdf',
-    text: 'Export PDF',
+    text: t('actions.exportPdf'),
     onClick: () => handleExport('pdf'),
   });
 
   const exportHtmlBtn = slButton({
     variant: 'default',
     icon: 'file-code',
-    text: 'Export HTML',
+    text: t('actions.exportHtml'),
     onClick: () => handleExport('html'),
   });
 
@@ -152,7 +152,7 @@ export function createActionsBar({ store, onEnhanceComplete }) {
     const state = store.get();
 
     if (!state.content.trim()) {
-      warning('No content to enhance');
+      warning(t('toast.noContentEnhance'));
       return;
     }
 
@@ -164,7 +164,7 @@ export function createActionsBar({ store, onEnhanceComplete }) {
     };
 
     if (!options.fixStructure && !options.fixTypos && !options.improveReadability && !options.getSuggestions) {
-      warning('Please select at least one enhancement option');
+      warning(t('toast.selectOption'));
       return;
     }
 
@@ -174,14 +174,18 @@ export function createActionsBar({ store, onEnhanceComplete }) {
     }
 
     const isSuggestionsOnly = options.getSuggestions && !willModify;
-    const messages = isSuggestionsOnly ? SUGGESTION_MESSAGES : ENHANCE_MESSAGES;
+    const messagesKey = isSuggestionsOnly ? 'aiLoading.suggestions' : 'aiLoading.enhance';
     const stage2Key = isSuggestionsOnly ? 'thinking' : 'improving';
 
-    // Shuffle stage 2 messages so we don't repeat
-    const stage2Messages = [...messages[stage2Key]].sort(() => Math.random() - 0.5);
-    let stage2Index = 0;
+    // Get messages from translations
+    const analyzingMessages = t(`${messagesKey}.analyzing`);
+    const stage2Messages = [...t(`${messagesKey}.${stage2Key}`)].sort(() => Math.random() - 0.5);
+    const wrappingMessages = t(`${messagesKey}.wrapping`);
 
-    const hide = showLoading(pickRandom(messages.analyzing));
+    let stage2Index = 0;
+    const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+    const hide = showLoading(pickRandom(analyzingMessages));
 
     let messageIndex = 0;
     const messageInterval = setInterval(() => {
@@ -191,7 +195,7 @@ export function createActionsBar({ store, onEnhanceComplete }) {
         updateLoadingMessage(stage2Messages[stage2Index % stage2Messages.length]);
         stage2Index++;
       } else if (messageIndex === 5) {
-        updateLoadingMessage(pickRandom(messages.wrapping));
+        updateLoadingMessage(pickRandom(wrappingMessages));
       }
     }, 3000);
 
@@ -202,13 +206,14 @@ export function createActionsBar({ store, onEnhanceComplete }) {
         markdown: state.content,
         provider: getProvider(),
         globalContext,
+        language: getLocale(),
         ...options,
       });
 
       clearInterval(messageInterval);
 
       if (!result.ok) {
-        throw new Error(result.data?.error || 'Enhancement failed');
+        throw new Error(result.data?.error || t('toast.enhancementFailed', { error: '' }));
       }
 
       onEnhanceComplete({
@@ -218,14 +223,14 @@ export function createActionsBar({ store, onEnhanceComplete }) {
         willModify,
       });
 
-      const successText = isSuggestionsOnly ? 'Suggestions ready' : 'Enhanced with AI';
+      const successText = isSuggestionsOnly ? t('toast.suggestionsReady') : t('toast.enhanced');
       success(successText);
     } catch (err) {
       clearInterval(messageInterval);
       if (willModify) {
         store.set({ originalContent: null });
       }
-      error(`Enhancement failed: ${err.message}`);
+      error(t('toast.enhancementFailed', { error: err.message }));
     } finally {
       hide();
     }
@@ -236,13 +241,13 @@ export function createActionsBar({ store, onEnhanceComplete }) {
     const state = store.get();
 
     if (!state.content.trim()) {
-      warning('No content to translate');
+      warning(t('toast.noContentTranslate'));
       return;
     }
 
     const direction = translateDirectionSelect.value;
-    const directionLabel = direction === 'nl-to-en' ? 'Dutch → English' : 'English → Dutch';
-    const hide = showLoading(`Translating (${directionLabel})...`);
+    const loadingKey = direction === 'nl-to-en' ? 'loading.translatingNlEn' : 'loading.translatingEnNl';
+    const hide = showLoading(t(loadingKey));
 
     try {
       const result = await post('/api/docx/translate', {
@@ -252,7 +257,7 @@ export function createActionsBar({ store, onEnhanceComplete }) {
       });
 
       if (!result.ok) {
-        throw new Error(result.data?.error || 'Translation failed');
+        throw new Error(result.data?.error || t('toast.translationFailed', { error: '' }));
       }
 
       onEnhanceComplete({
@@ -262,9 +267,10 @@ export function createActionsBar({ store, onEnhanceComplete }) {
         willModify: true,
       });
 
-      success(`Translated (${result.data.chunksProcessed} chunk${result.data.chunksProcessed !== 1 ? 's' : ''})`);
+      const count = result.data.chunksProcessed;
+      success(t('toast.translated', { count, plural: count !== 1 ? 's' : '' }));
     } catch (err) {
-      error(`Translation failed: ${err.message}`);
+      error(t('toast.translationFailed', { error: err.message }));
     } finally {
       hide();
     }
@@ -275,12 +281,12 @@ export function createActionsBar({ store, onEnhanceComplete }) {
     const state = store.get();
 
     if (!state.content.trim()) {
-      warning('No content to export');
+      warning(t('toast.noContentExport'));
       return;
     }
 
-    const config = getExportConfig(format);
-    const hide = showLoading(config.loadingMessage);
+    const loadingKey = format === 'pdf' ? 'loading.generatingPdf' : 'loading.generatingHtml';
+    const hide = showLoading(t(loadingKey));
 
     try {
       const result = await exportDocument({
@@ -292,9 +298,10 @@ export function createActionsBar({ store, onEnhanceComplete }) {
         pageNumbers: state.pageNumbers,
       });
 
-      success(result.message);
+      const successKey = format === 'pdf' ? 'toast.pdfExported' : 'toast.htmlExported';
+      success(t(successKey));
     } catch (err) {
-      error(`Export failed: ${err.message}`);
+      error(t('toast.exportFailed', { error: err.message }));
     } finally {
       hide();
     }

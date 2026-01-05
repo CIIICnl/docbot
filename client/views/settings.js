@@ -10,6 +10,7 @@ import { success } from '../lib/toast.js';
 import { slSelect, slButton, slTextarea, sl } from '../lib/shoelace.js';
 import { get } from '../lib/api.js';
 import { STORAGE_KEYS, PLACEHOLDERS } from '../lib/constants.js';
+import { t, getLocale, setLocale, getSupportedLocales } from '../lib/i18n.js';
 
 /**
  * Render the settings view
@@ -47,24 +48,45 @@ async function render(container) {
     hoist: true,
   });
 
-  themeSelect.appendChild(sl('sl-option', { value: 'light' }, ['Light']));
-  themeSelect.appendChild(sl('sl-option', { value: 'dark' }, ['Dark']));
+  themeSelect.appendChild(sl('sl-option', { value: 'light' }, [t('settings.appearance.themeLight')]));
+  themeSelect.appendChild(sl('sl-option', { value: 'dark' }, [t('settings.appearance.themeDark')]));
 
   themeSelect.addEventListener('sl-change', (e) => {
     setTheme(e.target.value);
-    success(`Theme changed to ${e.target.value}`);
+    success(t('toast.themeChanged', { theme: e.target.value }));
   });
 
+  // Language selector
+  const languageSelect = slSelect({
+    value: getLocale(),
+    hoist: true,
+  });
+
+  for (const locale of getSupportedLocales()) {
+    languageSelect.appendChild(sl('sl-option', { value: locale.code }, [locale.name]));
+  }
+
+  languageSelect.addEventListener('sl-change', async (e) => {
+    await setLocale(e.target.value);
+    success(t('toast.languageChanged'));
+    // Re-render the page to update all translations
+    render(container);
+  });
 
   // Appearance section
   const appearanceSection = settingsSection({
-    title: 'Appearance',
-    description: 'Customize how the application looks.',
+    title: t('settings.appearance.title'),
+    description: t('settings.appearance.description'),
     rows: [
       {
-        label: 'Theme',
-        description: 'Choose between light and dark mode.',
+        label: t('settings.appearance.themeLabel'),
+        description: t('settings.appearance.themeDescription'),
         control: themeSelect,
+      },
+      {
+        label: t('settings.appearance.languageLabel'),
+        description: t('settings.appearance.languageDescription'),
+        control: languageSelect,
       },
     ],
   });
@@ -72,7 +94,7 @@ async function render(container) {
   // AI Enhancement section
   const globalContext = slTextarea({
     value: localStorage.getItem(STORAGE_KEYS.GLOBAL_CONTEXT) || '',
-    placeholder: PLACEHOLDERS.GLOBAL_CONTEXT,
+    placeholder: t('placeholders.globalContext'),
     rows: 6,
     resize: 'vertical',
     style: 'width: 100%;',
@@ -83,7 +105,7 @@ async function render(container) {
   });
 
   globalContext.addEventListener('sl-blur', () => {
-    success('AI context saved');
+    success(t('toast.contextSaved'));
   });
 
   const defaultProvider = slSelect({
@@ -92,8 +114,8 @@ async function render(container) {
     style: 'width: 200px;',
   });
 
-  const claudeOption = sl('sl-option', { value: 'claude' }, ['Claude (Recommended)']);
-  const mistralOption = sl('sl-option', { value: 'mistral' }, ['Mistral (EU)']);
+  const claudeOption = sl('sl-option', { value: 'claude' }, [t('settings.ai.providerClaude')]);
+  const mistralOption = sl('sl-option', { value: 'mistral' }, [t('settings.ai.providerMistral')]);
 
   if (!llmProviders.claude) claudeOption.disabled = true;
   if (!llmProviders.mistral) mistralOption.disabled = true;
@@ -103,34 +125,34 @@ async function render(container) {
 
   defaultProvider.addEventListener('sl-change', (e) => {
     localStorage.setItem(STORAGE_KEYS.DEFAULT_PROVIDER, e.target.value);
-    success(`Default provider set to ${e.target.value}`);
+    success(t('toast.providerChanged', { provider: e.target.value }));
   });
 
   const aiAvailable = llmProviders.claude || llmProviders.mistral;
 
   // Build AI section with full-width global context
   const aiSection = h('div', { class: 'vk-settings-section' }, [
-    h('h2', { class: 'vk-settings-section-title' }, ['AI Enhancement']),
+    h('h2', { class: 'vk-settings-section-title' }, [t('settings.ai.title')]),
     h('p', { class: 'vk-settings-section-description' }, [
       aiAvailable
-        ? 'Configure AI-powered document enhancement for Word imports.'
-        : 'AI enhancement requires API keys. Add ANTHROPIC_API_KEY or MISTRAL_API_KEY to your .env file.',
+        ? t('settings.ai.descriptionAvailable')
+        : t('settings.ai.descriptionUnavailable'),
     ]),
     ...(aiAvailable
       ? [
           // Default provider row (standard layout)
           h('div', { class: 'vk-settings-row' }, [
             h('div', { class: 'vk-settings-row-label' }, [
-              h('h4', {}, ['Default Provider']),
-              h('p', {}, ['Choose which AI provider to use by default.']),
+              h('h4', {}, [t('settings.ai.providerLabel')]),
+              h('p', {}, [t('settings.ai.providerDescription')]),
             ]),
             h('div', { class: 'vk-settings-row-control' }, [defaultProvider]),
           ]),
           // Global context (full width)
           h('div', { class: 'vk-settings-row', style: 'flex-direction: column; align-items: stretch;' }, [
             h('div', { class: 'vk-settings-row-label', style: 'margin-bottom: var(--sl-spacing-small);' }, [
-              h('h4', {}, ['Global Context']),
-              h('p', {}, ['Instructions that apply to all document conversions.']),
+              h('h4', {}, [t('settings.ai.contextLabel')]),
+              h('p', {}, [t('settings.ai.contextDescription')]),
             ]),
             globalContext,
           ]),
@@ -142,20 +164,20 @@ async function render(container) {
   const deleteButton = slButton({
     variant: 'danger',
     outline: true,
-    text: 'Delete All',
+    text: t('settings.danger.deleteAllButton'),
   });
 
   const dangerSection = h('div', { class: 'vk-settings-section mt-8' }, [
-    h('h2', { class: 'vk-settings-section-title text-danger' }, ['Danger Zone']),
+    h('h2', { class: 'vk-settings-section-title text-danger' }, [t('settings.danger.title')]),
     h('p', { class: 'vk-settings-section-description' }, [
-      'Irreversible actions that affect your account.',
+      t('settings.danger.description'),
     ]),
     h('div', { class: 'vk-card mt-4' }, [
       h('div', { class: 'vk-card-body flex items-center justify-between' }, [
         h('div', {}, [
-          h('h4', { class: 'font-medium' }, ['Delete All Items']),
+          h('h4', { class: 'font-medium' }, [t('settings.danger.deleteAllTitle')]),
           h('p', { class: 'text-sm text-muted mt-1' }, [
-            'Permanently delete all items. This cannot be undone.',
+            t('settings.danger.deleteAllDescription'),
           ]),
         ]),
         deleteButton,
@@ -165,8 +187,8 @@ async function render(container) {
 
   // Page header
   const header = pageHeader({
-    title: 'Settings',
-    subtitle: 'Manage your preferences',
+    title: t('settings.title'),
+    subtitle: t('settings.subtitle'),
   });
 
   container.appendChild(header);

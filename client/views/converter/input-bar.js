@@ -9,8 +9,8 @@ import { success, error, warning } from '../../lib/toast.js';
 import { showLoading } from '../../lib/loading.js';
 import { readFileAsText, readFileAsArrayBuffer } from '../../lib/file-upload.js';
 import { slButton, slSelect, slSwitch, slInput, sl } from '../../lib/shoelace.js';
-import { PLACEHOLDERS } from '../../lib/constants.js';
 import { getDrafts, saveDraft, deleteDraft } from '../../lib/drafts.js';
+import { t } from '../../lib/i18n.js';
 
 /**
  * Create the input bar component
@@ -30,26 +30,26 @@ export function createInputBar({ store, onContentChange }) {
     variant: 'default',
     size: 'small',
     icon: 'upload',
-    text: 'Upload',
+    text: t('input.upload'),
     onClick: () => fileInput.click(),
   });
 
   // Notion dialog
   const notionInput = slInput({
-    placeholder: PLACEHOLDERS.NOTION_URL,
+    placeholder: t('placeholders.notionUrl'),
     size: 'medium',
     style: 'width: 100%;',
   });
 
-  const notionDialog = sl('sl-dialog', { label: 'Import from Notion' }, [
+  const notionDialog = sl('sl-dialog', { label: t('notion.dialogTitle') }, [
     h('p', { class: 'text-muted', style: 'margin-bottom: var(--sl-spacing-medium);' }, [
-      'Enter the URL of the Notion page you want to import.',
+      t('notion.dialogDescription'),
     ]),
     notionInput,
     slButton({
       slot: 'footer',
       variant: 'primary',
-      text: 'Import',
+      text: t('notion.import'),
       onClick: () => handleNotionFetch(),
     }),
   ]);
@@ -58,7 +58,7 @@ export function createInputBar({ store, onContentChange }) {
     variant: 'default',
     size: 'small',
     icon: 'box-arrow-in-right',
-    text: 'Notion',
+    text: t('input.notion'),
     onClick: () => notionDialog.show(),
   });
 
@@ -67,7 +67,7 @@ export function createInputBar({ store, onContentChange }) {
     variant: 'default',
     size: 'small',
     icon: 'save',
-    text: 'Save Draft',
+    text: t('input.saveDraft'),
     onClick: () => handleSaveDraft(),
   });
 
@@ -77,7 +77,7 @@ export function createInputBar({ store, onContentChange }) {
       variant: 'default',
       size: 'small',
       icon: 'folder2-open',
-      text: 'Load Draft',
+      text: t('input.loadDraft'),
       caret: true,
     }),
     sl('sl-menu', { class: 'drafts-menu' }, []),
@@ -86,7 +86,7 @@ export function createInputBar({ store, onContentChange }) {
 
   // Title input
   const titleInput = slInput({
-    placeholder: PLACEHOLDERS.DOCUMENT_TITLE,
+    placeholder: t('placeholders.documentTitle'),
     size: 'small',
     style: 'width: 200px;',
   });
@@ -101,11 +101,11 @@ export function createInputBar({ store, onContentChange }) {
 
   // ToC toggle
   const tocSwitch = slSwitch({ checked: true, size: 'small' });
-  const tocLabel = h('label', { class: 'input-toggle-label' }, [tocSwitch, ' ToC']);
+  const tocLabel = h('label', { class: 'input-toggle-label' }, [tocSwitch, ' ' + t('input.toc')]);
 
   // Page numbers toggle
   const pageNumSwitch = slSwitch({ checked: true, size: 'small' });
-  const pageNumLabel = h('label', { class: 'input-toggle-label' }, [pageNumSwitch, ' Page #']);
+  const pageNumLabel = h('label', { class: 'input-toggle-label' }, [pageNumSwitch, ' ' + t('input.pageNumbers')]);
 
   // Event handlers
   fileInput.addEventListener('change', () => handleFileUpload(fileInput.files));
@@ -134,7 +134,7 @@ export function createInputBar({ store, onContentChange }) {
     const isWord = file.name.toLowerCase().endsWith('.docx');
 
     if (isWord) {
-      const hide = showLoading('Parsing Word document...');
+      const hide = showLoading(t('loading.parsingWord'));
 
       try {
         const arrayBuffer = await readFileAsArrayBuffer(file);
@@ -143,19 +143,19 @@ export function createInputBar({ store, onContentChange }) {
         const result = await post('/api/docx/parse', { file: base64 });
 
         if (!result.ok) {
-          throw new Error(result.data?.error || 'Failed to parse document');
+          throw new Error(result.data?.error || t('toast.parseFailed', { error: '' }));
         }
 
         const title = result.data.title || file.name.replace(/\.docx$/i, '');
         onContentChange(result.data.markdown, title);
 
         if (result.data.warnings?.length > 0) {
-          warning(`Parsed with ${result.data.warnings.length} warning(s)`);
+          warning(t('toast.parsedWarnings', { count: result.data.warnings.length }));
         } else {
-          success(`Loaded ${file.name}`);
+          success(t('toast.loadedFile', { filename: file.name }));
         }
       } catch (err) {
-        error(`Failed to parse document: ${err.message}`);
+        error(t('toast.parseFailed', { error: err.message }));
       } finally {
         hide();
       }
@@ -164,9 +164,9 @@ export function createInputBar({ store, onContentChange }) {
         const text = await readFileAsText(file);
         const title = file.name.replace(/\.(md|markdown|txt)$/i, '');
         onContentChange(text, title);
-        success(`Loaded ${file.name}`);
+        success(t('toast.loadedFile', { filename: file.name }));
       } catch (err) {
-        error(`Failed to read file: ${err.message}`);
+        error(t('toast.readFailed', { error: err.message }));
       }
     }
 
@@ -177,25 +177,25 @@ export function createInputBar({ store, onContentChange }) {
   async function handleNotionFetch() {
     const url = notionInput.value?.trim();
     if (!url) {
-      warning('Enter a Notion page URL');
+      warning(t('notion.errorUrl'));
       return;
     }
 
     notionDialog.hide();
-    const hide = showLoading('Fetching Notion page...');
+    const hide = showLoading(t('loading.fetchingNotion'));
 
     try {
       const result = await post('/api/notion/fetch', { url });
 
       if (!result.ok) {
-        throw new Error(result.data?.error || 'Failed to fetch page');
+        throw new Error(result.data?.error || t('toast.fetchFailed', { error: '' }));
       }
 
       onContentChange(result.data.markdown, result.data.title);
       notionInput.value = '';
-      success('Fetched Notion page');
+      success(t('toast.fetchedNotion'));
     } catch (err) {
-      error(`Failed to fetch: ${err.message}`);
+      error(t('toast.fetchFailed', { error: err.message }));
     } finally {
       hide();
     }
@@ -205,19 +205,19 @@ export function createInputBar({ store, onContentChange }) {
   function handleSaveDraft() {
     const state = store.get();
     if (!state.content.trim()) {
-      warning('No content to save');
+      warning(t('toast.noContentSave'));
       return;
     }
 
     const draft = saveDraft({ title: state.contentTitle, content: state.content });
     updateDraftsMenu();
-    success(`Draft saved: ${draft.title}`);
+    success(t('toast.draftSaved', { title: draft.title }));
   }
 
   function handleLoadDraft(draft) {
     requestAnimationFrame(() => {
       onContentChange(draft.content, draft.title);
-      success(`Loaded: ${draft.title}`);
+      success(t('toast.draftLoaded', { title: draft.title }));
     });
   }
 
@@ -226,7 +226,7 @@ export function createInputBar({ store, onContentChange }) {
     deleteDraft(draftId);
     requestAnimationFrame(() => {
       updateDraftsMenu();
-      success('Draft deleted');
+      success(t('toast.draftDeleted'));
     });
   }
 
@@ -247,7 +247,7 @@ export function createInputBar({ store, onContentChange }) {
       const deleteBtn = h('sl-icon-button', {
         slot: 'suffix',
         name: 'trash',
-        label: 'Delete',
+        label: t('input.deleteLabel'),
         style: 'font-size: 1rem;',
       });
       deleteBtn.addEventListener('click', (e) => handleDeleteDraft(draft.id, e));

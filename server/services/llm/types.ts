@@ -18,6 +18,8 @@ export interface LlmSuggestion {
   location?: string;
 }
 
+export type UILanguage = 'en' | 'nl';
+
 export interface LlmEnhanceRequest {
   markdown: string;
   provider: LlmProvider;
@@ -27,6 +29,7 @@ export interface LlmEnhanceRequest {
   fixTypos?: boolean;
   improveReadability?: boolean;
   getSuggestions?: boolean;
+  language?: UILanguage;
 }
 
 export interface LlmEnhanceResult {

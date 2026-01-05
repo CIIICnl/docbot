@@ -28,6 +28,7 @@ interface EnhanceRequest {
   fixTypos?: boolean;
   improveReadability?: boolean;
   getSuggestions?: boolean;
+  language?: 'en' | 'nl';
 }
 
 interface TranslateRequest {
@@ -112,6 +113,7 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
         fixTypos: body.fixTypos,
         improveReadability: body.improveReadability,
         getSuggestions: body.getSuggestions,
+        language: body.language,
       });
 
       ok(res, {
