@@ -2,6 +2,7 @@
 
 import MarkdownIt from 'markdown-it';
 import anchor from 'markdown-it-anchor';
+import footnote from 'markdown-it-footnote';
 import hljs from 'highlight.js';
 import type { MarkdownResult, TocEntry } from '../types/index.js';
 
@@ -32,6 +33,9 @@ md.use(anchor, {
       .replace(/[\s]+/g, '-')
       .replace(/[^\w-]/g, ''),
 });
+
+// Add footnote support
+md.use(footnote);
 
 // Enable tables (built into markdown-it)
 md.enable('table');

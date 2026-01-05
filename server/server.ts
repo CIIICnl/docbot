@@ -6,9 +6,7 @@
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { handleApi } from './routes/api/index.js';
 import { serveStatic } from './routes/static.js';
-import { loadEnv } from './config/env.js';
-
-const PORT = parseInt(process.env.PORT || '3000', 10);
+import { loadEnv, getConfig } from './config/env.js';
 
 async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
@@ -44,10 +42,11 @@ async function start(): Promise<void> {
   // Load environment variables
   await loadEnv();
 
+  const { port } = getConfig();
   const server = createServer(handleRequest);
 
-  server.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+  server.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
   });
 }
 

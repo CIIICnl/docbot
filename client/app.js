@@ -8,12 +8,17 @@ import { initTheme, createThemeToggle } from './lib/theme.js';
 import { $, h, empty } from './lib/dom.js';
 import { renderConverter } from './views/converter/index.js';
 import { renderSettings } from './views/settings.js';
+import { renderLogin } from './views/login.js';
+import { getMeCached, logout, clearUserCache } from './lib/auth.js';
 
 // Initialize theme
 initTheme();
 
 // Get app container
 const app = $('#app');
+
+// Current user state
+let currentUser = null;
 
 /**
  * Render the app shell with content
@@ -41,8 +46,19 @@ function renderShell(content, { activeNav = '' } = {}) {
       h('div', { class: 'vk-header-spacer' }),
 
       h('div', { class: 'vk-header-actions' }, [
+        // User info and logout
+        currentUser ? h('sl-dropdown', {}, [
+          h('sl-button', { slot: 'trigger', caret: true, size: 'small' }, [
+            currentUser.name || currentUser.email,
+          ]),
+          h('sl-menu', {}, [
+            h('sl-menu-item', {
+              onclick: handleLogout,
+            }, ['Sign out']),
+          ]),
+        ]) : null,
         createThemeToggle(),
-      ]),
+      ].filter(Boolean)),
     ]),
 
     // Main content
@@ -50,6 +66,19 @@ function renderShell(content, { activeNav = '' } = {}) {
   ]);
 
   app.appendChild(shell);
+}
+
+/**
+ * Handle logout
+ */
+async function handleLogout() {
+  try {
+    await logout();
+    currentUser = null;
+    navigate('/login');
+  } catch (err) {
+    console.error('Logout failed:', err);
+  }
 }
 
 /**
@@ -68,10 +97,45 @@ function render404() {
   renderShell(content);
 }
 
+/**
+ * Check auth and redirect to login if needed
+ */
+async function requireAuth() {
+  try {
+    currentUser = await getMeCached();
+    if (!currentUser) {
+      const returnTo = `${location.pathname}${location.search || ''}`;
+      navigate(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+      return false;
+    }
+    return true;
+  } catch {
+    navigate('/login');
+    return false;
+  }
+}
+
 // Define routes
+
+// Login page (no auth required)
+route('/login', async () => {
+  // If already logged in, redirect to home
+  try {
+    const user = await getMeCached();
+    if (user) {
+      navigate('/');
+      return;
+    }
+  } catch {
+    // ignore
+  }
+  empty(app);
+  return renderLogin(app);
+});
 
 // Converter (home page)
 route('/', async () => {
+  if (!(await requireAuth())) return;
   const content = h('div', {});
   renderShell(content, { activeNav: 'convert' });
   return renderConverter(content);
@@ -79,6 +143,7 @@ route('/', async () => {
 
 // Settings
 route('/settings', async () => {
+  if (!(await requireAuth())) return;
   const content = h('div', {});
   renderShell(content, { activeNav: 'settings' });
   return renderSettings(content);

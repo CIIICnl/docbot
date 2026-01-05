@@ -5,15 +5,19 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { handleAuth } from './auth.js';
 import { handleConvert } from './convert.js';
 import { handleThemes } from './themes.js';
 import { handleNotion } from './notion.js';
-import { notFound } from '../../utils/http.js';
+import { handleDocx } from './docx.js';
+import { notFound, unauthorized } from '../../utils/http.js';
+import { authEnabled, getUserFromRequest, type User } from '../../auth/auth.js';
 
 export interface ApiContext {
   req: IncomingMessage;
   res: ServerResponse;
   url: URL;
+  authedUser?: User | null;
 }
 
 /**
@@ -21,14 +25,30 @@ export interface ApiContext {
  * Routes requests to appropriate handlers.
  */
 export async function handleApi(ctx: ApiContext): Promise<void> {
+  // Auth routes (must be accessible without auth)
+  if (await handleAuth(ctx)) return;
+
+  // Check authentication for all other routes
+  const authedUser = getUserFromRequest(ctx.req);
+  if (authEnabled() && !authedUser) {
+    unauthorized(ctx.res);
+    return;
+  }
+
+  // Add user to context
+  const authedCtx = { ...ctx, authedUser };
+
   // Conversion routes (main functionality)
-  if (await handleConvert(ctx)) return;
+  if (await handleConvert(authedCtx)) return;
 
   // Theme routes
-  if (await handleThemes(ctx)) return;
+  if (await handleThemes(authedCtx)) return;
 
   // Notion routes
-  if (await handleNotion(ctx)) return;
+  if (await handleNotion(authedCtx)) return;
+
+  // DOCX and LLM routes
+  if (await handleDocx(authedCtx)) return;
 
   // No handler matched
   notFound(ctx.res);

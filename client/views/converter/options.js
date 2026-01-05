@@ -1,6 +1,6 @@
 /**
  * Options Panel
- * Conversion options and actions.
+ * Conversion options and export actions.
  */
 
 import { h, empty } from '../../lib/dom.js';
@@ -13,19 +13,22 @@ import { slSelect, slSwitch, slButton, sl } from '../../lib/shoelace.js';
 /**
  * Create the options panel
  * @param {Object} callbacks
- * @param {Function} callbacks.getContent - Get current content
+ * @param {Function} callbacks.getContent - Get current markdown content
  * @param {Function} callbacks.getTitle - Get current title
  * @param {Function} callbacks.getSource - Get content source
+ * @param {Function} callbacks.onOptionsChange - Called when options change
+ * @param {Function} callbacks.onEnhanceRequest - Called when AI enhancement is requested
  */
 export function createOptionsPanel(callbacks) {
-  const { getContent, getTitle, getSource } = callbacks;
+  const { getContent, getTitle, getSource, onOptionsChange, onEnhanceRequest } = callbacks;
 
   // State
   let themes = [];
   let selectedTheme = 'default';
   let generateToc = true;
   let pageNumbers = true;
-  let lastResult = null;
+  let llmAvailable = false;
+  let selectedProvider = localStorage.getItem('dreamdocs_default_provider') || 'claude';
 
   // Theme selector
   const themeSelect = slSelect({
@@ -41,6 +44,9 @@ export function createOptionsPanel(callbacks) {
   });
   tocSwitch.addEventListener('sl-change', (e) => {
     generateToc = e.target.checked;
+    if (onOptionsChange) {
+      onOptionsChange({ generateToc });
+    }
   });
 
   // Page numbers toggle
@@ -52,36 +58,54 @@ export function createOptionsPanel(callbacks) {
     pageNumbers = e.target.checked;
   });
 
-  // Convert button
-  const convertButton = slButton({
-    variant: 'primary',
-    size: 'large',
-    className: 'options-convert-button',
-    icon: 'file-earmark-pdf',
-    text: 'Convert to PDF',
-    onClick: () => convert(),
+  // AI Enhancement section
+  const providerSelect = slSelect({
+    value: selectedProvider,
+    size: 'small',
+    className: 'options-provider-select',
+  });
+  providerSelect.appendChild(sl('sl-option', { value: 'claude' }, ['Claude']));
+  providerSelect.appendChild(sl('sl-option', { value: 'mistral' }, ['Mistral']));
+  providerSelect.addEventListener('sl-change', (e) => {
+    selectedProvider = e.target.value;
+    localStorage.setItem('dreamdocs_default_provider', selectedProvider);
   });
 
-  // Download buttons
-  const pdfDownloadBtn = slButton({
+  const enhanceButton = slButton({
     variant: 'default',
-    icon: 'file-pdf',
-    text: 'PDF',
-    onClick: () => downloadPdf(),
+    size: 'medium',
+    icon: 'magic',
+    text: 'Enhance with AI',
+    onClick: () => requestEnhancement(),
   });
 
-  const htmlDownloadBtn = slButton({
-    variant: 'default',
-    icon: 'file-code',
-    text: 'HTML',
-    onClick: () => downloadHtml(),
-  });
-
-  const downloadSection = h('div', { class: 'options-downloads' }, [
-    h('div', { class: 'options-downloads-label' }, ['Download:']),
-    h('div', { class: 'options-downloads-buttons' }, [pdfDownloadBtn, htmlDownloadBtn]),
+  const enhanceSection = h('div', { class: 'options-enhance-section' }, [
+    providerSelect,
+    enhanceButton,
   ]);
-  downloadSection.hidden = true;
+  enhanceSection.hidden = true;
+
+  // Export buttons
+  const exportPdfBtn = slButton({
+    variant: 'primary',
+    size: 'medium',
+    icon: 'file-pdf',
+    text: 'Export PDF',
+    onClick: () => exportPdf(),
+  });
+
+  const exportHtmlBtn = slButton({
+    variant: 'default',
+    size: 'medium',
+    icon: 'file-code',
+    text: 'Export HTML',
+    onClick: () => exportHtml(),
+  });
+
+  const exportSection = h('div', { class: 'options-export-section' }, [
+    exportPdfBtn,
+    exportHtmlBtn,
+  ]);
 
   // Metadata display
   const pagesValue = h('span', { class: 'options-metadata-value pages' }, ['-']);
@@ -120,21 +144,66 @@ export function createOptionsPanel(callbacks) {
     }
   }
 
+  // Check LLM availability
+  async function checkLlmStatus() {
+    try {
+      const result = await get('/api/llm/status');
+      if (result.ok) {
+        const providers = result.data.providers;
+        llmAvailable = providers.claude || providers.mistral;
+
+        if (llmAvailable) {
+          enhanceSection.hidden = false;
+
+          // Disable unavailable providers
+          const claudeOption = providerSelect.querySelector('[value="claude"]');
+          const mistralOption = providerSelect.querySelector('[value="mistral"]');
+          if (claudeOption && !providers.claude) claudeOption.disabled = true;
+          if (mistralOption && !providers.mistral) mistralOption.disabled = true;
+
+          // Set default to first available
+          if (!providers.claude && providers.mistral) {
+            selectedProvider = 'mistral';
+            providerSelect.value = 'mistral';
+          }
+        }
+      }
+    } catch {
+      // LLM not available
+    }
+  }
+
   // Theme change handler
   themeSelect.addEventListener('sl-change', (e) => {
     selectedTheme = e.target.value;
+    if (onOptionsChange) {
+      onOptionsChange({ themeId: selectedTheme });
+    }
   });
 
-  // Convert content
-  async function convert() {
+  // Request AI enhancement
+  async function requestEnhancement() {
     const content = getContent();
-
     if (!content || content.trim().length === 0) {
-      warning('Please enter some content first');
+      warning('No content to enhance');
       return;
     }
 
-    const hide = showLoading('Converting document...');
+    if (onEnhanceRequest) {
+      onEnhanceRequest(selectedProvider);
+    }
+  }
+
+  // Export to PDF
+  async function exportPdf() {
+    const content = getContent();
+
+    if (!content || content.trim().length === 0) {
+      warning('No content to export');
+      return;
+    }
+
+    const hide = showLoading('Generating PDF...');
 
     try {
       const result = await post('/api/convert', {
@@ -149,43 +218,61 @@ export function createOptionsPanel(callbacks) {
       });
 
       if (!result.ok) {
-        throw new Error(result.data?.error || 'Conversion failed');
+        throw new Error(result.data?.error || 'Export failed');
       }
-
-      lastResult = result.data;
-
-      // Show download section
-      downloadSection.hidden = false;
 
       // Update metadata
       metadataSection.hidden = false;
       pagesValue.textContent = result.data.metadata.pageCount;
       tocValue.textContent = result.data.metadata.tocEntries;
 
-      success('Document converted successfully');
+      // Download PDF
+      const filename = sanitizeFilename(result.data.metadata.title) + '.pdf';
+      downloadBase64(result.data.pdf, filename, 'application/pdf');
+      success('PDF exported');
     } catch (err) {
-      error(err.message || 'Conversion failed');
+      error(err.message || 'Export failed');
     } finally {
       hide();
     }
   }
 
-  // Download PDF
-  function downloadPdf() {
-    if (!lastResult) return;
+  // Export to HTML
+  async function exportHtml() {
+    const content = getContent();
 
-    const filename = sanitizeFilename(lastResult.metadata.title) + '.pdf';
-    downloadBase64(lastResult.pdf, filename, 'application/pdf');
-    success('PDF downloaded');
-  }
+    if (!content || content.trim().length === 0) {
+      warning('No content to export');
+      return;
+    }
 
-  // Download HTML
-  function downloadHtml() {
-    if (!lastResult) return;
+    const hide = showLoading('Generating HTML...');
 
-    const filename = sanitizeFilename(lastResult.metadata.title) + '.html';
-    downloadFile(lastResult.html, filename, 'text/html');
-    success('HTML downloaded');
+    try {
+      const result = await post('/api/convert', {
+        source: getSource(),
+        content,
+        options: {
+          themeId: selectedTheme,
+          generateToc,
+          pageNumbers: false,
+          title: getTitle(),
+        },
+      });
+
+      if (!result.ok) {
+        throw new Error(result.data?.error || 'Export failed');
+      }
+
+      // Download HTML
+      const filename = sanitizeFilename(result.data.metadata.title) + '.html';
+      downloadFile(result.data.html, filename, 'text/html');
+      success('HTML exported');
+    } catch (err) {
+      error(err.message || 'Export failed');
+    } finally {
+      hide();
+    }
   }
 
   // Sanitize filename
@@ -199,15 +286,15 @@ export function createOptionsPanel(callbacks) {
 
   // Initialize
   loadThemes();
+  checkLlmStatus();
 
   return h('div', { class: 'options-panel' }, [
     h('div', { class: 'options-section' }, [
-      h('div', { class: 'options-section-title' }, ['Options']),
       themeSelect,
       h('div', { class: 'options-toggles' }, [tocSwitch, pageNumSwitch]),
     ]),
-    h('div', { class: 'options-section options-actions' }, [convertButton]),
-    downloadSection,
+    enhanceSection,
+    exportSection,
     metadataSection,
   ]);
 }

@@ -53,10 +53,17 @@ export async function loadEnv(): Promise<void> {
  */
 export function getConfig() {
   return {
-    port: parseInt(process.env.PORT || '3000', 10),
+    port: parseInt(process.env.PORT || '3001', 10),
     nodeEnv: process.env.NODE_ENV || 'development',
     isDev: process.env.NODE_ENV !== 'production',
+    // Auth configuration
     authSecret: process.env.AUTH_SECRET,
+    authUsersJson: process.env.AUTH_USERS_JSON,
+    authUsersB64: process.env.AUTH_USERS_B64,
+    authAdminEmail: process.env.AUTH_ADMIN_EMAIL || 'jaap@ciiic.nl',
+    authDevBypass: process.env.AUTH_DEV_BYPASS === '1' || process.env.AUTH_DEV_BYPASS === 'true',
+    secureCookies: process.env.SECURE_COOKIES === '1' || process.env.SECURE_COOKIES === 'true',
+    cookieDomain: process.env.COOKIE_DOMAIN || '', // e.g. '.ciiic.nl' for cross-subdomain SSO
     demoMode: process.env.DEMO_MODE === 'true' || process.env.DEMO_MODE === '1',
   };
 }
