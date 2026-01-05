@@ -1820,3 +1820,32 @@ sl-tooltip::part(body) {
   white-space: pre-line;
   line-height: 1.5;
 }
+
+/* ============================================
+ * CONNECTED ACTION GROUPS
+ * Visually group related controls together.
+ * ============================================ */
+.action-group-connected {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+  padding: var(--vk-space-1) var(--vk-space-2);
+  background: var(--vk-color-bg-subtle);
+  border-radius: var(--vk-radius-md);
+  border: 1px solid var(--vk-color-border-subtle);
+}
+
+/* Panel header spacer - pushes elements to the right */
+.panel-header-spacer {
+  flex: 1;
+}
+
+/* Preview refresh button in header */
+.preview-refresh-btn {
+  font-size: 1rem;
+  color: var(--vk-color-text-muted);
+}
+
+.preview-refresh-btn:hover {
+  color: var(--vk-color-text);
+}

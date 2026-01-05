@@ -9,7 +9,7 @@ import { post, get } from '../../lib/api.js';
 import { success, error, warning } from '../../lib/toast.js';
 import { showLoading, hideLoading } from '../../lib/loading.js';
 import { downloadFile, downloadBase64 } from '../../lib/download.js';
-import { createDropZone, readFileAsText, readFileAsArrayBuffer, formatFileSize } from '../../lib/file-upload.js';
+import { readFileAsText, readFileAsArrayBuffer } from '../../lib/file-upload.js';
 import { slButton, slSelect, slSwitch, slTextarea, slInput, sl, slIcon } from '../../lib/shoelace.js';
 
 /**
@@ -26,7 +26,6 @@ export async function renderConverter(container) {
   let pageNumbers = true;
   let themes = [];
   let llmProviders = { claude: false, mistral: false };
-  let selectedProvider = localStorage.getItem('dreamdocs_default_provider') || 'claude';
 
   // Draft storage key
   const DRAFTS_KEY = 'dreamdocs_drafts';
@@ -46,76 +45,59 @@ export async function renderConverter(container) {
     }
   } catch {}
 
+  // Get provider from settings
+  function getProvider() {
+    return localStorage.getItem('dreamdocs_default_provider') || 'claude';
+  }
+
   // ============================================
   // INPUT CONTROLS (top bar)
   // ============================================
 
-  // Paste button
-  const pasteBtn = slButton({
-    variant: 'default',
-    size: 'small',
-    icon: 'clipboard',
-    text: 'Paste',
-    onClick: () => handlePaste(),
-  });
-
-  // Upload .md button
-  const mdInput = h('input', {
+  // Combined file upload (MD + Word)
+  const fileInput = h('input', {
     type: 'file',
-    accept: '.md,.markdown,.txt',
+    accept: '.md,.markdown,.txt,.docx',
     class: 'sr-only',
   });
-  mdInput.addEventListener('change', () => handleMdUpload(mdInput.files));
+  fileInput.addEventListener('change', () => handleFileUpload(fileInput.files));
 
-  const uploadMdBtn = slButton({
+  const uploadBtn = slButton({
     variant: 'default',
     size: 'small',
-    icon: 'file-text',
-    text: 'Upload .md',
-    onClick: () => mdInput.click(),
+    icon: 'upload',
+    text: 'Upload',
+    onClick: () => fileInput.click(),
   });
 
-  // Upload Word button
-  const wordInput = h('input', {
-    type: 'file',
-    accept: '.docx',
-    class: 'sr-only',
-  });
-  wordInput.addEventListener('change', () => handleWordUpload(wordInput.files));
-
-  const uploadWordBtn = slButton({
-    variant: 'default',
-    size: 'small',
-    icon: 'file-earmark-word',
-    text: 'Upload Word',
-    onClick: () => wordInput.click(),
-  });
-
-  // Notion URL input
+  // Notion dialog
   const notionInput = slInput({
-    placeholder: 'Notion page URL...',
-    size: 'small',
-    style: 'width: 250px;',
+    placeholder: 'https://notion.so/...',
+    size: 'medium',
+    style: 'width: 100%;',
   });
-  const notionFetchBtn = slButton({
+
+  const notionDialog = sl('sl-dialog', { label: 'Import from Notion' }, [
+    h('p', { class: 'text-muted', style: 'margin-bottom: var(--sl-spacing-medium);' }, [
+      'Enter the URL of the Notion page you want to import.',
+    ]),
+    notionInput,
+    slButton({
+      slot: 'footer',
+      variant: 'primary',
+      text: 'Import',
+      onClick: () => handleNotionFetch(),
+    }),
+  ]);
+
+  const notionBtn = slButton({
     variant: 'default',
     size: 'small',
     icon: 'box-arrow-in-right',
-    text: 'Fetch',
-    onClick: () => handleNotionFetch(),
+    text: 'Notion',
+    onClick: () => notionDialog.show(),
   });
-  const notionGroup = h('div', { class: 'input-notion-group' }, [notionInput, notionFetchBtn]);
-  if (!notionAvailable) notionGroup.hidden = true;
-
-  // Title input
-  const titleInput = slInput({
-    placeholder: 'Document title...',
-    size: 'small',
-    style: 'width: 200px;',
-  });
-  titleInput.addEventListener('sl-input', (e) => {
-    contentTitle = e.target.value;
-  });
+  if (!notionAvailable) notionBtn.hidden = true;
 
   // Draft buttons
   const saveDraftBtn = slButton({
@@ -139,6 +121,16 @@ export async function renderConverter(container) {
   ]);
   const draftsMenu = draftsDropdown.querySelector('sl-menu');
   updateDraftsMenu();
+
+  // Title input
+  const titleInput = slInput({
+    placeholder: 'Document title...',
+    size: 'small',
+    style: 'width: 200px;',
+  });
+  titleInput.addEventListener('sl-input', (e) => {
+    contentTitle = e.target.value;
+  });
 
   // Theme selector
   const themeSelect = slSelect({
@@ -180,7 +172,7 @@ export async function renderConverter(container) {
 
   const inputBar = h('div', { class: 'converter-input-bar' }, [
     h('div', { class: 'input-bar-sources' }, [
-      pasteBtn, uploadMdBtn, uploadWordBtn, draftsDropdown, mdInput, wordInput, notionGroup,
+      uploadBtn, fileInput, notionBtn, draftsDropdown,
     ]),
     h('div', { class: 'input-bar-settings' }, [
       titleInput, themeSelect, tocLabel, pageNumLabel, saveDraftBtn,
@@ -191,7 +183,7 @@ export async function renderConverter(container) {
   // MARKDOWN EDITOR (left)
   // ============================================
   const markdownTextarea = slTextarea({
-    placeholder: 'Markdown content will appear here...\n\nYou can also type or paste directly.',
+    placeholder: 'Paste or type your markdown here...\n\nOr use Upload to load a .md or .docx file.',
     rows: 20,
     resize: 'vertical',
     className: 'markdown-editor-textarea',
@@ -238,10 +230,20 @@ export async function renderConverter(container) {
   ]);
   changeLogSection.hidden = true;
 
+  // Refresh button in preview header
+  const refreshBtn = h('sl-icon-button', {
+    name: 'arrow-clockwise',
+    label: 'Refresh Preview',
+    class: 'preview-refresh-btn',
+  });
+  refreshBtn.addEventListener('click', () => updatePreview());
+
   const previewPanel = h('div', { class: 'preview-panel' }, [
     h('div', { class: 'panel-header' }, [
       slIcon({ name: 'eye', className: 'panel-icon' }),
       h('span', { class: 'panel-title' }, ['Preview']),
+      h('div', { class: 'panel-header-spacer' }),
+      refreshBtn,
     ]),
     h('div', { class: 'preview-content' }, [previewEmpty, previewLoading, previewIframe]),
     changeLogSection,
@@ -250,17 +252,13 @@ export async function renderConverter(container) {
   // ============================================
   // ACTIONS BAR (bottom)
   // ============================================
-  const providerSelect = slSelect({
-    value: selectedProvider,
-    size: 'small',
-    style: 'width: 120px;',
-    hoist: true,
-  });
-  providerSelect.appendChild(sl('sl-option', { value: 'claude' }, ['Claude']));
-  providerSelect.appendChild(sl('sl-option', { value: 'mistral' }, ['Mistral']));
-  providerSelect.addEventListener('sl-change', (e) => {
-    selectedProvider = e.target.value;
-  });
+
+  // Fix typos checkbox
+  const fixTyposCheckbox = slSwitch({ checked: false, size: 'small' });
+  const fixTyposLabel = h('label', {
+    class: 'input-toggle-label',
+    title: 'Also fix double spaces and obvious spelling errors',
+  }, [fixTyposCheckbox, ' Fix typos']);
 
   const enhanceBtn = slButton({
     variant: 'default',
@@ -269,10 +267,10 @@ export async function renderConverter(container) {
     onClick: () => handleEnhance(),
   });
 
-  // Fix typos checkbox
-  const fixTyposCheckbox = slSwitch({ checked: false, size: 'small' });
-  const fixTyposLabel = h('label', { class: 'input-toggle-label', title: 'Also fix double spaces and obvious spelling errors' }, [
-    fixTyposCheckbox, ' Fix typos',
+  // Enhance group with clear association
+  const enhanceGroup = h('div', { class: 'action-group action-group-connected' }, [
+    fixTyposLabel,
+    enhanceBtn,
   ]);
 
   // Translation direction selector
@@ -292,19 +290,17 @@ export async function renderConverter(container) {
     onClick: () => handleTranslate(),
   });
 
-  const enhanceGroup = h('div', { class: 'action-group' }, [providerSelect, fixTyposLabel, enhanceBtn]);
-  const translateGroup = h('div', { class: 'action-group' }, [translateDirectionSelect, translateBtn]);
+  // Translate group with clear association
+  const translateGroup = h('div', { class: 'action-group action-group-connected' }, [
+    translateDirectionSelect,
+    translateBtn,
+  ]);
+
+  // Hide AI groups if no providers available
   if (!llmProviders.claude && !llmProviders.mistral) {
     enhanceGroup.hidden = true;
     translateGroup.hidden = true;
   }
-
-  const refreshBtn = slButton({
-    variant: 'default',
-    icon: 'arrow-clockwise',
-    text: 'Refresh Preview',
-    onClick: () => updatePreview(),
-  });
 
   const exportPdfBtn = slButton({
     variant: 'primary',
@@ -324,7 +320,6 @@ export async function renderConverter(container) {
     enhanceGroup,
     translateGroup,
     h('div', { class: 'actions-spacer' }),
-    refreshBtn,
     h('div', { class: 'action-group' }, [exportPdfBtn, exportHtmlBtn]),
   ]);
 
@@ -442,61 +437,52 @@ export async function renderConverter(container) {
     }
   }
 
-  async function handlePaste() {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) {
-        setContent(text, '');
-        success('Pasted from clipboard');
-      }
-    } catch (err) {
-      warning('Could not read clipboard. Try pasting directly into the editor.');
-    }
-  }
-
-  async function handleMdUpload(files) {
+  async function handleFileUpload(files) {
     const file = files?.[0];
     if (!file) return;
 
-    try {
-      const text = await readFileAsText(file);
-      const title = file.name.replace(/\.(md|markdown|txt)$/i, '');
-      setContent(text, title);
-      success(`Loaded ${file.name}`);
-    } catch (err) {
-      error(`Failed to read file: ${err.message}`);
-    }
-  }
+    const isWord = file.name.toLowerCase().endsWith('.docx');
 
-  async function handleWordUpload(files) {
-    const file = files?.[0];
-    if (!file) return;
+    if (isWord) {
+      const hide = showLoading('Parsing Word document...');
 
-    const hide = showLoading('Parsing Word document...');
+      try {
+        const arrayBuffer = await readFileAsArrayBuffer(file);
+        const base64 = arrayBufferToBase64(arrayBuffer);
 
-    try {
-      const arrayBuffer = await readFileAsArrayBuffer(file);
-      const base64 = arrayBufferToBase64(arrayBuffer);
+        const result = await post('/api/docx/parse', { file: base64 });
 
-      const result = await post('/api/docx/parse', { file: base64 });
+        if (!result.ok) {
+          throw new Error(result.data?.error || 'Failed to parse document');
+        }
 
-      if (!result.ok) {
-        throw new Error(result.data?.error || 'Failed to parse document');
+        const title = result.data.title || file.name.replace(/\.docx$/i, '');
+        setContent(result.data.markdown, title);
+
+        if (result.data.warnings?.length > 0) {
+          warning(`Parsed with ${result.data.warnings.length} warning(s)`);
+        } else {
+          success(`Loaded ${file.name}`);
+        }
+      } catch (err) {
+        error(`Failed to parse document: ${err.message}`);
+      } finally {
+        hide();
       }
-
-      const title = result.data.title || file.name.replace(/\.docx$/i, '');
-      setContent(result.data.markdown, title);
-
-      if (result.data.warnings?.length > 0) {
-        warning(`Parsed with ${result.data.warnings.length} warning(s)`);
-      } else {
+    } else {
+      // Markdown/text file
+      try {
+        const text = await readFileAsText(file);
+        const title = file.name.replace(/\.(md|markdown|txt)$/i, '');
+        setContent(text, title);
         success(`Loaded ${file.name}`);
+      } catch (err) {
+        error(`Failed to read file: ${err.message}`);
       }
-    } catch (err) {
-      error(`Failed to parse document: ${err.message}`);
-    } finally {
-      hide();
     }
+
+    // Reset input so same file can be uploaded again
+    fileInput.value = '';
   }
 
   async function handleNotionFetch() {
@@ -506,6 +492,7 @@ export async function renderConverter(container) {
       return;
     }
 
+    notionDialog.hide();
     const hide = showLoading('Fetching Notion page...');
 
     try {
@@ -516,6 +503,7 @@ export async function renderConverter(container) {
       }
 
       setContent(result.data.markdown, result.data.title);
+      notionInput.value = '';
       success('Fetched Notion page');
     } catch (err) {
       error(`Failed to fetch: ${err.message}`);
@@ -538,7 +526,7 @@ export async function renderConverter(container) {
 
       const result = await post('/api/docx/enhance', {
         markdown: content,
-        provider: selectedProvider,
+        provider: getProvider(),
         globalContext,
         fixTypos,
       });
@@ -581,7 +569,7 @@ export async function renderConverter(container) {
     try {
       const result = await post('/api/docx/translate', {
         markdown: content,
-        provider: selectedProvider,
+        provider: getProvider(),
         direction,
       });
 
@@ -730,6 +718,7 @@ export async function renderConverter(container) {
       previewPanel,
     ]),
     actionsBar,
+    notionDialog,
   ]);
 
   container.appendChild(page);
