@@ -23,11 +23,14 @@
     "check": "npm run typecheck && npm run lint && npm run format:check"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
     "@notionhq/client": "^2.2.14",
     "@shoelace-style/shoelace": "^2.19.1",
     "highlight.js": "^11.9.0",
+    "mammoth": "^1.11.0",
     "markdown-it": "^14.0.0",
     "markdown-it-anchor": "^8.6.7",
+    "markdown-it-footnote": "^4.0.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

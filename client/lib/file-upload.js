@@ -174,6 +174,20 @@ export function readFileAsDataURL(file) {
 }
 
 /**
+ * Read file contents as ArrayBuffer
+ * @param {File} file
+ * @returns {Promise<ArrayBuffer>}
+ */
+export function readFileAsArrayBuffer(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error(`Failed to read ${file.name}`));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/**
  * Format file size for display
  * @param {number} bytes
  * @returns {string}
