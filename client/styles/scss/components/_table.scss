@@ -1,0 +1,49 @@
+/**
+ * Data Table
+ * Enhanced table for data display.
+ */
+
+.vk-table-container {
+  background: var(--vk-color-bg);
+  border: 1px solid var(--vk-color-border);
+  border-radius: var(--vk-radius-lg);
+  overflow: hidden;
+}
+
+.vk-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    padding: var(--vk-space-3) var(--vk-space-4);
+    text-align: left;
+    font-size: var(--vk-text-xs);
+    font-weight: var(--vk-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--vk-color-text-secondary);
+    background: var(--vk-color-bg-subtle);
+    border-bottom: 1px solid var(--vk-color-border);
+  }
+
+  td {
+    padding: var(--vk-space-3) var(--vk-space-4);
+    font-size: var(--vk-text-sm);
+    color: var(--vk-color-text);
+    border-bottom: 1px solid var(--vk-color-border);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: var(--vk-color-bg-subtle);
+  }
+}
+
+.vk-table-actions {
+  display: flex;
+  gap: var(--vk-space-1);
+  justify-content: flex-end;
+}

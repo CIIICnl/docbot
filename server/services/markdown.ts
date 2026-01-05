@@ -5,6 +5,7 @@ import anchor from 'markdown-it-anchor';
 import footnote from 'markdown-it-footnote';
 import hljs from 'highlight.js';
 import type { MarkdownResult, TocEntry } from '../types/index.js';
+import { escapeHtml } from '../utils/html.js';
 
 // Configure markdown-it with plugins
 const md = new MarkdownIt({
@@ -127,19 +128,6 @@ export function generateTocHtml(toc: TocEntry[]): string {
   `;
 }
 
-/**
- * Escape HTML special characters
- */
-function escapeHtml(text: string): string {
-  const escapeMap: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  };
-  return text.replace(/[&<>"']/g, (char) => escapeMap[char] ?? char);
-}
 
 /**
  * Simple word count for statistics

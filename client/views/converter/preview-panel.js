@@ -1,73 +1,54 @@
 /**
- * Preview Panel
- * Live HTML preview of markdown content with change log display.
+ * Preview Panel Component
+ * Live HTML preview with search functionality.
  */
 
-import { h, empty } from '../../lib/dom.js';
+import { h } from '../../lib/dom.js';
 import { post } from '../../lib/api.js';
 import { slIcon } from '../../lib/shoelace.js';
+import { DOMSearchController, SEARCH_HIGHLIGHT_CSS } from '../../lib/search-controller.js';
 
 /**
  * Create the preview panel
  * @param {Object} options
- * @param {Function} options.getContent - Get current markdown content
- * @param {Function} options.getTitle - Get current title
- * @param {Function} options.getThemeId - Get selected theme ID
- * @param {Function} options.getGenerateToc - Get TOC toggle state
+ * @param {Object} options.store - State store
  */
-export function createPreviewPanel(options) {
-  const { getContent, getTitle, getThemeId, getGenerateToc } = options;
-
-  // State
-  let currentChanges = [];
-  let debounceTimer = null;
-
+export function createPreviewPanel({ store }) {
   // Preview iframe
   const iframe = h('iframe', {
     class: 'preview-iframe',
-    sandbox: 'allow-same-origin',
+    sandbox: 'allow-same-origin allow-scripts',
     title: 'Document Preview',
   });
+  iframe.hidden = true;
 
   // Empty state
   const emptyState = h('div', { class: 'preview-empty' }, [
-    slIcon({ name: 'file-earmark-text', className: 'preview-empty-icon' }),
-    h('p', { class: 'preview-empty-text' }, ['Enter content to see preview']),
+    slIcon({ name: 'eye', className: 'preview-empty-icon' }),
+    h('p', {}, ['Preview will appear here']),
   ]);
 
   // Loading state
   const loadingState = h('div', { class: 'preview-loading' }, [
-    h('sl-spinner', { style: 'font-size: 2rem;' }),
-    h('p', { class: 'preview-loading-text' }, ['Generating preview...']),
+    h('sl-spinner', { style: 'font-size: 1.5rem;' }),
   ]);
   loadingState.hidden = true;
 
-  // Preview content container
-  const previewContent = h('div', { class: 'preview-content' }, [
-    emptyState,
-    loadingState,
-    iframe,
-  ]);
-  iframe.hidden = true;
+  // Search controller
+  const search = new DOMSearchController(iframe);
 
-  // Change log section
-  const changeLogList = h('ul', { class: 'change-log-list' }, []);
-  const changeLogSection = h('div', { class: 'change-log' }, [
-    h('div', { class: 'change-log-header' }, [
-      slIcon({ name: 'magic', className: 'change-log-icon' }),
-      h('span', { class: 'change-log-title' }, ['AI Changes']),
-    ]),
-    changeLogList,
-  ]);
-  changeLogSection.hidden = true;
+  // Refresh button
+  const refreshBtn = h('sl-icon-button', {
+    name: 'arrow-clockwise',
+    label: 'Refresh Preview',
+    class: 'preview-refresh-btn',
+  });
 
-  /**
-   * Update the preview with new content
-   */
+  // Preview update function
   async function updatePreview() {
-    const content = getContent();
+    const state = store.get();
 
-    if (!content || content.trim().length === 0) {
+    if (!state.content.trim()) {
       iframe.hidden = true;
       loadingState.hidden = true;
       emptyState.hidden = false;
@@ -77,87 +58,55 @@ export function createPreviewPanel(options) {
     emptyState.hidden = true;
     loadingState.hidden = false;
 
+    if (search.hasActiveSearch()) {
+      search.clear();
+    }
+
     try {
       const result = await post('/api/convert/preview', {
         source: 'markdown',
-        content,
+        content: state.content,
         options: {
-          themeId: getThemeId(),
-          generateToc: getGenerateToc(),
+          themeId: state.selectedTheme,
+          generateToc: state.generateToc,
           pageNumbers: false,
-          title: getTitle(),
+          title: state.contentTitle,
         },
       });
 
       if (result.ok && result.data.html) {
         loadingState.hidden = true;
         iframe.hidden = false;
-        iframe.srcdoc = result.data.html;
+        const htmlWithCSS = result.data.html.replace(
+          '</head>',
+          `<style>${SEARCH_HIGHLIGHT_CSS}</style></head>`
+        );
+        iframe.srcdoc = htmlWithCSS;
       }
-    } catch (err) {
-      console.error('Preview failed:', err);
+    } catch {
       loadingState.hidden = true;
       emptyState.hidden = false;
     }
   }
 
-  /**
-   * Debounced preview update
-   */
-  function schedulePreviewUpdate() {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
-    debounceTimer = setTimeout(updatePreview, 500);
-  }
+  refreshBtn.addEventListener('click', updatePreview);
 
-  /**
-   * Update the change log display
-   * @param {Array} changes - Array of change objects
-   */
-  function updateChangeLog(changes) {
-    currentChanges = changes || [];
-    empty(changeLogList);
-
-    if (currentChanges.length === 0) {
-      changeLogSection.hidden = true;
-      return;
-    }
-
-    changeLogSection.hidden = false;
-
-    for (const change of currentChanges) {
-      const item = h('li', { class: 'change-log-item' }, [
-        h('span', { class: 'change-log-description' }, [change.description]),
-        change.location &&
-          h('span', { class: 'change-log-location' }, [change.location]),
-      ]);
-      changeLogList.appendChild(item);
-    }
-  }
-
-  /**
-   * Clear the change log
-   */
-  function clearChangeLog() {
-    updateChangeLog([]);
-  }
-
-  // Expose methods
-  const panel = h('div', { class: 'preview-panel' }, [
-    h('div', { class: 'preview-panel-header' }, [
-      slIcon({ name: 'eye', className: 'preview-panel-icon' }),
-      h('span', { class: 'preview-panel-title' }, ['Preview']),
+  // Build element
+  const element = h('div', { class: 'preview-panel' }, [
+    h('div', { class: 'panel-header' }, [
+      slIcon({ name: 'eye', className: 'panel-icon' }),
+      h('span', { class: 'panel-title' }, ['Preview']),
+      h('div', { class: 'panel-header-spacer' }),
+      search.toggle,
+      refreshBtn,
     ]),
-    previewContent,
-    changeLogSection,
+    search.searchBar,
+    h('div', { class: 'preview-content' }, [emptyState, loadingState, iframe]),
   ]);
 
-  // Attach methods to panel element for external access
-  panel.updatePreview = schedulePreviewUpdate;
-  panel.updateChangeLog = updateChangeLog;
-  panel.clearChangeLog = clearChangeLog;
-  panel.forceUpdate = updatePreview;
-
-  return panel;
+  return {
+    element,
+    updatePreview,
+    clearSearch: () => search.clear(),
+  };
 }

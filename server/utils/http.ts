@@ -103,6 +103,22 @@ export function parseQuery(url: URL): Record<string, string> {
 }
 
 /**
+ * Validate required fields in a request body
+ * Returns validation result with field name and message on failure
+ */
+export function validateRequired(
+  body: Record<string, unknown>,
+  fields: Record<string, string>
+): { valid: true } | { valid: false; field: string; message: string } {
+  for (const [field, message] of Object.entries(fields)) {
+    if (!body[field]) {
+      return { valid: false, field, message };
+    }
+  }
+  return { valid: true };
+}
+
+/**
  * Extract path parameter from pattern match
  */
 export function matchPath(pattern: string, pathname: string): Record<string, string> | null {

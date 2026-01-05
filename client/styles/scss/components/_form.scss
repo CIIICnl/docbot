@@ -1,0 +1,62 @@
+/**
+ * Form Components
+ * Form groups, labels, validation, and actions.
+ */
+
+.vk-form-group {
+  margin-bottom: var(--vk-space-4);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.vk-form-label {
+  display: block;
+  font-size: var(--vk-text-sm);
+  font-weight: var(--vk-weight-medium);
+  color: var(--vk-color-text);
+  margin-bottom: var(--vk-space-1);
+
+  .vk-required {
+    color: var(--vk-color-danger);
+    margin-left: var(--vk-space-1);
+  }
+}
+
+.vk-form-help {
+  font-size: var(--vk-text-sm);
+  color: var(--vk-color-text-muted);
+  margin-top: var(--vk-space-1);
+}
+
+.vk-form-error {
+  font-size: var(--vk-text-sm);
+  color: var(--vk-color-danger);
+  margin-top: var(--vk-space-1);
+}
+
+.vk-form-group.is-invalid {
+  sl-input::part(base),
+  sl-textarea::part(base),
+  sl-select::part(combobox) {
+    border-color: var(--vk-color-danger);
+  }
+}
+
+.vk-form-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  margin-top: var(--vk-space-6);
+  padding-top: var(--vk-space-4);
+  border-top: 1px solid var(--vk-color-border);
+
+  &.is-end {
+    justify-content: flex-end;
+  }
+
+  &.is-between {
+    justify-content: space-between;
+  }
+}

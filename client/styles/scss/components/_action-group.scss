@@ -1,0 +1,24 @@
+/**
+ * Action Groups
+ * Button groups and connected controls.
+ */
+
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+}
+
+.action-group-connected {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+  padding: var(--vk-space-1) var(--vk-space-2);
+  background: var(--vk-color-bg-subtle);
+  border-radius: var(--vk-radius-md);
+  border: 1px solid var(--vk-color-border-subtle);
+}
+
+.actions-spacer {
+  flex: 1;
+}

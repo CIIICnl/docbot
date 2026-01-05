@@ -1,0 +1,64 @@
+/**
+ * Tabs
+ * Tab interface for multi-panel patterns.
+ */
+
+.vk-tabs {
+  display: flex;
+  flex-direction: column;
+}
+
+.vk-tab-list {
+  display: flex;
+  gap: var(--vk-space-1);
+  border-bottom: 1px solid var(--vk-color-border);
+  padding-bottom: var(--vk-space-1);
+}
+
+.vk-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+  padding: var(--vk-space-2) var(--vk-space-4);
+  font-size: var(--vk-text-sm);
+  font-weight: var(--vk-weight-medium);
+  color: var(--vk-color-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--vk-radius-md) var(--vk-radius-md) 0 0;
+  cursor: pointer;
+  transition: color var(--vk-transition-fast), background var(--vk-transition-fast);
+
+  &:hover {
+    color: var(--vk-color-text);
+    background: var(--vk-color-bg-muted);
+  }
+
+  &[aria-selected="true"] {
+    color: var(--vk-color-primary);
+    background: var(--vk-color-bg);
+    box-shadow: inset 0 -2px 0 var(--vk-color-primary);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--vk-color-focus);
+    outline-offset: -3px;
+  }
+}
+
+.vk-tab-panels {
+  padding-top: var(--vk-space-4);
+}
+
+.vk-tab-panel {
+  animation: fadeIn var(--vk-transition-normal);
+
+  &[hidden] {
+    display: none;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

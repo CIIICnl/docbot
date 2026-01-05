@@ -6,9 +6,10 @@
 import { h, empty } from '../lib/dom.js';
 import { pageHeader, settingsSection } from '../lib/components.js';
 import { getTheme, setTheme } from '../lib/theme.js';
-import { success, error } from '../lib/toast.js';
+import { success } from '../lib/toast.js';
 import { slSelect, slButton, slTextarea, sl } from '../lib/shoelace.js';
 import { get } from '../lib/api.js';
+import { STORAGE_KEYS, PLACEHOLDERS } from '../lib/constants.js';
 
 /**
  * Render the settings view
@@ -70,15 +71,15 @@ async function render(container) {
 
   // AI Enhancement section
   const globalContext = slTextarea({
-    value: localStorage.getItem('dreamdocs_global_context') || '',
-    placeholder: 'Enter organization style preferences and general instructions for AI enhancement...\n\nExamples:\n- Use sentence case for headings\n- Keep paragraphs concise\n- Use bullet points for lists of 3+ items',
+    value: localStorage.getItem(STORAGE_KEYS.GLOBAL_CONTEXT) || '',
+    placeholder: PLACEHOLDERS.GLOBAL_CONTEXT,
     rows: 6,
     resize: 'vertical',
     style: 'width: 100%;',
   });
 
   globalContext.addEventListener('sl-input', (e) => {
-    localStorage.setItem('dreamdocs_global_context', e.target.value);
+    localStorage.setItem(STORAGE_KEYS.GLOBAL_CONTEXT, e.target.value);
   });
 
   globalContext.addEventListener('sl-blur', () => {
@@ -86,7 +87,7 @@ async function render(container) {
   });
 
   const defaultProvider = slSelect({
-    value: localStorage.getItem('dreamdocs_default_provider') || 'claude',
+    value: localStorage.getItem(STORAGE_KEYS.DEFAULT_PROVIDER) || 'claude',
     hoist: true,
     style: 'width: 200px;',
   });
@@ -101,7 +102,7 @@ async function render(container) {
   defaultProvider.appendChild(mistralOption);
 
   defaultProvider.addEventListener('sl-change', (e) => {
-    localStorage.setItem('dreamdocs_default_provider', e.target.value);
+    localStorage.setItem(STORAGE_KEYS.DEFAULT_PROVIDER, e.target.value);
     success(`Default provider set to ${e.target.value}`);
   });
 

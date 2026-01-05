@@ -5,8 +5,10 @@ import {
   getTheme,
   getThemeStyles,
   generateFontFaceRules,
+  generateFontFaceUrlRules,
   generateColorVariables,
 } from '../services/themes.js';
+import { escapeHtml } from '../utils/html.js';
 
 export interface DocumentOptions {
   title: string;
@@ -14,18 +16,23 @@ export interface DocumentOptions {
   toc?: string;
   themeId: string;
   showToc: boolean;
+  /** Use URL-based fonts instead of base64 embedding (for preview) */
+  useUrlFonts?: boolean;
 }
 
 /**
  * Build a complete HTML document ready for PDF generation
  */
 export async function buildDocument(options: DocumentOptions): Promise<string> {
-  const { title, content, toc, themeId, showToc } = options;
+  const { title, content, toc, themeId, showToc, useUrlFonts } = options;
 
   // Load theme data
   const theme = await getTheme(themeId);
   const themeStyles = await getThemeStyles(themeId);
-  const fontFaceRules = await generateFontFaceRules(themeId);
+  // Use URL-based fonts for preview (much lighter), base64 for PDF export
+  const fontFaceRules = useUrlFonts
+    ? await generateFontFaceUrlRules(themeId)
+    : await generateFontFaceRules(themeId);
   const colorVariables = theme ? generateColorVariables(theme) : '';
 
   // Build the document
@@ -87,19 +94,6 @@ export async function buildPreviewDocument(options: DocumentOptions): Promise<st
   return buildDocument(options);
 }
 
-/**
- * Escape HTML special characters
- */
-function escapeHtml(text: string): string {
-  const escapeMap: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  };
-  return text.replace(/[&<>"']/g, (char) => escapeMap[char] ?? char);
-}
 
 /**
  * Get page settings from a theme

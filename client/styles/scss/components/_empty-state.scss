@@ -1,0 +1,36 @@
+/**
+ * Empty State
+ * "No items yet" placeholder pattern.
+ */
+
+.vk-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--vk-space-12) var(--vk-space-6);
+  background: var(--vk-color-bg-subtle);
+  border: 2px dashed var(--vk-color-border);
+  border-radius: var(--vk-radius-lg);
+}
+
+.vk-empty-state-icon {
+  font-size: 48px;
+  color: var(--vk-color-text-muted);
+  margin-bottom: var(--vk-space-4);
+}
+
+.vk-empty-state-title {
+  font-size: var(--vk-text-lg);
+  font-weight: var(--vk-weight-semibold);
+  color: var(--vk-color-text);
+  margin-bottom: var(--vk-space-2);
+}
+
+.vk-empty-state-description {
+  font-size: var(--vk-text-sm);
+  color: var(--vk-color-text-secondary);
+  max-width: 400px;
+  margin-bottom: var(--vk-space-6);
+}

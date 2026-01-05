@@ -4,6 +4,7 @@
  */
 
 import mammoth from 'mammoth';
+import { decodeHtmlEntities } from '../utils/html.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type MammothOptions = any;
@@ -221,36 +222,6 @@ function convertTables(html: string): string {
   });
 }
 
-/**
- * Decode common HTML entities
- */
-function decodeHtmlEntities(text: string): string {
-  const entities: Record<string, string> = {
-    '&amp;': '&',
-    '&lt;': '<',
-    '&gt;': '>',
-    '&quot;': '"',
-    '&#39;': "'",
-    '&nbsp;': ' ',
-    '&ndash;': '\u2013',
-    '&mdash;': '\u2014',
-    '&lsquo;': '\u2018',
-    '&rsquo;': '\u2019',
-    '&ldquo;': '\u201C',
-    '&rdquo;': '\u201D',
-    '&hellip;': '\u2026',
-  };
-
-  let result = text;
-  for (const [entity, char] of Object.entries(entities)) {
-    result = result.replace(new RegExp(entity, 'g'), char);
-  }
-
-  // Handle numeric entities
-  result = result.replace(/&#(\d+);/g, (_, code) => String.fromCharCode(parseInt(code, 10)));
-
-  return result;
-}
 
 /**
  * Extract title from markdown content

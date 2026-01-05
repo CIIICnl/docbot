@@ -1,0 +1,59 @@
+/**
+ * Converter Page (Legacy)
+ * Older layout patterns kept for backwards compatibility.
+ */
+
+.converter-page {
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.converter-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--vk-space-6);
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.converter-layout-new {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--vk-space-6);
+  align-items: stretch;
+  min-height: 500px;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.converter-input-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.converter-preview-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.converter-input {
+  background: var(--vk-color-bg);
+  border: 1px solid var(--vk-color-border);
+  border-radius: var(--vk-radius-lg);
+  padding: var(--vk-space-4);
+  flex: 1;
+}
+
+.converter-sidebar {
+  position: sticky;
+  top: calc(var(--vk-header-height) + var(--vk-space-6));
+}
+
+.converter-options-bar {
+  margin-top: var(--vk-space-6);
+}

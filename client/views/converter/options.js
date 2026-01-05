@@ -6,9 +6,10 @@
 import { h, empty } from '../../lib/dom.js';
 import { get, post } from '../../lib/api.js';
 import { success, error, warning } from '../../lib/toast.js';
-import { showLoading, hideLoading } from '../../lib/loading.js';
-import { downloadFile, downloadBase64 } from '../../lib/download.js';
+import { showLoading } from '../../lib/loading.js';
+import { downloadFile, downloadBase64, sanitizeFilename } from '../../lib/download.js';
 import { slSelect, slSwitch, slButton, sl } from '../../lib/shoelace.js';
+import { STORAGE_KEYS } from '../../lib/constants.js';
 
 /**
  * Create the options panel
@@ -28,7 +29,7 @@ export function createOptionsPanel(callbacks) {
   let generateToc = true;
   let pageNumbers = true;
   let llmAvailable = false;
-  let selectedProvider = localStorage.getItem('dreamdocs_default_provider') || 'claude';
+  let selectedProvider = localStorage.getItem(STORAGE_KEYS.DEFAULT_PROVIDER) || 'claude';
 
   // Theme selector
   const themeSelect = slSelect({
@@ -68,7 +69,7 @@ export function createOptionsPanel(callbacks) {
   providerSelect.appendChild(sl('sl-option', { value: 'mistral' }, ['Mistral']));
   providerSelect.addEventListener('sl-change', (e) => {
     selectedProvider = e.target.value;
-    localStorage.setItem('dreamdocs_default_provider', selectedProvider);
+    localStorage.setItem(STORAGE_KEYS.DEFAULT_PROVIDER, selectedProvider);
   });
 
   const enhanceButton = slButton({
@@ -296,15 +297,6 @@ This is especially important for Word documents, which often have inconsistent h
     } finally {
       hide();
     }
-  }
-
-  // Sanitize filename
-  function sanitizeFilename(name) {
-    return (name || 'document')
-      .replace(/[^a-z0-9\s-]/gi, '')
-      .replace(/\s+/g, '-')
-      .toLowerCase()
-      .slice(0, 50);
   }
 
   // Initialize

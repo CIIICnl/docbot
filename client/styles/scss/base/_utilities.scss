@@ -1,0 +1,280 @@
+/**
+ * Utility Classes
+ * Single-purpose helper classes.
+ */
+
+/* Text utilities */
+.text-muted {
+  color: var(--vk-color-text-muted);
+}
+
+.text-secondary {
+  color: var(--vk-color-text-secondary);
+}
+
+.text-primary {
+  color: var(--vk-color-primary);
+}
+
+.text-success {
+  color: var(--vk-color-success);
+}
+
+.text-warning {
+  color: var(--vk-color-warning);
+}
+
+.text-danger {
+  color: var(--vk-color-danger);
+}
+
+.text-sm {
+  font-size: var(--vk-text-sm);
+}
+
+.text-xs {
+  font-size: var(--vk-text-xs);
+}
+
+.text-lg {
+  font-size: var(--vk-text-lg);
+}
+
+.text-xl {
+  font-size: var(--vk-text-xl);
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.font-medium {
+  font-weight: var(--vk-weight-medium);
+}
+
+.font-semibold {
+  font-weight: var(--vk-weight-semibold);
+}
+
+.font-bold {
+  font-weight: var(--vk-weight-bold);
+}
+
+.font-mono {
+  font-family: var(--vk-font-mono);
+}
+
+/* Spacing utilities */
+.mt-0 { margin-top: 0; }
+.mt-1 { margin-top: var(--vk-space-1); }
+.mt-2 { margin-top: var(--vk-space-2); }
+.mt-3 { margin-top: var(--vk-space-3); }
+.mt-4 { margin-top: var(--vk-space-4); }
+.mt-6 { margin-top: var(--vk-space-6); }
+.mt-8 { margin-top: var(--vk-space-8); }
+
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: var(--vk-space-1); }
+.mb-2 { margin-bottom: var(--vk-space-2); }
+.mb-3 { margin-bottom: var(--vk-space-3); }
+.mb-4 { margin-bottom: var(--vk-space-4); }
+.mb-6 { margin-bottom: var(--vk-space-6); }
+.mb-8 { margin-bottom: var(--vk-space-8); }
+
+.ml-auto { margin-left: auto; }
+.mr-auto { margin-right: auto; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+
+.p-0 { padding: 0; }
+.p-2 { padding: var(--vk-space-2); }
+.p-3 { padding: var(--vk-space-3); }
+.p-4 { padding: var(--vk-space-4); }
+.p-6 { padding: var(--vk-space-6); }
+
+/* Display utilities */
+.hidden {
+  display: none;
+}
+
+.block {
+  display: block;
+}
+
+.inline {
+  display: inline;
+}
+
+.inline-block {
+  display: inline-block;
+}
+
+.flex {
+  display: flex;
+}
+
+.inline-flex {
+  display: inline-flex;
+}
+
+.grid {
+  display: grid;
+}
+
+/* Flex utilities */
+.flex-col {
+  flex-direction: column;
+}
+
+.flex-wrap {
+  flex-wrap: wrap;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.items-start {
+  align-items: flex-start;
+}
+
+.items-end {
+  align-items: flex-end;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+.gap-1 { gap: var(--vk-space-1); }
+.gap-2 { gap: var(--vk-space-2); }
+.gap-3 { gap: var(--vk-space-3); }
+.gap-4 { gap: var(--vk-space-4); }
+.gap-6 { gap: var(--vk-space-6); }
+
+/* Width utilities */
+.w-full {
+  width: 100%;
+}
+
+.max-w-sm {
+  max-width: 24rem;
+}
+
+.max-w-md {
+  max-width: 28rem;
+}
+
+.max-w-lg {
+  max-width: 32rem;
+}
+
+.max-w-xl {
+  max-width: 36rem;
+}
+
+/* Border utilities */
+.rounded {
+  border-radius: var(--vk-radius-md);
+}
+
+.rounded-lg {
+  border-radius: var(--vk-radius-lg);
+}
+
+.rounded-full {
+  border-radius: var(--vk-radius-full);
+}
+
+.border {
+  border: 1px solid var(--vk-color-border);
+}
+
+.border-t {
+  border-top: 1px solid var(--vk-color-border);
+}
+
+.border-b {
+  border-bottom: 1px solid var(--vk-color-border);
+}
+
+/* Background utilities */
+.bg-subtle {
+  background-color: var(--vk-color-bg-subtle);
+}
+
+.bg-muted {
+  background-color: var(--vk-color-bg-muted);
+}
+
+/* Shadow utilities */
+.shadow-sm {
+  box-shadow: var(--vk-shadow-sm);
+}
+
+.shadow-md {
+  box-shadow: var(--vk-shadow-md);
+}
+
+.shadow-lg {
+  box-shadow: var(--vk-shadow-lg);
+}
+
+/* Overflow utilities */
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.overflow-auto {
+  overflow: auto;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
+/* Positioning */
+.relative {
+  position: relative;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.sticky {
+  position: sticky;
+}
+
+.fixed {
+  position: fixed;
+}
+
+/* Cursor */
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Transitions */
+.transition {
+  transition: all var(--vk-transition-fast);
+}

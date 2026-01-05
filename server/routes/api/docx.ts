@@ -4,12 +4,13 @@
  */
 
 import type { ApiContext } from './index.js';
-import { json, ok, badRequest, serverError } from '../../utils/http.js';
+import { json, ok, badRequest, serverError, validateRequired } from '../../utils/http.js';
 import { parseDocx } from '../../services/docx.js';
 import {
   enhanceMarkdown,
   translateMarkdown,
   getLlmStatus,
+  validateProvider,
   type LlmProvider,
   type TranslationDirection,
 } from '../../services/llm.js';
@@ -23,7 +24,10 @@ interface EnhanceRequest {
   provider: LlmProvider;
   globalContext?: string;
   documentContext?: string;
+  fixStructure?: boolean;
   fixTypos?: boolean;
+  improveReadability?: boolean;
+  getSuggestions?: boolean;
 }
 
 interface TranslateRequest {
@@ -81,24 +85,20 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
     try {
       const body = await json<EnhanceRequest>(req);
 
-      if (!body.markdown) {
-        badRequest(res, 'Markdown content is required');
-        return true;
-      }
-
-      if (!body.provider) {
-        badRequest(res, 'LLM provider is required');
+      // Validate required fields
+      const validation = validateRequired(body as unknown as Record<string, unknown>, {
+        markdown: 'Markdown content is required',
+        provider: 'LLM provider is required',
+      });
+      if (!validation.valid) {
+        badRequest(res, validation.message);
         return true;
       }
 
       // Check if provider is available
-      const status = getLlmStatus();
-      if (body.provider === 'claude' && !status.providers.claude) {
-        badRequest(res, 'Claude API key is not configured');
-        return true;
-      }
-      if (body.provider === 'mistral' && !status.providers.mistral) {
-        badRequest(res, 'Mistral API key is not configured');
+      const providerError = validateProvider(body.provider);
+      if (providerError) {
+        badRequest(res, providerError);
         return true;
       }
 
@@ -108,12 +108,16 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
         provider: body.provider,
         globalContext: body.globalContext,
         documentContext: body.documentContext,
+        fixStructure: body.fixStructure,
         fixTypos: body.fixTypos,
+        improveReadability: body.improveReadability,
+        getSuggestions: body.getSuggestions,
       });
 
       ok(res, {
         enhanced: result.enhanced,
         changes: result.changes,
+        suggestions: result.suggestions,
       });
 
       return true;
@@ -128,13 +132,13 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
     try {
       const body = await json<TranslateRequest>(req);
 
-      if (!body.markdown) {
-        badRequest(res, 'Markdown content is required');
-        return true;
-      }
-
-      if (!body.provider) {
-        badRequest(res, 'LLM provider is required');
+      // Validate required fields
+      const validation = validateRequired(body as unknown as Record<string, unknown>, {
+        markdown: 'Markdown content is required',
+        provider: 'LLM provider is required',
+      });
+      if (!validation.valid) {
+        badRequest(res, validation.message);
         return true;
       }
 
@@ -144,13 +148,9 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
       }
 
       // Check if provider is available
-      const status = getLlmStatus();
-      if (body.provider === 'claude' && !status.providers.claude) {
-        badRequest(res, 'Claude API key is not configured');
-        return true;
-      }
-      if (body.provider === 'mistral' && !status.providers.mistral) {
-        badRequest(res, 'Mistral API key is not configured');
+      const providerError = validateProvider(body.provider);
+      if (providerError) {
+        badRequest(res, providerError);
         return true;
       }
 
