@@ -1,0 +1,42 @@
+/**
+ * Panel Search Bar
+ * Search functionality for editor and preview panels.
+ */
+
+.panel-search-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+  padding: var(--vk-space-2) var(--vk-space-3);
+  background: var(--vk-color-bg-subtle);
+  border-bottom: 1px solid var(--vk-color-border);
+}
+
+.panel-search-input {
+  flex: 1;
+  min-width: 0;
+
+  &::part(base) {
+    border-color: var(--vk-color-border);
+  }
+
+  &::part(input) {
+    font-size: var(--vk-text-sm);
+  }
+}
+
+.search-count {
+  font-size: var(--vk-text-xs);
+  color: var(--vk-color-text-muted);
+  white-space: nowrap;
+  min-width: 70px;
+  text-align: right;
+}
+
+.panel-search-toggle {
+  font-size: 1rem;
+}
+
+.panel-header-spacer {
+  flex: 1;
+}

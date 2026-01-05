@@ -115,13 +115,14 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
       const title = options.title || extractedTitle || 'Document';
       const tocHtml = options.generateToc ? generateTocHtml(toc) : '';
 
-      // Build document (preview version)
+      // Build document (preview version - uses URL fonts for speed)
       const documentHtml = await buildDocument({
         title,
         content: contentHtml,
         toc: tocHtml,
         themeId: options.themeId,
         showToc: options.generateToc,
+        useUrlFonts: true,
       });
 
       ok(res, { html: documentHtml, title });

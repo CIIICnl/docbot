@@ -1,0 +1,245 @@
+/**
+ * App Shell Layouts
+ * Main application layout structures.
+ */
+
+/* ============================================
+ * SKIP LINK - Accessibility
+ * ============================================ */
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: var(--vk-space-2) var(--vk-space-4);
+  background: var(--vk-color-bg);
+  color: var(--vk-color-primary);
+  font-weight: var(--vk-weight-medium);
+  border: 2px solid var(--vk-color-primary);
+  border-radius: var(--vk-radius-md);
+  transform: translateY(-100%);
+  transition: transform var(--vk-transition-fast);
+  z-index: 10000;
+
+  &:focus {
+    transform: translateY(var(--vk-space-2));
+    outline: none;
+  }
+}
+
+/* ============================================
+ * MINIMAL SHELL - Header bar only
+ * ============================================ */
+.vk-shell-minimal {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  .vk-header {
+    height: var(--vk-header-height);
+    display: flex;
+    align-items: center;
+    gap: var(--vk-space-4);
+    padding: 0 var(--vk-space-6);
+    background: var(--vk-color-bg);
+    border-bottom: 1px solid var(--vk-color-border);
+  }
+
+  .vk-main {
+    flex: 1;
+    padding: var(--vk-space-6);
+  }
+}
+
+/* ============================================
+ * HEADER SHELL - Sticky header with nav
+ * ============================================ */
+.vk-shell-header {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+
+  .vk-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: var(--vk-header-height);
+    display: flex;
+    align-items: center;
+    gap: var(--vk-space-4);
+    padding: 0 var(--vk-space-6);
+    background: var(--vk-color-bg);
+    border-bottom: 1px solid var(--vk-color-border);
+  }
+
+  .vk-header-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--vk-space-2);
+    font-size: var(--vk-text-lg);
+    font-weight: var(--vk-weight-semibold);
+    color: var(--vk-color-text);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
+
+  .vk-header-nav {
+    display: flex;
+    align-items: center;
+    gap: var(--vk-space-1);
+    margin-left: var(--vk-space-6);
+
+    a,
+    button {
+      padding: var(--vk-space-2) var(--vk-space-3);
+      font-size: var(--vk-text-sm);
+      font-weight: var(--vk-weight-medium);
+      color: var(--vk-color-text-secondary);
+      text-decoration: none;
+      border-radius: var(--vk-radius-md);
+      transition: background var(--vk-transition-fast), color var(--vk-transition-fast);
+
+      &:hover {
+        background: var(--vk-color-bg-muted);
+        color: var(--vk-color-text);
+      }
+
+      &.is-active {
+        background: var(--vk-color-primary-subtle);
+        color: var(--vk-color-primary);
+      }
+    }
+  }
+
+  .vk-header-spacer {
+    flex: 1;
+  }
+
+  .vk-header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--vk-space-2);
+  }
+
+  .vk-main {
+    flex: 1;
+    padding: var(--vk-space-6);
+    max-width: var(--vk-content-max-width);
+    margin: 0 auto;
+    width: 100%;
+
+    // Allow full width for converter page
+    &:has(.converter-page-v2) {
+      max-width: 100%;
+    }
+  }
+}
+
+/* ============================================
+ * SIDEBAR SHELL - Fixed sidebar navigation
+ * ============================================ */
+.vk-shell-sidebar {
+  display: flex;
+  min-height: 100vh;
+
+  .vk-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: var(--vk-sidebar-width);
+    display: flex;
+    flex-direction: column;
+    background: var(--vk-color-bg-subtle);
+    border-right: 1px solid var(--vk-color-border);
+    overflow-y: auto;
+  }
+
+  .vk-sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: var(--vk-space-2);
+    padding: var(--vk-space-4);
+    border-bottom: 1px solid var(--vk-color-border);
+  }
+
+  .vk-sidebar-logo {
+    font-size: var(--vk-text-lg);
+    font-weight: var(--vk-weight-semibold);
+    color: var(--vk-color-text);
+    text-decoration: none;
+  }
+
+  .vk-sidebar-nav {
+    flex: 1;
+    padding: var(--vk-space-4);
+  }
+
+  .vk-sidebar-section {
+    margin-bottom: var(--vk-space-6);
+  }
+
+  .vk-sidebar-section-title {
+    font-size: var(--vk-text-xs);
+    font-weight: var(--vk-weight-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--vk-color-text-muted);
+    padding: var(--vk-space-2) var(--vk-space-3);
+    margin-bottom: var(--vk-space-1);
+  }
+
+  .vk-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: var(--vk-space-3);
+    padding: var(--vk-space-2) var(--vk-space-3);
+    font-size: var(--vk-text-sm);
+    color: var(--vk-color-text-secondary);
+    text-decoration: none;
+    border-radius: var(--vk-radius-md);
+    transition: background var(--vk-transition-fast), color var(--vk-transition-fast);
+
+    &:hover {
+      background: var(--vk-color-bg-muted);
+      color: var(--vk-color-text);
+    }
+
+    &.is-active {
+      background: var(--vk-color-primary-subtle);
+      color: var(--vk-color-primary);
+    }
+  }
+
+  .vk-sidebar-footer {
+    padding: var(--vk-space-4);
+    border-top: 1px solid var(--vk-color-border);
+  }
+
+  .vk-content {
+    flex: 1;
+    margin-left: var(--vk-sidebar-width);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .vk-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    height: var(--vk-header-height);
+    display: flex;
+    align-items: center;
+    gap: var(--vk-space-4);
+    padding: 0 var(--vk-space-6);
+    background: var(--vk-color-bg);
+    border-bottom: 1px solid var(--vk-color-border);
+  }
+
+  .vk-main {
+    flex: 1;
+    padding: var(--vk-space-6);
+  }
+}

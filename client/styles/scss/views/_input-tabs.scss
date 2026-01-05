@@ -1,0 +1,319 @@
+/**
+ * Input Tabs
+ * Paste, Upload, Notion, Word tab styles.
+ */
+
+/* Paste Tab */
+.paste-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-3);
+}
+
+.paste-title-input {
+  width: 100%;
+}
+
+.paste-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.paste-toolbar-left {
+  display: flex;
+  gap: var(--vk-space-1);
+}
+
+.paste-char-count {
+  font-size: var(--vk-text-xs);
+}
+
+.paste-textarea {
+  width: 100%;
+
+  &::part(textarea) {
+    font-family: var(--vk-font-mono);
+    font-size: var(--vk-text-sm);
+  }
+}
+
+/* Upload Tab */
+.upload-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-4);
+}
+
+.upload-file-info {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  padding: var(--vk-space-3);
+  background: var(--vk-color-bg-subtle);
+  border-radius: var(--vk-radius-md);
+}
+
+.upload-file-icon {
+  font-size: 1.5rem;
+  color: var(--vk-color-primary);
+}
+
+.upload-file-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.upload-file-name {
+  font-size: var(--vk-text-sm);
+  font-weight: var(--vk-weight-medium);
+  color: var(--vk-color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-file-size {
+  font-size: var(--vk-text-xs);
+}
+
+.upload-preview {
+  border: 1px solid var(--vk-color-border);
+  border-radius: var(--vk-radius-md);
+  overflow: hidden;
+}
+
+.upload-preview-header {
+  padding: var(--vk-space-2) var(--vk-space-3);
+  background: var(--vk-color-bg-subtle);
+  border-bottom: 1px solid var(--vk-color-border);
+  font-size: var(--vk-text-xs);
+  font-weight: var(--vk-weight-medium);
+  color: var(--vk-color-text-muted);
+}
+
+.upload-preview-content {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.upload-preview-text {
+  margin: 0;
+  padding: var(--vk-space-3);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-text-xs);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Notion Tab */
+.notion-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-4);
+}
+
+.notion-input-row {
+  display: flex;
+  gap: var(--vk-space-2);
+  align-items: flex-end;
+}
+
+.notion-url-input {
+  flex: 1;
+}
+
+.notion-loading {
+  font-size: 1.25rem;
+}
+
+.notion-preview {
+  border: 1px solid var(--vk-color-border);
+  border-radius: var(--vk-radius-md);
+  overflow: hidden;
+}
+
+.notion-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--vk-space-2) var(--vk-space-3);
+  background: var(--vk-color-bg-subtle);
+  border-bottom: 1px solid var(--vk-color-border);
+}
+
+.notion-preview-title {
+  font-size: var(--vk-text-sm);
+  font-weight: var(--vk-weight-medium);
+  color: var(--vk-color-text);
+}
+
+.notion-preview-content {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.notion-preview-text {
+  margin: 0;
+  padding: var(--vk-space-3);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-text-xs);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.notion-help {
+  font-size: var(--vk-text-sm);
+  padding: var(--vk-space-3);
+  background: var(--vk-color-bg-subtle);
+  border-radius: var(--vk-radius-md);
+
+  p {
+    margin: 0 0 var(--vk-space-2) 0;
+  }
+
+  ol {
+    margin: 0;
+    padding-left: var(--vk-space-4);
+  }
+
+  li {
+    margin-bottom: var(--vk-space-1);
+  }
+}
+
+/* Word Tab */
+.word-tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-4);
+}
+
+.word-icon {
+  color: var(--vk-color-primary);
+}
+
+.word-status {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  padding: var(--vk-space-3);
+  background: var(--vk-color-bg-subtle);
+  border-radius: var(--vk-radius-md);
+}
+
+.word-status-text {
+  font-size: var(--vk-text-sm);
+  color: var(--vk-color-text-secondary);
+}
+
+.word-enhancement-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-3);
+}
+
+.word-enhancement-row {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  flex-wrap: wrap;
+}
+
+.word-provider-select {
+  width: 180px;
+}
+
+.word-context-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-2);
+}
+
+.word-context-label {
+  font-size: var(--vk-text-sm);
+  font-weight: var(--vk-weight-medium);
+  color: var(--vk-color-text);
+}
+
+.word-document-context {
+  width: 100%;
+
+  &::part(textarea) {
+    font-size: var(--vk-text-sm);
+  }
+}
+
+/* Word Image Gallery */
+.word-images {
+  border: 1px solid var(--vk-color-border);
+  border-radius: var(--vk-radius-md);
+  overflow: hidden;
+}
+
+.word-images-header {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+  padding: var(--vk-space-2) var(--vk-space-3);
+  background: var(--vk-color-bg-subtle);
+  border-bottom: 1px solid var(--vk-color-border);
+}
+
+.word-images-icon {
+  font-size: 1rem;
+  color: var(--vk-color-text-muted);
+}
+
+.word-images-title {
+  font-size: var(--vk-text-sm);
+  font-weight: var(--vk-weight-medium);
+  color: var(--vk-color-text);
+}
+
+.word-image-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vk-space-3);
+  padding: var(--vk-space-3);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.word-image-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-2);
+  padding: var(--vk-space-2);
+  background: var(--vk-color-bg-subtle);
+  border-radius: var(--vk-radius-md);
+  max-width: 120px;
+}
+
+.word-image-thumb {
+  width: 100px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--vk-radius-sm);
+  border: 1px solid var(--vk-color-border);
+}
+
+.word-image-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vk-space-1);
+}
+
+.word-image-name {
+  font-size: var(--vk-text-xs);
+  color: var(--vk-color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 70px;
+}

@@ -1,10 +1,11 @@
 /**
  * Build Client
- * Bundles client JavaScript with esbuild.
+ * Compiles SCSS and bundles client JavaScript with esbuild.
  */
 
 import * as esbuild from 'esbuild';
-import { cp, mkdir, rm } from 'node:fs/promises';
+import * as sass from 'sass';
+import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,8 +15,32 @@ const ROOT = join(__dirname, '..');
 const isDev = process.argv.includes('--dev');
 const isWatch = process.argv.includes('--watch');
 
+/**
+ * Compile SCSS to CSS
+ */
+async function buildStyles() {
+  const scssEntry = join(ROOT, 'client/styles/scss/main.scss');
+  const cssOut = join(ROOT, 'client/styles/components.css');
+
+  const result = sass.compile(scssEntry, {
+    style: isDev ? 'expanded' : 'compressed',
+    sourceMap: isDev,
+  });
+
+  await writeFile(cssOut, result.css);
+
+  if (isDev && result.sourceMap) {
+    await writeFile(`${cssOut}.map`, JSON.stringify(result.sourceMap));
+  }
+
+  console.log('SCSS compiled to components.css');
+}
+
 async function build() {
   const outdir = join(ROOT, 'client/dist');
+
+  // Compile SCSS first
+  await buildStyles();
 
   // Clean output directory
   await rm(outdir, { recursive: true, force: true });
@@ -64,7 +89,23 @@ async function build() {
   if (isWatch) {
     const ctx = await esbuild.context(config);
     await ctx.watch();
-    console.log('Watching for changes...');
+    console.log('Watching JS for changes...');
+
+    // Watch SCSS files
+    const { watch: fsWatch } = await import('node:fs');
+    const scssDir = join(ROOT, 'client/styles/scss');
+
+    fsWatch(scssDir, { recursive: true }, async (eventType, filename) => {
+      if (filename?.endsWith('.scss')) {
+        console.log(`SCSS changed: ${filename}`);
+        try {
+          await buildStyles();
+        } catch (err) {
+          console.error('SCSS error:', err.message);
+        }
+      }
+    });
+    console.log('Watching SCSS for changes...');
   } else {
     const result = await esbuild.build(config);
     console.log('Client build complete');

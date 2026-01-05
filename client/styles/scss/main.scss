@@ -1,0 +1,36 @@
+/**
+ * DocBot Main Stylesheet
+ * Modular SCSS architecture
+ */
+
+// Base - Reset, tokens, utilities
+@use 'base/reset';
+@use 'base/tokens';
+@use 'base/utilities';
+
+// Layout - Shell components
+@use 'layout/shell';
+
+// Components - Reusable UI pieces
+@use 'components/page-header';
+@use 'components/form';
+@use 'components/card';
+@use 'components/empty-state';
+@use 'components/toast';
+@use 'components/table';
+@use 'components/settings';
+@use 'components/loading';
+@use 'components/drop-zone';
+@use 'components/tabs';
+@use 'components/markdown-field';
+@use 'components/panel-search';
+@use 'components/enhance-dialog';
+@use 'components/action-group';
+
+// Views - Page-specific styles
+@use 'views/converter';
+@use 'views/converter-legacy';
+@use 'views/panels';
+@use 'views/changes-sidebar';
+@use 'views/options-panel';
+@use 'views/input-tabs';

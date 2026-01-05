@@ -1,0 +1,32 @@
+/**
+ * Card Component
+ * Container with optional header/body/footer sections.
+ */
+
+.vk-card {
+  background: var(--vk-color-bg);
+  border: 1px solid var(--vk-color-border);
+  border-radius: var(--vk-radius-lg);
+}
+
+.vk-card-header {
+  padding: var(--vk-space-4) var(--vk-space-5);
+  border-bottom: 1px solid var(--vk-color-border);
+}
+
+.vk-card-title {
+  font-size: var(--vk-text-base);
+  font-weight: var(--vk-weight-semibold);
+  color: var(--vk-color-text);
+  margin: 0;
+}
+
+.vk-card-body {
+  padding: var(--vk-space-5);
+}
+
+.vk-card-footer {
+  padding: var(--vk-space-4) var(--vk-space-5);
+  border-top: 1px solid var(--vk-color-border);
+  background: var(--vk-color-bg-subtle);
+}

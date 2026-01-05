@@ -1,0 +1,36 @@
+/**
+ * Page Header
+ * Title + actions pattern for page tops.
+ */
+
+.vk-page-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--vk-space-4);
+  margin-bottom: var(--vk-space-6);
+}
+
+.vk-page-header-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.vk-page-header-title {
+  font-size: var(--vk-text-2xl);
+  font-weight: var(--vk-weight-semibold);
+  color: var(--vk-color-text);
+  margin: 0;
+}
+
+.vk-page-header-subtitle {
+  font-size: var(--vk-text-sm);
+  color: var(--vk-color-text-secondary);
+  margin-top: var(--vk-space-1);
+}
+
+.vk-page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+  flex-shrink: 0;
+}

@@ -1,0 +1,67 @@
+/**
+ * Settings Panel
+ * Grouped settings with sections.
+ */
+
+.vk-settings {
+  max-width: var(--vk-form-max-width);
+}
+
+.vk-settings-section {
+  margin-bottom: var(--vk-space-8);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.vk-settings-section-title {
+  font-size: var(--vk-text-lg);
+  font-weight: var(--vk-weight-semibold);
+  color: var(--vk-color-text);
+  margin-bottom: var(--vk-space-2);
+}
+
+.vk-settings-section-description {
+  font-size: var(--vk-text-sm);
+  color: var(--vk-color-text-secondary);
+  margin-bottom: var(--vk-space-4);
+}
+
+.vk-settings-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--vk-space-4);
+  padding: var(--vk-space-4) 0;
+  border-bottom: 1px solid var(--vk-color-border-subtle);
+
+  &:first-child {
+    padding-top: 0;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.vk-settings-row-label {
+  flex: 1;
+  min-width: 0;
+
+  h4 {
+    font-size: var(--vk-text-sm);
+    font-weight: var(--vk-weight-medium);
+    color: var(--vk-color-text);
+    margin: 0;
+  }
+
+  p {
+    font-size: var(--vk-text-sm);
+    color: var(--vk-color-text-muted);
+    margin: var(--vk-space-1) 0 0;
+  }
+}
+
+.vk-settings-row-control {
+  flex-shrink: 0;
+}

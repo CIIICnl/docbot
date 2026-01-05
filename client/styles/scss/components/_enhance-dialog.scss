@@ -1,0 +1,76 @@
+/**
+ * Enhance Dialog
+ * AI enhancement options modal.
+ */
+
+.enhance-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-3);
+}
+
+.enhance-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--vk-space-3);
+  padding: var(--vk-space-3);
+  background: var(--vk-color-bg-subtle);
+  border-radius: var(--vk-radius-md);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: var(--vk-color-bg-muted);
+  }
+
+  sl-switch {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+}
+
+.enhance-option-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-1);
+}
+
+.enhance-option-title {
+  font-weight: var(--vk-weight-semibold);
+  color: var(--vk-color-text);
+}
+
+.enhance-option-desc {
+  font-size: var(--vk-text-sm);
+  color: var(--vk-color-text-muted);
+  line-height: 1.4;
+}
+
+.enhance-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--vk-space-2);
+}
+
+/* AI Enhance action button + tooltip */
+.options-enhance-action {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-1);
+}
+
+.enhance-info-btn {
+  font-size: var(--vk-text-lg);
+  color: var(--vk-color-text-muted);
+
+  &:hover {
+    color: var(--vk-color-text-secondary);
+  }
+}
+
+// Tooltip styling
+sl-tooltip::part(body) {
+  max-width: 320px;
+  white-space: pre-line;
+  line-height: 1.5;
+}

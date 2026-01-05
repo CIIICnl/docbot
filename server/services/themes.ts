@@ -135,6 +135,61 @@ export async function generateFontFaceRules(themeId: string): Promise<string> {
 }
 
 /**
+ * Generate @font-face rules using URL references (for preview)
+ * Much lighter than base64 embedding
+ */
+export async function generateFontFaceUrlRules(themeId: string): Promise<string> {
+  const theme = await getTheme(themeId);
+  if (!theme?.fonts || theme.fonts.length === 0) {
+    return '';
+  }
+
+  const rules: string[] = [];
+
+  for (const font of theme.fonts) {
+    const format = font.src.endsWith('.woff2')
+      ? 'woff2'
+      : font.src.endsWith('.woff')
+        ? 'woff'
+        : 'truetype';
+
+    rules.push(`
+      @font-face {
+        font-family: '${font.family}';
+        font-weight: ${font.weight || 400};
+        font-style: ${font.style || 'normal'};
+        src: url(/api/themes/${themeId}/fonts/${encodeURIComponent(font.src)}) format('${format}');
+      }
+    `);
+  }
+
+  return rules.join('\n');
+}
+
+/**
+ * Get a font file from a theme
+ */
+export async function getThemeFont(themeId: string, fontFile: string): Promise<Buffer | null> {
+  const theme = await getTheme(themeId);
+  if (!theme?.fonts) {
+    return null;
+  }
+
+  // Verify the font file is in the theme's fonts list (security check)
+  const fontEntry = theme.fonts.find(f => f.src === fontFile);
+  if (!fontEntry) {
+    return null;
+  }
+
+  const fontPath = path.join(getThemeDir(themeId), fontFile);
+  if (!fs.existsSync(fontPath)) {
+    return null;
+  }
+
+  return fs.readFileSync(fontPath);
+}
+
+/**
  * Generate CSS custom properties from theme colors
  */
 export function generateColorVariables(theme: Theme): string {

@@ -1,0 +1,169 @@
+/**
+ * Design Tokens
+ * CSS custom properties for consistent theming.
+ */
+
+:root {
+  /* Typography - Sans */
+  --vk-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --vk-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Font Weights */
+  --vk-weight-normal: 400;
+  --vk-weight-medium: 500;
+  --vk-weight-semibold: 600;
+  --vk-weight-bold: 700;
+
+  /* Font Sizes */
+  --vk-text-xs: 0.75rem;
+  --vk-text-sm: 0.875rem;
+  --vk-text-base: 1rem;
+  --vk-text-lg: 1.125rem;
+  --vk-text-xl: 1.25rem;
+  --vk-text-2xl: 1.5rem;
+  --vk-text-3xl: 1.875rem;
+  --vk-text-4xl: 2.25rem;
+
+  /* Line Heights */
+  --vk-leading-none: 1;
+  --vk-leading-tight: 1.25;
+  --vk-leading-normal: 1.5;
+  --vk-leading-relaxed: 1.75;
+
+  /* Spacing */
+  --vk-space-0: 0;
+  --vk-space-1: 0.25rem;
+  --vk-space-2: 0.5rem;
+  --vk-space-3: 0.75rem;
+  --vk-space-4: 1rem;
+  --vk-space-5: 1.25rem;
+  --vk-space-6: 1.5rem;
+  --vk-space-8: 2rem;
+  --vk-space-10: 2.5rem;
+  --vk-space-12: 3rem;
+  --vk-space-16: 4rem;
+  --vk-space-20: 5rem;
+  --vk-space-24: 6rem;
+
+  /* Border Radius */
+  --vk-radius-none: 0;
+  --vk-radius-sm: 0.25rem;
+  --vk-radius-md: 0.375rem;
+  --vk-radius-lg: 0.5rem;
+  --vk-radius-xl: 0.75rem;
+  --vk-radius-2xl: 1rem;
+  --vk-radius-full: 9999px;
+
+  /* Transitions */
+  --vk-transition-fast: 150ms ease;
+  --vk-transition-normal: 200ms ease;
+  --vk-transition-slow: 300ms ease;
+
+  /* Shadows */
+  --vk-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --vk-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --vk-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --vk-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+
+  /* Layout */
+  --vk-header-height: 56px;
+  --vk-sidebar-width: 240px;
+  --vk-content-max-width: 1200px;
+  --vk-form-max-width: 640px;
+
+  /* Z-Index */
+  --vk-z-dropdown: 1000;
+  --vk-z-sticky: 1020;
+  --vk-z-fixed: 1030;
+  --vk-z-modal-backdrop: 1040;
+  --vk-z-modal: 1050;
+  --vk-z-popover: 1060;
+  --vk-z-tooltip: 1070;
+  --vk-z-toast: 1080;
+
+  /* Colors - Light Theme */
+  --vk-color-bg: #ffffff;
+  --vk-color-bg-subtle: #f8fafc;
+  --vk-color-bg-muted: #f1f5f9;
+
+  --vk-color-text: #0f172a;
+  --vk-color-text-secondary: #475569;
+  --vk-color-text-muted: #94a3b8;
+
+  --vk-color-border: #e2e8f0;
+  --vk-color-border-subtle: #f1f5f9;
+
+  --vk-color-primary: #2563eb;
+  --vk-color-primary-hover: #1d4ed8;
+  --vk-color-primary-subtle: #eff6ff;
+
+  --vk-color-success: #16a34a;
+  --vk-color-success-subtle: #f0fdf4;
+
+  --vk-color-warning: #ca8a04;
+  --vk-color-warning-subtle: #fefce8;
+
+  --vk-color-danger: #dc2626;
+  --vk-color-danger-subtle: #fef2f2;
+
+  --vk-color-focus: rgba(37, 99, 235, 0.5);
+}
+
+/* Dark Theme */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --vk-color-bg: #0f172a;
+    --vk-color-bg-subtle: #1e293b;
+    --vk-color-bg-muted: #334155;
+
+    --vk-color-text: #f8fafc;
+    --vk-color-text-secondary: #cbd5e1;
+    --vk-color-text-muted: #64748b;
+
+    --vk-color-border: #334155;
+    --vk-color-border-subtle: #1e293b;
+
+    --vk-color-primary: #3b82f6;
+    --vk-color-primary-hover: #60a5fa;
+    --vk-color-primary-subtle: rgba(59, 130, 246, 0.15);
+
+    --vk-color-success: #22c55e;
+    --vk-color-success-subtle: rgba(34, 197, 94, 0.15);
+
+    --vk-color-warning: #eab308;
+    --vk-color-warning-subtle: rgba(234, 179, 8, 0.15);
+
+    --vk-color-danger: #ef4444;
+    --vk-color-danger-subtle: rgba(239, 68, 68, 0.15);
+
+    --vk-color-focus: rgba(59, 130, 246, 0.5);
+  }
+}
+
+[data-theme="dark"] {
+  --vk-color-bg: #0f172a;
+  --vk-color-bg-subtle: #1e293b;
+  --vk-color-bg-muted: #334155;
+
+  --vk-color-text: #f8fafc;
+  --vk-color-text-secondary: #cbd5e1;
+  --vk-color-text-muted: #64748b;
+
+  --vk-color-border: #334155;
+  --vk-color-border-subtle: #1e293b;
+
+  --vk-color-primary: #3b82f6;
+  --vk-color-primary-hover: #60a5fa;
+  --vk-color-primary-subtle: rgba(59, 130, 246, 0.15);
+
+  --vk-color-success: #22c55e;
+  --vk-color-success-subtle: rgba(34, 197, 94, 0.15);
+
+  --vk-color-warning: #eab308;
+  --vk-color-warning-subtle: rgba(234, 179, 8, 0.15);
+
+  --vk-color-danger: #ef4444;
+  --vk-color-danger-subtle: rgba(239, 68, 68, 0.15);
+
+  --vk-color-focus: rgba(59, 130, 246, 0.5);
+}

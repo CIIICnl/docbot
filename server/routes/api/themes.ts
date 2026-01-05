@@ -5,7 +5,7 @@
 
 import type { ApiContext } from './index.js';
 import { ok, notFound, matchPath } from '../../utils/http.js';
-import { listThemes, getTheme, getThemeStyles, getDefaultThemeId } from '../../services/themes.js';
+import { listThemes, getTheme, getThemeStyles, getThemeFont, getDefaultThemeId } from '../../services/themes.js';
 
 /**
  * Handle theme routes
@@ -53,6 +53,35 @@ export async function handleThemes(ctx: ApiContext): Promise<boolean> {
     // Return CSS directly
     res.writeHead(200, { 'Content-Type': 'text/css' });
     res.end(styles);
+    return true;
+  }
+
+  // GET /api/themes/:id/fonts/:filename - Serve theme font files
+  const fontsMatch = matchPath('/api/themes/:id/fonts/:filename', path);
+  if (fontsMatch?.id && fontsMatch?.filename && req.method === 'GET') {
+    const fontFile = decodeURIComponent(fontsMatch.filename);
+    const fontBuffer = await getThemeFont(fontsMatch.id, fontFile);
+
+    if (!fontBuffer) {
+      notFound(res, 'Font not found');
+      return true;
+    }
+
+    // Determine MIME type
+    const mimeType = fontFile.endsWith('.woff2')
+      ? 'font/woff2'
+      : fontFile.endsWith('.woff')
+        ? 'font/woff'
+        : fontFile.endsWith('.otf')
+          ? 'font/otf'
+          : 'font/ttf';
+
+    res.writeHead(200, {
+      'Content-Type': mimeType,
+      'Content-Length': fontBuffer.length,
+      'Cache-Control': 'max-age=31536000', // Cache fonts for 1 year
+    });
+    res.end(fontBuffer);
     return true;
   }
 

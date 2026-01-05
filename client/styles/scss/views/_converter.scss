@@ -1,0 +1,150 @@
+/**
+ * Converter Page V2
+ * New streamlined layout with input bar, side-by-side editor/preview, actions.
+ */
+
+.converter-page-v2 {
+  max-width: 1800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-3);
+  height: calc(100vh - var(--vk-header-height) - var(--vk-space-6) * 2);
+  min-height: 500px;
+}
+
+/* Input bar at top */
+.converter-input-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--vk-space-3);
+  padding: var(--vk-space-2) var(--vk-space-3);
+  background: var(--vk-color-bg);
+  border: 1px solid var(--vk-color-border);
+  border-radius: var(--vk-radius-lg);
+  flex-shrink: 0;
+}
+
+.input-bar-sources {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+  flex-wrap: wrap;
+}
+
+.input-bar-settings {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  margin-left: auto;
+  flex-wrap: wrap;
+  padding-left: var(--vk-space-3);
+  border-left: 1px solid var(--vk-color-border);
+}
+
+.input-bar-options {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.input-notion-group {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-1);
+}
+
+.input-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-1);
+  font-size: var(--vk-text-sm);
+  color: var(--vk-color-text-secondary);
+  cursor: pointer;
+}
+
+/* Editor area - side by side */
+.converter-editor-area {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--vk-space-4);
+  flex: 1;
+  min-height: 0;
+
+  &.has-changes {
+    grid-template-columns: 1fr 1fr 380px;
+  }
+}
+
+/* Actions bar at bottom */
+.converter-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-3);
+  padding: var(--vk-space-2) var(--vk-space-3);
+  background: var(--vk-color-bg);
+  border: 1px solid var(--vk-color-border);
+  border-radius: var(--vk-radius-lg);
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 1600px) {
+  .converter-editor-area.has-changes {
+    grid-template-columns: 1fr 1fr;
+
+    .changes-sidebar {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 1000px) {
+  .converter-editor-area,
+  .converter-editor-area.has-changes {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1800px) {
+  .converter-page-v2 {
+    max-width: 1800px;
+  }
+}
+
+@media (min-width: 2000px) {
+  .converter-page-v2 {
+    max-width: 2000px;
+  }
+}
+
+/* Draft menu */
+.draft-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.draft-title {
+  font-weight: var(--vk-weight-medium);
+}
+
+.draft-date {
+  font-size: var(--vk-font-xs);
+}
+
+.drafts-menu {
+  min-width: 250px;
+}
+
+.drafts-empty-item {
+  text-align: center;
+  font-style: italic;
+
+  &::part(base) {
+    justify-content: center;
+  }
+}
