@@ -5,7 +5,6 @@
  */
 
 import { h, empty } from '../../lib/dom.js';
-import { pageHeader } from '../../lib/components.js';
 import { post, get } from '../../lib/api.js';
 import { success, error, warning } from '../../lib/toast.js';
 import { showLoading, hideLoading } from '../../lib/loading.js';
@@ -181,10 +180,10 @@ export async function renderConverter(container) {
 
   const inputBar = h('div', { class: 'converter-input-bar' }, [
     h('div', { class: 'input-bar-sources' }, [
-      pasteBtn, uploadMdBtn, uploadWordBtn, mdInput, wordInput, notionGroup,
+      pasteBtn, uploadMdBtn, uploadWordBtn, draftsDropdown, mdInput, wordInput, notionGroup,
     ]),
-    h('div', { class: 'input-bar-options' }, [
-      titleInput, saveDraftBtn, draftsDropdown, themeSelect, tocLabel, pageNumLabel,
+    h('div', { class: 'input-bar-settings' }, [
+      titleInput, themeSelect, tocLabel, pageNumLabel, saveDraftBtn,
     ]),
   ]);
 
@@ -412,9 +411,10 @@ export async function renderConverter(container) {
     empty(draftsMenu);
 
     if (drafts.length === 0) {
-      draftsMenu.appendChild(
-        sl('sl-menu-item', { disabled: true }, ['No saved drafts'])
-      );
+      const emptyItem = sl('sl-menu-item', { disabled: true, class: 'drafts-empty-item' }, [
+        'No saved drafts',
+      ]);
+      draftsMenu.appendChild(emptyItem);
       return;
     }
 
@@ -724,10 +724,6 @@ export async function renderConverter(container) {
   // LAYOUT
   // ============================================
   const page = h('div', { class: 'converter-page-v2' }, [
-    pageHeader({
-      title: 'DreamDocs',
-      subtitle: 'Convert documents to beautifully styled PDFs',
-    }),
     inputBar,
     h('div', { class: 'converter-editor-area' }, [
       markdownPanel,

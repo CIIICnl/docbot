@@ -79,9 +79,32 @@ export function createOptionsPanel(callbacks) {
     onClick: () => requestEnhancement(),
   });
 
+  // Info tooltip for AI enhancement
+  const enhanceInfo = h('sl-tooltip', {
+    content: `AI Enhancement improves your document by:
+
+• Fixing heading hierarchy (H1 → H2 → H3) for proper structure
+• Ensuring correct nesting for table of contents generation
+• Cleaning up inconsistent formatting from Word
+• Applying style guidelines from your global context
+
+This is especially important for Word documents, which often have inconsistent heading levels.`,
+    placement: 'bottom',
+    hoist: true,
+  }, [
+    h('sl-icon-button', {
+      name: 'info-circle',
+      label: 'What does AI enhancement do?',
+      class: 'enhance-info-btn',
+    }),
+  ]);
+
   const enhanceSection = h('div', { class: 'options-enhance-section' }, [
     providerSelect,
-    enhanceButton,
+    h('div', { class: 'options-enhance-action' }, [
+      enhanceButton,
+      enhanceInfo,
+    ]),
   ]);
   enhanceSection.hidden = true;
 

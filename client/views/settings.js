@@ -7,7 +7,7 @@ import { h, empty } from '../lib/dom.js';
 import { pageHeader, settingsSection } from '../lib/components.js';
 import { getTheme, setTheme } from '../lib/theme.js';
 import { success, error } from '../lib/toast.js';
-import { slSelect, slSwitch, slInput, slButton, slTextarea, sl } from '../lib/shoelace.js';
+import { slSelect, slButton, slTextarea, sl } from '../lib/shoelace.js';
 import { get } from '../lib/api.js';
 
 /**
@@ -54,18 +54,6 @@ async function render(container) {
     success(`Theme changed to ${e.target.value}`);
   });
 
-  // Notification toggle
-  const notifySwitch = slSwitch({ checked: true });
-  notifySwitch.addEventListener('sl-change', (e) => {
-    success(e.target.checked ? 'Notifications enabled' : 'Notifications disabled');
-  });
-
-  // Email input
-  const emailInput = slInput({
-    type: 'email',
-    placeholder: 'your@email.com',
-    style: { width: '250px' },
-  });
 
   // Appearance section
   const appearanceSection = settingsSection({
@@ -86,7 +74,7 @@ async function render(container) {
     placeholder: 'Enter organization style preferences and general instructions for AI enhancement...\n\nExamples:\n- Use sentence case for headings\n- Keep paragraphs concise\n- Use bullet points for lists of 3+ items',
     rows: 6,
     resize: 'vertical',
-    style: 'width: 100%; max-width: 500px;',
+    style: 'width: 100%;',
   });
 
   globalContext.addEventListener('sl-input', (e) => {
@@ -119,44 +107,35 @@ async function render(container) {
 
   const aiAvailable = llmProviders.claude || llmProviders.mistral;
 
-  const aiSection = settingsSection({
-    title: 'AI Enhancement',
-    description: aiAvailable
-      ? 'Configure AI-powered document enhancement for Word imports.'
-      : 'AI enhancement requires API keys. Add ANTHROPIC_API_KEY or MISTRAL_API_KEY to your .env file.',
-    rows: aiAvailable
+  // Build AI section with full-width global context
+  const aiSection = h('div', { class: 'vk-settings-section' }, [
+    h('h2', { class: 'vk-settings-section-title' }, ['AI Enhancement']),
+    h('p', { class: 'vk-settings-section-description' }, [
+      aiAvailable
+        ? 'Configure AI-powered document enhancement for Word imports.'
+        : 'AI enhancement requires API keys. Add ANTHROPIC_API_KEY or MISTRAL_API_KEY to your .env file.',
+    ]),
+    ...(aiAvailable
       ? [
-          {
-            label: 'Default Provider',
-            description: 'Choose which AI provider to use by default.',
-            control: defaultProvider,
-          },
-          {
-            label: 'Global Context',
-            description: 'Instructions that apply to all document conversions.',
-            control: globalContext,
-          },
+          // Default provider row (standard layout)
+          h('div', { class: 'vk-settings-row' }, [
+            h('div', { class: 'vk-settings-row-label' }, [
+              h('h4', {}, ['Default Provider']),
+              h('p', {}, ['Choose which AI provider to use by default.']),
+            ]),
+            h('div', { class: 'vk-settings-row-control' }, [defaultProvider]),
+          ]),
+          // Global context (full width)
+          h('div', { class: 'vk-settings-row', style: 'flex-direction: column; align-items: stretch;' }, [
+            h('div', { class: 'vk-settings-row-label', style: 'margin-bottom: var(--sl-spacing-small);' }, [
+              h('h4', {}, ['Global Context']),
+              h('p', {}, ['Instructions that apply to all document conversions.']),
+            ]),
+            globalContext,
+          ]),
         ]
-      : [],
-  });
-
-  // Notifications section
-  const notificationsSection = settingsSection({
-    title: 'Notifications',
-    description: 'Configure how you receive notifications.',
-    rows: [
-      {
-        label: 'Push Notifications',
-        description: 'Receive push notifications for important updates.',
-        control: notifySwitch,
-      },
-      {
-        label: 'Email Address',
-        description: 'Email address for notification delivery.',
-        control: emailInput,
-      },
-    ],
-  });
+      : []),
+  ]);
 
   // Danger zone
   const deleteButton = slButton({
@@ -194,7 +173,6 @@ async function render(container) {
   const settingsContainer = h('div', { class: 'vk-settings' }, [
     appearanceSection,
     aiSection,
-    notificationsSection,
     dangerSection,
   ]);
 
