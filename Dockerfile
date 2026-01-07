@@ -1,10 +1,11 @@
-FROM node:20-alpine
+# Use Playwright's official image which includes Chromium and all dependencies
+FROM mcr.microsoft.com/playwright:v1.49.1-noble
 
 WORKDIR /app
 
-# Install dependencies
+# Install dependencies (including devDependencies for playwright)
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm ci
 
 # App source
 COPY . .
