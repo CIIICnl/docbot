@@ -52,10 +52,17 @@ export async function generatePdf(options: PdfOptions): Promise<Buffer> {
     if (options.pageNumbers) {
       pdfOptions.displayHeaderFooter = true;
       pdfOptions.headerTemplate = '<div></div>';
+      // Hide page number on first page (cover page) using inline script
       pdfOptions.footerTemplate = `
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #666; text-align: center; width: 100%; padding: 0 2cm;">
+        <div id="footer" style="font-family: 'JetBrains Mono', monospace; font-size: 9px; color: #666; text-align: center; width: 100%; padding: 0 2cm;">
           <span class="pageNumber"></span> / <span class="totalPages"></span>
         </div>
+        <script>
+          var pageNum = document.querySelector('.pageNumber');
+          if (pageNum && pageNum.textContent === '1') {
+            document.getElementById('footer').style.visibility = 'hidden';
+          }
+        </script>
       `;
       // Adjust margin to accommodate footer
       pdfOptions.margin = {

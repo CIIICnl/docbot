@@ -134,6 +134,13 @@
     &:has(.converter-page-v2) {
       max-width: 100%;
     }
+
+    // Editor page should fill the available space
+    &:has(.editor-page) {
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+    }
   }
 }
 

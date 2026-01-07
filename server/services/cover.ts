@@ -48,22 +48,17 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 
 /**
  * Format date for display with locale support
- * Dutch format: "1 januari 2025" (day month year, lowercase month)
- * English format: "January 1, 2025"
+ * If a date string is provided, it's returned as-is (preserving user's format)
+ * If no date is provided, generates today's date in the specified locale
  */
 function formatDate(dateStr?: string, locale: 'en' | 'nl' = 'en'): string {
-  let date: Date;
-
+  // If user provided a date string, use it exactly as-is
   if (dateStr) {
-    // Try to parse the provided date
-    date = new Date(dateStr);
-    if (isNaN(date.getTime())) {
-      return dateStr; // Return as-is if can't parse
-    }
-  } else {
-    // Default to today
-    date = new Date();
+    return dateStr;
   }
+
+  // Generate today's date in the appropriate locale format
+  const date = new Date();
 
   if (locale === 'nl') {
     // Dutch format: "1 januari 2025"
@@ -134,27 +129,15 @@ async function loadFonts(pdfDoc: PDFDocument, theme: Theme | null, themeId: stri
     }
   }
 
-  // Load body font - try variants with TTF files (regular, then bold, then italic)
-  if (fonts?.body) {
-    // Find a variant that has a TTF file
-    const variantsToTry = [
-      fonts.body.regular,
-      fonts.body.bold,
-      fonts.body.italic,
-      fonts.body.boldItalic,
-    ];
-
-    for (const variant of variantsToTry) {
-      if (variant?.ttf) {
-        try {
-          const fontPath = path.join(themePath, variant.ttf);
-          const fontBytes = await fs.readFile(fontPath);
-          bodyFont = await pdfDoc.embedFont(fontBytes);
-          break; // Successfully loaded, stop trying
-        } catch (err) {
-          console.error('Failed to load body font variant:', err);
-        }
-      }
+  // Load body font - only use regular variant, fall back to standard font
+  // Don't use bold/italic as fallbacks to preserve intended styling
+  if (fonts?.body?.regular?.ttf) {
+    try {
+      const fontPath = path.join(themePath, fonts.body.regular.ttf);
+      const fontBytes = await fs.readFile(fontPath);
+      bodyFont = await pdfDoc.embedFont(fontBytes);
+    } catch (err) {
+      console.error('Failed to load body font:', err);
     }
   }
 
@@ -270,7 +253,7 @@ export async function createCoverPage(options: CreateCoverPageOptions): Promise<
   const locale = coverPageOptions?.locale || 'en';
   const dateStr = formatDate(coverPageOptions?.date, locale);
   const versionDateText = `${version}  |  ${dateStr}`;
-  const metaFontSize = 11;
+  const metaFontSize = 13;
 
   // Position rotated text in top right corner
   // -90 degrees (or 270) for clockwise rotation

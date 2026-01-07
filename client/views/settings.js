@@ -1,21 +1,42 @@
 /**
  * Settings View
- * Application settings page.
+ * Application settings as a modal dialog.
  */
 
 import { h, empty } from '../lib/dom.js';
-import { pageHeader, settingsSection } from '../lib/components.js';
+import { settingsSection } from '../lib/components.js';
 import { getTheme, setTheme } from '../lib/theme.js';
 import { success } from '../lib/toast.js';
 import { slSelect, slButton, slTextarea, sl } from '../lib/shoelace.js';
-import { get } from '../lib/api.js';
+import { checkLlmProviders } from '../lib/feature-detection.js';
 import { STORAGE_KEYS, PLACEHOLDERS } from '../lib/constants.js';
 import { t, getLocale, setLocale, getSupportedLocales } from '../lib/i18n.js';
+import { createModal } from '../lib/modal.js';
 
 /**
- * Render the settings view
+ * Show the settings modal
+ * @param {HTMLElement} root - Root element to append modal to
+ * @param {Set} [overlayClosers] - Set of overlay closer functions
+ * @returns {Object} Modal API
+ */
+export function showSettingsModal(root, overlayClosers) {
+  const modal = createModal(h, {
+    title: t('settings.title'),
+    modalClass: 'modal-settings',
+  });
+
+  // Render settings content into the modal
+  renderSettingsContent(modal.content);
+
+  modal.show(root, overlayClosers);
+  return modal;
+}
+
+/**
+ * Render the settings view (legacy page version)
  * @param {HTMLElement} container
  * @returns {Function} Cleanup function
+ * @deprecated Use showSettingsModal instead
  */
 export async function renderSettings(container) {
   render(container);
@@ -26,21 +47,16 @@ export async function renderSettings(container) {
 }
 
 /**
- * Render the settings UI
+ * Render the settings content (shared between modal and page)
+ * @param {HTMLElement} container
+ * @param {Object} [options]
+ * @param {Function} [options.onLanguageChange] - Callback when language changes
  */
-async function render(container) {
+async function renderSettingsContent(container, options = {}) {
   empty(container);
 
   // Check LLM availability
-  let llmProviders = { claude: false, mistral: false };
-  try {
-    const result = await get('/api/llm/status');
-    if (result.ok) {
-      llmProviders = result.data.providers;
-    }
-  } catch {
-    // LLM not available
-  }
+  const llmProviders = await checkLlmProviders();
 
   // Theme toggle
   const themeSelect = slSelect({
@@ -68,9 +84,8 @@ async function render(container) {
 
   languageSelect.addEventListener('sl-change', async (e) => {
     await setLocale(e.target.value);
-    success(t('toast.languageChanged'));
-    // Re-render the page to update all translations
-    render(container);
+    // Reload the page to apply translations everywhere
+    window.location.reload();
   });
 
   // Appearance section
@@ -95,7 +110,7 @@ async function render(container) {
   const globalContext = slTextarea({
     value: localStorage.getItem(STORAGE_KEYS.GLOBAL_CONTEXT) || '',
     placeholder: t('placeholders.globalContext'),
-    rows: 6,
+    rows: 4,
     resize: 'vertical',
     style: 'width: 100%;',
   });
@@ -132,7 +147,7 @@ async function render(container) {
 
   // Build AI section with full-width global context
   const aiSection = h('div', { class: 'vk-settings-section' }, [
-    h('h2', { class: 'vk-settings-section-title' }, [t('settings.ai.title')]),
+    h('h3', { class: 'vk-settings-section-title' }, [t('settings.ai.title')]),
     h('p', { class: 'vk-settings-section-description' }, [
       aiAvailable
         ? t('settings.ai.descriptionAvailable')
@@ -167,31 +182,21 @@ async function render(container) {
     text: t('settings.danger.deleteAllButton'),
   });
 
-  const dangerSection = h('div', { class: 'vk-settings-section mt-8' }, [
-    h('h2', { class: 'vk-settings-section-title text-danger' }, [t('settings.danger.title')]),
+  const dangerSection = h('div', { class: 'vk-settings-section' }, [
+    h('h3', { class: 'vk-settings-section-title text-danger' }, [t('settings.danger.title')]),
     h('p', { class: 'vk-settings-section-description' }, [
       t('settings.danger.description'),
     ]),
-    h('div', { class: 'vk-card mt-4' }, [
-      h('div', { class: 'vk-card-body flex items-center justify-between' }, [
-        h('div', {}, [
-          h('h4', { class: 'font-medium' }, [t('settings.danger.deleteAllTitle')]),
-          h('p', { class: 'text-sm text-muted mt-1' }, [
-            t('settings.danger.deleteAllDescription'),
-          ]),
+    h('div', { class: 'vk-settings-danger-row' }, [
+      h('div', {}, [
+        h('h4', { class: 'font-medium' }, [t('settings.danger.deleteAllTitle')]),
+        h('p', { class: 'text-sm text-muted mt-1' }, [
+          t('settings.danger.deleteAllDescription'),
         ]),
-        deleteButton,
       ]),
+      deleteButton,
     ]),
   ]);
-
-  // Page header
-  const header = pageHeader({
-    title: t('settings.title'),
-    subtitle: t('settings.subtitle'),
-  });
-
-  container.appendChild(header);
 
   const settingsContainer = h('div', { class: 'vk-settings' }, [
     appearanceSection,
@@ -200,4 +205,25 @@ async function render(container) {
   ]);
 
   container.appendChild(settingsContainer);
+}
+
+/**
+ * Render the settings UI (legacy page version)
+ */
+async function render(container) {
+  empty(container);
+
+  // Page header
+  const { pageHeader } = await import('../lib/components.js');
+  const header = pageHeader({
+    title: t('settings.title'),
+    subtitle: t('settings.subtitle'),
+  });
+
+  container.appendChild(header);
+
+  const contentContainer = h('div', {});
+  container.appendChild(contentContainer);
+
+  await renderSettingsContent(contentContainer);
 }

@@ -41,6 +41,23 @@ md.use(footnote);
 // Enable tables (built into markdown-it)
 md.enable('table');
 
+// Make external links open in new window
+const defaultRender =
+  md.renderer.rules.link_open ||
+  function (tokens, idx, options, _env, self) {
+    return self.renderToken(tokens, idx, options);
+  };
+
+md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+  const token = tokens[idx];
+  if (token) {
+    // Add target="_blank" and rel="noopener noreferrer" for security
+    token.attrSet('target', '_blank');
+    token.attrSet('rel', 'noopener noreferrer');
+  }
+  return defaultRender(tokens, idx, options, env, self);
+};
+
 /**
  * Extract table of contents entries from markdown tokens
  */
@@ -108,8 +125,10 @@ export function parseMarkdown(content: string): MarkdownResult {
 /**
  * Generate HTML for table of contents
  */
-export function generateTocHtml(toc: TocEntry[]): string {
+export function generateTocHtml(toc: TocEntry[], locale: 'en' | 'nl' = 'en'): string {
   if (toc.length === 0) return '';
+
+  const tocTitle = locale === 'nl' ? 'Inhoudsopgave' : 'Contents';
 
   const items = toc
     .map((entry) => {
@@ -119,8 +138,8 @@ export function generateTocHtml(toc: TocEntry[]): string {
     .join('\n');
 
   return `
-    <nav class="document-toc" aria-label="Table of Contents">
-      <h2 class="toc-title">Contents</h2>
+    <nav class="document-toc" aria-label="${tocTitle}">
+      <h2 class="toc-title">${tocTitle}</h2>
       <ul class="toc-list">
         ${items}
       </ul>
