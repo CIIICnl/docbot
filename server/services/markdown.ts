@@ -41,6 +41,23 @@ md.use(footnote);
 // Enable tables (built into markdown-it)
 md.enable('table');
 
+// Make external links open in new window
+const defaultRender =
+  md.renderer.rules.link_open ||
+  function (tokens, idx, options, _env, self) {
+    return self.renderToken(tokens, idx, options);
+  };
+
+md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+  const token = tokens[idx];
+  if (token) {
+    // Add target="_blank" and rel="noopener noreferrer" for security
+    token.attrSet('target', '_blank');
+    token.attrSet('rel', 'noopener noreferrer');
+  }
+  return defaultRender(tokens, idx, options, env, self);
+};
+
 /**
  * Extract table of contents entries from markdown tokens
  */
