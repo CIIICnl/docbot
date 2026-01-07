@@ -120,6 +120,7 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
         enhanced: result.enhanced,
         changes: result.changes,
         suggestions: result.suggestions,
+        coverPage: result.coverPage,
       });
 
       return true;

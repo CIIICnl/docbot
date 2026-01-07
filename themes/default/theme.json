@@ -3,26 +3,25 @@
   "description": "Clean, minimal document theme with Inter font family",
   "version": "1.0.0",
   "author": "DreamDocs",
-  "fonts": [
-    {
+  "fonts": {
+    "heading": {
       "family": "Inter",
-      "weight": 400,
-      "style": "normal",
-      "src": "fonts/Inter-Regular.woff2"
+      "woff2": "fonts/Inter-SemiBold.woff2"
     },
-    {
+    "body": {
       "family": "Inter",
-      "weight": 600,
-      "style": "normal",
-      "src": "fonts/Inter-SemiBold.woff2"
+      "regular": {
+        "woff2": "fonts/Inter-Regular.woff2"
+      },
+      "bold": {
+        "woff2": "fonts/Inter-SemiBold.woff2"
+      }
     },
-    {
+    "caption": {
       "family": "JetBrains Mono",
-      "weight": 400,
-      "style": "normal",
-      "src": "fonts/JetBrainsMono-Regular.woff2"
+      "woff2": "fonts/JetBrainsMono-Regular.woff2"
     }
-  ],
+  },
   "colors": {
     "text": "#1a1a1a",
     "heading": "#000000",

@@ -22,6 +22,7 @@ function parseResponse(response: string): LlmEnhanceResult {
         enhanced: parsed.markdown || response,
         changes: Array.isArray(parsed.changes) ? parsed.changes : [],
         suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+        coverPage: parsed.coverPage || undefined,
       };
     }
   } catch {

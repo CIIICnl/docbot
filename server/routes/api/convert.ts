@@ -9,7 +9,19 @@ import { parseMarkdown, generateTocHtml } from '../../services/markdown.js';
 import { generatePdf, estimatePageCount } from '../../services/pdf.js';
 import { buildDocument, getPageSettings } from '../../templates/document.js';
 import { getDefaultThemeId, themeExists } from '../../services/themes.js';
+import { createCoverPage, mergePdfs } from '../../services/cover.js';
 import type { ConversionRequest, ConversionResult, ConversionMetadata } from '../../types/index.js';
+
+/**
+ * Remove the first H1 from markdown content (for cover page)
+ * This prevents the title from appearing twice when a cover page is used
+ */
+function stripFirstH1(markdown: string): string {
+  // Match first H1 (# at start of line, not ##)
+  // Also handles H1 with leading whitespace on the line
+  const h1Regex = /^(\s*#\s+[^\n]+\n?)/m;
+  return markdown.replace(h1Regex, '');
+}
 
 /**
  * Handle conversion routes
@@ -40,8 +52,12 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
         options.themeId = getDefaultThemeId();
       }
 
-      // Parse markdown
-      const { html: contentHtml, toc, title: extractedTitle } = parseMarkdown(body.content);
+      // If cover page is enabled, strip the first H1 from content to avoid duplication
+      const contentToProcess = options.coverPage ? stripFirstH1(body.content) : body.content;
+
+      // Parse markdown (use original content to extract title, processed content for body)
+      const { title: extractedTitle } = parseMarkdown(body.content);
+      const { html: contentHtml, toc } = parseMarkdown(contentToProcess);
       const title = options.title || extractedTitle || 'Document';
       const tocHtml = options.generateToc ? generateTocHtml(toc) : '';
 
@@ -57,13 +73,24 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
       // Get page settings from theme
       const pageSettings = await getPageSettings(options.themeId);
 
-      // Generate PDF
-      const pdfBuffer = await generatePdf({
+      // Generate main PDF
+      let pdfBuffer = await generatePdf({
         html: documentHtml,
         pageNumbers: options.pageNumbers,
         format: pageSettings.format,
         margins: pageSettings.margins,
       });
+
+      // Optionally add cover page
+      if (options.coverPage) {
+        const coverBuffer = await createCoverPage({
+          title,
+          themeId: options.themeId,
+          format: pageSettings.format,
+          coverPageOptions: options.coverPageOptions,
+        });
+        pdfBuffer = await mergePdfs(coverBuffer, pdfBuffer);
+      }
 
       // Build metadata
       const metadata: ConversionMetadata = {

@@ -39,9 +39,11 @@ const EXPORT_FORMATS = {
  * @param {string} options.themeId - Theme ID
  * @param {boolean} options.generateToc - Generate table of contents
  * @param {boolean} options.pageNumbers - Include page numbers (PDF only)
+ * @param {boolean} options.coverPage - Include cover page (PDF only)
+ * @param {Object} options.coverPageOptions - Cover page options (subtitle, version, date)
  * @returns {Promise<Object>} Export result with success flag
  */
-export async function exportDocument({ format, content, title, themeId, generateToc, pageNumbers }) {
+export async function exportDocument({ format, content, title, themeId, generateToc, pageNumbers, coverPage, coverPageOptions }) {
   const formatConfig = EXPORT_FORMATS[format];
   if (!formatConfig) {
     throw new Error(`Unknown export format: ${format}`);
@@ -58,6 +60,8 @@ export async function exportDocument({ format, content, title, themeId, generate
       themeId,
       generateToc,
       pageNumbers: format === 'pdf' ? pageNumbers : false,
+      coverPage: format === 'pdf' ? coverPage : false,
+      coverPageOptions: format === 'pdf' ? coverPageOptions : undefined,
       title,
     },
   });

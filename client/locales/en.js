@@ -82,6 +82,7 @@ export default {
     loadDraft: 'Load Draft',
     toc: 'ToC',
     pageNumbers: 'Page #',
+    coverPage: 'Cover Page',
     deleteLabel: 'Delete',
   },
 
@@ -279,6 +280,9 @@ export default {
     markdownEditor: 'Paste or type your markdown here...\n\nOr use Upload to load a .md or .docx file.',
     notionUrl: 'https://notion.so/...',
     documentTitle: 'Document title...',
+    subtitle: 'Subtitle...',
+    version: 'v1.0',
+    date: 'Date...',
     globalContext: `Enter organization style preferences and general instructions for AI enhancement...
 
 Examples:

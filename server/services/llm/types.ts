@@ -32,10 +32,17 @@ export interface LlmEnhanceRequest {
   language?: UILanguage;
 }
 
+export interface CoverPageMetadata {
+  subtitle?: string;
+  version?: string;
+  date?: string;
+}
+
 export interface LlmEnhanceResult {
   enhanced: string;
   changes: LlmChange[];
   suggestions: LlmSuggestion[];
+  coverPage?: CoverPageMetadata;
 }
 
 export interface LlmStatus {

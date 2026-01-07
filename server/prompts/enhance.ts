@@ -87,6 +87,10 @@ Return a JSON object with these fields:
 3. "suggestions": An array of feedback items (empty if feedback was not requested), each with:
    - "text": The suggestion or question in a helpful, constructive tone
    - "location": Where in the document this applies (e.g., "Methods section", "paragraph about pricing")
+4. "coverPage": An object with metadata for the document cover page. ALWAYS include all three fields:
+   - "subtitle": A subtitle or tagline. If explicitly mentioned in the document, use that. Otherwise, generate a brief descriptive subtitle (5-10 words) that captures the document's purpose or main topic. Always provide something.
+   - "version": A version number. If mentioned in the document (e.g., "v1.0", "Version 2.3", "Draft 1"), use that. Otherwise, use "v1.0" as the default.
+   - "date": A document date. If mentioned in the document (e.g., "January 2025", "2025-01-07", "Updated: March 2024"), use that. Otherwise, use today's date in a readable format like "January 2025".
 
 Only include substantive changes in the changes array, not minor whitespace adjustments.${languageInstruction}`;
 };

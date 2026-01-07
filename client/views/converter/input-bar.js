@@ -107,6 +107,29 @@ export function createInputBar({ store, onContentChange }) {
   const pageNumSwitch = slSwitch({ checked: true, size: 'small' });
   const pageNumLabel = h('label', { class: 'input-toggle-label' }, [pageNumSwitch, ' ' + t('input.pageNumbers')]);
 
+  // Cover page toggle
+  const coverPageSwitch = slSwitch({ checked: true, size: 'small' });
+  const coverPageLabel = h('label', { class: 'input-toggle-label' }, [coverPageSwitch, ' ' + t('input.coverPage')]);
+
+  // Cover page metadata fields
+  const subtitleInput = slInput({
+    placeholder: t('placeholders.subtitle'),
+    size: 'small',
+    style: 'width: 250px;',
+  });
+
+  const versionInput = slInput({
+    placeholder: t('placeholders.version'),
+    size: 'small',
+    style: 'width: 80px;',
+  });
+
+  const dateInput = slInput({
+    placeholder: t('placeholders.date'),
+    size: 'small',
+    style: 'width: 140px;',
+  });
+
   // Event handlers
   fileInput.addEventListener('change', () => handleFileUpload(fileInput.files));
 
@@ -124,6 +147,22 @@ export function createInputBar({ store, onContentChange }) {
 
   pageNumSwitch.addEventListener('sl-change', (e) => {
     store.set({ pageNumbers: e.target.checked });
+  });
+
+  coverPageSwitch.addEventListener('sl-change', (e) => {
+    store.set({ coverPage: e.target.checked });
+  });
+
+  subtitleInput.addEventListener('sl-input', (e) => {
+    store.set({ coverPageSubtitle: e.target.value });
+  });
+
+  versionInput.addEventListener('sl-input', (e) => {
+    store.set({ coverPageVersion: e.target.value });
+  });
+
+  dateInput.addEventListener('sl-input', (e) => {
+    store.set({ coverPageDate: e.target.value });
   });
 
   // File upload handler
@@ -312,14 +351,31 @@ export function createInputBar({ store, onContentChange }) {
     return btoa(binary);
   }
 
+  // Cover page metadata row (shown/hidden based on coverPage toggle)
+  const coverMetadataRow = h('div', { class: 'input-bar-cover-metadata' }, [
+    subtitleInput,
+    versionInput,
+    dateInput,
+  ]);
+
+  // Show/hide cover metadata based on toggle
+  function updateCoverMetadataVisibility() {
+    coverMetadataRow.hidden = !coverPageSwitch.checked;
+  }
+  coverPageSwitch.addEventListener('sl-change', updateCoverMetadataVisibility);
+  updateCoverMetadataVisibility();
+
   // Build element
   const element = h('div', { class: 'converter-input-bar' }, [
-    h('div', { class: 'input-bar-sources' }, [
-      uploadBtn, fileInput, notionBtn, draftsDropdown,
+    h('div', { class: 'input-bar-row' }, [
+      h('div', { class: 'input-bar-sources' }, [
+        uploadBtn, fileInput, notionBtn, draftsDropdown,
+      ]),
+      h('div', { class: 'input-bar-settings' }, [
+        titleInput, themeSelect, tocLabel, pageNumLabel, coverPageLabel, saveDraftBtn,
+      ]),
     ]),
-    h('div', { class: 'input-bar-settings' }, [
-      titleInput, themeSelect, tocLabel, pageNumLabel, saveDraftBtn,
-    ]),
+    coverMetadataRow,
   ]);
 
   // Initialize
@@ -332,6 +388,18 @@ export function createInputBar({ store, onContentChange }) {
     notionDialog,
     setTitle(title) {
       titleInput.value = title;
+    },
+    setSubtitle(subtitle) {
+      subtitleInput.value = subtitle || '';
+      store.set({ coverPageSubtitle: subtitle || '' });
+    },
+    setVersion(version) {
+      versionInput.value = version || '';
+      store.set({ coverPageVersion: version || '' });
+    },
+    setDate(date) {
+      dateInput.value = date || '';
+      store.set({ coverPageDate: date || '' });
     },
   };
 }

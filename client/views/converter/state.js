@@ -45,6 +45,12 @@ export function createConverterState() {
     selectedTheme: 'default',
     generateToc: true,
     pageNumbers: true,
+    coverPage: true,
+
+    // Cover page options (populated by AI enhancement)
+    coverPageSubtitle: '',
+    coverPageVersion: '',
+    coverPageDate: '',
 
     // Available options
     themes: [],

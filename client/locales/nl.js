@@ -83,6 +83,7 @@ export default {
     loadDraft: 'Concept laden',
     toc: 'Inhoud',
     pageNumbers: 'Pagina #',
+    coverPage: 'Voorblad',
     deleteLabel: 'Verwijderen',
   },
 
@@ -278,6 +279,9 @@ export default {
       'Plak of typ hier je markdown...\n\nOf gebruik Uploaden om een .md of .docx bestand te laden.',
     notionUrl: 'https://notion.so/...',
     documentTitle: 'Documenttitel...',
+    subtitle: 'Ondertitel...',
+    version: 'v1.0',
+    date: 'Datum...',
     globalContext: `Voer organisatie stijlvoorkeuren en algemene instructies voor AI-verbetering in...
 
 Voorbeelden:

@@ -110,8 +110,18 @@ export function h(tag, attrs = {}, children = []) {
  * @param {Element} el
  */
 export function empty(el) {
-  while (el.firstChild) {
-    el.removeChild(el.firstChild);
+  // Use replaceChildren if available (better for web components)
+  if (el.replaceChildren) {
+    el.replaceChildren();
+  } else {
+    while (el.firstChild) {
+      try {
+        el.removeChild(el.firstChild);
+      } catch {
+        // Ignore errors from web components that manage their own children
+        break;
+      }
+    }
   }
 }
 

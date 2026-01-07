@@ -15,6 +15,15 @@ export interface ConversionOptions {
   generateToc: boolean;
   pageNumbers: boolean;
   title?: string;
+  coverPage?: boolean;
+  coverPageOptions?: CoverPageOptions;
+}
+
+export interface CoverPageOptions {
+  subtitle?: string;
+  version?: string;
+  date?: string;
+  locale?: 'en' | 'nl';
 }
 
 export interface ConversionResult {
@@ -41,16 +50,66 @@ export interface Theme {
   description?: string;
   version?: string;
   author?: string;
-  fonts?: FontDefinition[];
+  fonts?: ThemeFonts;
   colors?: Record<string, string>;
   pageSettings?: PageSettings;
 }
 
-export interface FontDefinition {
+/**
+ * Theme font configuration
+ * Structured for clear separation of heading, body, and caption fonts
+ */
+export interface ThemeFonts {
+  /** Heading font - single variant only, no faux-bold/italic */
+  heading: HeadingFont;
+  /** Body font - supports multiple variants */
+  body: BodyFont;
+  /** Caption/code font - single variant */
+  caption: CaptionFont;
+}
+
+/**
+ * Heading font - one variant only
+ * Same font used regardless of weight/style to prevent faux-bold/italic
+ */
+export interface HeadingFont {
   family: string;
-  weight?: number | string;
-  style?: 'normal' | 'italic';
-  src: string;
+  /** TTF file for PDF generation */
+  ttf?: string;
+  /** WOFF2 file for web preview */
+  woff2?: string;
+}
+
+/**
+ * Body font with multiple variants
+ */
+export interface BodyFont {
+  family: string;
+  regular?: FontVariant;
+  bold?: FontVariant;
+  italic?: FontVariant;
+  boldItalic?: FontVariant;
+}
+
+/**
+ * Caption/code font - single variant
+ */
+export interface CaptionFont {
+  family: string;
+  /** TTF file for PDF generation */
+  ttf?: string;
+  /** WOFF2 file for web preview */
+  woff2?: string;
+}
+
+/**
+ * Font variant with optional TTF and WOFF2 paths
+ */
+export interface FontVariant {
+  /** TTF file for PDF generation */
+  ttf?: string;
+  /** WOFF2 file for web preview */
+  woff2?: string;
 }
 
 export interface PageSettings {

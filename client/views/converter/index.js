@@ -75,11 +75,18 @@ export async function renderConverter(container) {
 
   const actionsBar = createActionsBar({
     store,
-    onEnhanceComplete: ({ enhanced, changes, suggestions, willModify }) => {
+    onEnhanceComplete: ({ enhanced, changes, suggestions, coverPage, willModify }) => {
       if (willModify && enhanced) {
         store.set({ content: enhanced });
         markdownPanel.setValue(enhanced);
         previewPanel.updatePreview();
+      }
+
+      // Store cover page metadata if extracted and update input fields
+      if (coverPage) {
+        inputBar.setSubtitle(coverPage.subtitle || '');
+        inputBar.setVersion(coverPage.version || 'v1.0');
+        inputBar.setDate(coverPage.date || '');
       }
 
       if (changes.length > 0 || suggestions.length > 0) {

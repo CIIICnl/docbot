@@ -4,44 +4,35 @@
   "version": "1.0.0",
   "author": "CIIIC",
   "private": true,
-  "fonts": [
-    {
-      "family": "GT America",
-      "weight": 400,
-      "style": "normal",
-      "src": "fonts/GT-America-LCGV-Standard-Regular.ttf"
-    },
-    {
-      "family": "GT America",
-      "weight": 700,
-      "style": "normal",
-      "src": "fonts/GT-America-LCGV-Standard-Bold.ttf"
-    },
-    {
-      "family": "GT America",
-      "weight": 400,
-      "style": "italic",
-      "src": "fonts/GT-America-LCGV-Standard-Regular-Italic.ttf"
-    },
-    {
-      "family": "GT America",
-      "weight": 700,
-      "style": "italic",
-      "src": "fonts/GT-America-LCGV-Standard-Bold-Italic.ttf"
-    },
-    {
+  "fonts": {
+    "heading": {
       "family": "GT America Extended",
-      "weight": 500,
-      "style": "normal",
-      "src": "fonts/GT-America-LCGV-Extended-Medium.ttf"
+      "ttf": "fonts/heading/GT-America-Extended-Medium.ttf",
+      "woff2": "fonts/heading/GT-America-Extended-Medium.woff2"
     },
-    {
+    "body": {
+      "family": "GT America",
+      "regular": {
+        "woff2": "fonts/body/GT-America-Standard-Regular.woff2"
+      },
+      "bold": {
+        "ttf": "fonts/body/GT-America-Standard-Bold.ttf",
+        "woff2": "fonts/body/GT-America-Standard-Bold.woff2"
+      },
+      "italic": {
+        "ttf": "fonts/body/GT-America-Standard-Regular-Italic.ttf",
+        "woff2": "fonts/body/GT-America-Standard-Regular-Italic.woff2"
+      },
+      "boldItalic": {
+        "woff2": "fonts/body/GT-America-Standard-Bold-Italic.woff2"
+      }
+    },
+    "caption": {
       "family": "JetBrains Mono",
-      "weight": 400,
-      "style": "normal",
-      "src": "fonts/JetBrainsMono-Regular.ttf"
+      "ttf": "fonts/captions/JetBrainsMono-Regular.ttf",
+      "woff2": "fonts/captions/JetBrainsMono-Regular.woff2"
     }
-  ],
+  },
   "colors": {
     "text": "#141414",
     "heading": "#141414",

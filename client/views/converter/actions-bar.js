@@ -220,6 +220,7 @@ export function createActionsBar({ store, onEnhanceComplete }) {
         enhanced: willModify ? result.data.enhanced : null,
         changes: result.data.changes || [],
         suggestions: result.data.suggestions || [],
+        coverPage: result.data.coverPage,
         willModify,
       });
 
@@ -296,6 +297,13 @@ export function createActionsBar({ store, onEnhanceComplete }) {
         themeId: state.selectedTheme,
         generateToc: state.generateToc,
         pageNumbers: state.pageNumbers,
+        coverPage: state.coverPage,
+        coverPageOptions: {
+          subtitle: state.coverPageSubtitle,
+          version: state.coverPageVersion,
+          date: state.coverPageDate,
+          locale: getLocale(),
+        },
       });
 
       const successKey = format === 'pdf' ? 'toast.pdfExported' : 'toast.htmlExported';

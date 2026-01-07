@@ -10,6 +10,7 @@ import { showLoading } from '../../lib/loading.js';
 import { downloadFile, downloadBase64, sanitizeFilename } from '../../lib/download.js';
 import { slSelect, slSwitch, slButton, sl } from '../../lib/shoelace.js';
 import { STORAGE_KEYS } from '../../lib/constants.js';
+import { t } from '../../lib/i18n.js';
 
 /**
  * Create the options panel
@@ -28,6 +29,7 @@ export function createOptionsPanel(callbacks) {
   let selectedTheme = 'default';
   let generateToc = true;
   let pageNumbers = true;
+  let coverPage = false;
   let llmAvailable = false;
   let selectedProvider = localStorage.getItem(STORAGE_KEYS.DEFAULT_PROVIDER) || 'claude';
 
@@ -57,6 +59,15 @@ export function createOptionsPanel(callbacks) {
   });
   pageNumSwitch.addEventListener('sl-change', (e) => {
     pageNumbers = e.target.checked;
+  });
+
+  // Cover page toggle
+  const coverPageSwitch = slSwitch({
+    checked: false,
+    text: t('input.coverPage'),
+  });
+  coverPageSwitch.addEventListener('sl-change', (e) => {
+    coverPage = e.target.checked;
   });
 
   // AI Enhancement section
@@ -237,6 +248,7 @@ This is especially important for Word documents, which often have inconsistent h
           themeId: selectedTheme,
           generateToc,
           pageNumbers,
+          coverPage,
           title: getTitle(),
         },
       });
@@ -306,7 +318,7 @@ This is especially important for Word documents, which often have inconsistent h
   return h('div', { class: 'options-panel' }, [
     h('div', { class: 'options-section' }, [
       themeSelect,
-      h('div', { class: 'options-toggles' }, [tocSwitch, pageNumSwitch]),
+      h('div', { class: 'options-toggles' }, [tocSwitch, pageNumSwitch, coverPageSwitch]),
     ]),
     enhanceSection,
     exportSection,
