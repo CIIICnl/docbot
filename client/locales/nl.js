@@ -7,6 +7,7 @@ export default {
     appName: 'DreamDocs',
     confirm: 'Bevestigen',
     cancel: 'Annuleren',
+    close: 'Sluiten',
     delete: 'Verwijderen',
     save: 'Opslaan',
     ok: 'OK',
@@ -16,7 +17,7 @@ export default {
 
   // Navigation
   nav: {
-    convert: 'Converteren',
+    documents: 'Documenten',
     settings: 'Instellingen',
     signOut: 'Uitloggen',
   },
@@ -75,13 +76,82 @@ export default {
     },
   },
 
+  // List view
+  list: {
+    title: 'Je Documenten',
+    empty: 'Nog geen documenten',
+    emptyHint: 'Maak je eerste document om te beginnen.',
+    emptyDraft: 'Leeg document',
+    newDocument: 'Nieuw Document',
+    localStorageNotice: 'Concepten worden lokaal in je browser opgeslagen.',
+    delete: 'Verwijderen',
+    deleteTitle: 'Document Verwijderen',
+    deleteConfirm: '"{title}" verwijderen? Dit kan niet ongedaan worden gemaakt.',
+    openDraft: '{title} openen',
+    timeJustNow: 'Zojuist',
+    timeMinutes: '{count}m geleden',
+    timeHours: '{count}u geleden',
+    timeYesterday: 'Gisteren',
+    timeDays: '{count}d geleden',
+  },
+
+  // New document modal
+  newDocument: {
+    title: 'Nieuw Document',
+    untitled: 'Naamloos',
+    mode: {
+      empty: 'Leeg',
+      paste: 'Plakken',
+      upload: 'Uploaden',
+      notion: 'Notion',
+    },
+    titleLabel: 'Titel',
+    titlePlaceholder: 'Documenttitel...',
+    titleHintNotion: 'Laat leeg om de Notion-paginatitel te gebruiken',
+    contentLabel: 'Inhoud',
+    contentPlaceholder: 'Plak hier je content...',
+    notionUrlLabel: 'Notion Pagina URL',
+    notionUrlPlaceholder: 'https://notion.so/...',
+    selectFile: 'Bestand Kiezen',
+    noFileSelected: 'Geen bestand geselecteerd',
+    options: {
+      theme: 'Thema',
+      aiEnhance: 'Verbeteren met AI',
+      aiEnhanceHint: 'Verbeter automatisch de structuur, corrigeer typfouten en verbeter de leesbaarheid',
+      coverPage: 'Voorblad',
+      pageNumbers: 'Paginanummers',
+      toc: 'Inhoudsopgave',
+    },
+    create: 'Aanmaken',
+    import: 'Importeren',
+    importing: 'Importeren...',
+    fetchingNotion: 'Notion-pagina ophalen...',
+    enhancing: 'Document Verbeteren',
+    enhancingMessage: 'Structuur verbeteren en problemen oplossen...',
+    enhanceDone: 'Verbetering voltooid',
+    errorNoFile: 'Selecteer een bestand',
+    errorNoUrl: 'Voer een Notion-pagina URL in',
+    errorReadFile: 'Bestand lezen mislukt: {error}',
+    errorNotion: 'Importeren van Notion mislukt: {error}',
+    errorEnhance: 'Verbetering mislukt: {error}',
+  },
+
+  // Editor
+  editor: {
+    backToList: 'Documenten',
+    saved: 'Opgeslagen',
+    saving: 'Opslaan...',
+    unsavedChanges: 'Je hebt niet-opgeslagen wijzigingen. Toch verlaten?',
+    draftNotFound: 'Document niet gevonden',
+  },
+
   // Converter input bar
   input: {
     upload: 'Uploaden',
     notion: 'Notion',
     saveDraft: 'Concept opslaan',
     loadDraft: 'Concept laden',
-    toc: 'Inhoud',
+    toc: 'Inhoudsopgave',
     pageNumbers: 'Pagina #',
     coverPage: 'Voorblad',
     deleteLabel: 'Verwijderen',

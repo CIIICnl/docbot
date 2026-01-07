@@ -26,6 +26,7 @@
 @use 'components/panel-search';
 @use 'components/enhance-dialog';
 @use 'components/action-group';
+@use 'components/modal';
 
 // Views - Page-specific styles
 @use 'views/converter';
@@ -34,3 +35,4 @@
 @use 'views/changes-sidebar';
 @use 'views/options-panel';
 @use 'views/input-tabs';
+@use 'views/list';

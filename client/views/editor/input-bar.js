@@ -4,10 +4,12 @@
  */
 
 import { h, empty } from '../../lib/dom.js';
-import { post, get } from '../../lib/api.js';
+import { post } from '../../lib/api.js';
+import { populateThemeSelect, getDefaultThemeId } from '../../lib/document-themes.js';
+import { checkNotionAvailable } from '../../lib/feature-detection.js';
 import { success, error, warning } from '../../lib/toast.js';
 import { showLoading } from '../../lib/loading.js';
-import { readFileAsText, readFileAsArrayBuffer } from '../../lib/file-upload.js';
+import { parseDocumentFile, isWordDocument } from '../../lib/file-processing.js';
 import { slButton, slSelect, slSwitch, slInput, sl } from '../../lib/shoelace.js';
 import { getDrafts, saveDraft, deleteDraft } from '../../lib/drafts.js';
 import { t } from '../../lib/i18n.js';
@@ -170,43 +172,22 @@ export function createInputBar({ store, onContentChange }) {
     const file = files?.[0];
     if (!file) return;
 
-    const isWord = file.name.toLowerCase().endsWith('.docx');
+    const showLoadingIndicator = isWordDocument(file);
+    const hide = showLoadingIndicator ? showLoading(t('loading.parsingWord')) : null;
 
-    if (isWord) {
-      const hide = showLoading(t('loading.parsingWord'));
+    try {
+      const result = await parseDocumentFile(file);
+      onContentChange(result.markdown, result.title);
 
-      try {
-        const arrayBuffer = await readFileAsArrayBuffer(file);
-        const base64 = arrayBufferToBase64(arrayBuffer);
-
-        const result = await post('/api/docx/parse', { file: base64 });
-
-        if (!result.ok) {
-          throw new Error(result.data?.error || t('toast.parseFailed', { error: '' }));
-        }
-
-        const title = result.data.title || file.name.replace(/\.docx$/i, '');
-        onContentChange(result.data.markdown, title);
-
-        if (result.data.warnings?.length > 0) {
-          warning(t('toast.parsedWarnings', { count: result.data.warnings.length }));
-        } else {
-          success(t('toast.loadedFile', { filename: file.name }));
-        }
-      } catch (err) {
-        error(t('toast.parseFailed', { error: err.message }));
-      } finally {
-        hide();
-      }
-    } else {
-      try {
-        const text = await readFileAsText(file);
-        const title = file.name.replace(/\.(md|markdown|txt)$/i, '');
-        onContentChange(text, title);
+      if (result.warnings?.length > 0) {
+        warning(t('toast.parsedWarnings', { count: result.warnings.length }));
+      } else {
         success(t('toast.loadedFile', { filename: file.name }));
-      } catch (err) {
-        error(t('toast.readFailed', { error: err.message }));
       }
+    } catch (err) {
+      error(t('toast.parseFailed', { error: err.message }));
+    } finally {
+      hide?.();
     }
 
     fileInput.value = '';
@@ -313,42 +294,15 @@ export function createInputBar({ store, onContentChange }) {
 
   // Initialize themes
   async function loadThemes() {
-    try {
-      const result = await get('/api/themes');
-      if (result.ok) {
-        store.set({
-          themes: result.data.themes,
-          selectedTheme: result.data.defaultThemeId,
-        });
-
-        for (const theme of result.data.themes) {
-          themeSelect.appendChild(sl('sl-option', { value: theme.id }, [theme.name]));
-        }
-        themeSelect.value = result.data.defaultThemeId;
-      }
-    } catch {}
+    await populateThemeSelect(themeSelect);
+    store.set({ selectedTheme: getDefaultThemeId() });
   }
 
   // Check Notion availability
   async function checkNotionStatus() {
-    try {
-      const response = await fetch('/api/notion/status');
-      const data = await response.json();
-      store.set({ notionAvailable: data.available });
-      notionBtn.hidden = !data.available;
-    } catch {
-      notionBtn.hidden = true;
-    }
-  }
-
-  // Utility
-  function arrayBufferToBase64(buffer) {
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
+    const available = await checkNotionAvailable();
+    store.set({ notionAvailable: available });
+    notionBtn.hidden = !available;
   }
 
   // Cover page metadata row (shown/hidden based on coverPage toggle)

@@ -31,16 +31,32 @@ export function createChangesSidebar({ store, onUndo }) {
     success(t('changes.reverted'));
   });
 
-  const element = h('div', { class: 'changes-sidebar' }, [
-    h('div', { class: 'changes-sidebar-header' }, [
-      slIcon({ name: 'magic', className: 'changes-sidebar-icon' }),
-      h('span', { class: 'changes-sidebar-title' }, [t('changes.title')]),
-      changesCount,
-    ]),
+  const header = h('div', { class: 'changes-sidebar-header' }, [
+    slIcon({ name: 'magic', className: 'changes-sidebar-icon' }),
+    h('span', { class: 'changes-sidebar-title' }, [t('changes.title')]),
+    changesCount,
+  ]);
+
+  const element = h('div', { class: 'changes-sidebar is-collapsed' }, [
+    header,
     changesList,
     h('div', { class: 'changes-sidebar-footer' }, [undoAllBtn]),
   ]);
   element.hidden = true;
+
+  // Toggle collapse on header click (for smaller screens)
+  header.addEventListener('click', () => {
+    element.classList.toggle('is-collapsed');
+  });
+
+  // Close when clicking outside on mobile
+  document.addEventListener('click', (e) => {
+    if (!element.hidden && !element.classList.contains('is-collapsed')) {
+      if (!element.contains(e.target)) {
+        element.classList.add('is-collapsed');
+      }
+    }
+  });
 
   /**
    * Group similar changes together for display
@@ -235,10 +251,15 @@ export function createChangesSidebar({ store, onUndo }) {
 
   function show() {
     element.hidden = false;
+    // Auto-expand on larger screens
+    if (window.innerWidth > 1400) {
+      element.classList.remove('is-collapsed');
+    }
   }
 
   function hide() {
     element.hidden = true;
+    element.classList.add('is-collapsed');
   }
 
   return {

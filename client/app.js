@@ -6,11 +6,13 @@
 import { route, notFound, startRouter, navigate } from './lib/router.js';
 import { initTheme, createThemeToggle } from './lib/theme.js';
 import { $, h, empty } from './lib/dom.js';
-import { renderConverter } from './views/converter/index.js';
-import { renderSettings } from './views/settings.js';
+import { renderList } from './views/list.js';
+import { renderEditor } from './views/editor/index.js';
+import { showSettingsModal } from './views/settings.js';
 import { renderLogin } from './views/login.js';
 import { getMeCached, logout, clearUserCache } from './lib/auth.js';
 import { initI18n, t } from './lib/i18n.js';
+import { get, post } from './lib/api.js';
 
 // Initialize app
 (async function init() {
@@ -23,6 +25,17 @@ import { initI18n, t } from './lib/i18n.js';
 
   // Current user state
   let currentUser = null;
+
+  // Track open overlays for cleanup
+  const openOverlayClosers = new Set();
+
+  /**
+   * Open settings modal
+   */
+  function openSettings(e) {
+    if (e) e.preventDefault();
+    showSettingsModal(app, openOverlayClosers);
+  }
 
   /**
    * Render the app shell with content
@@ -39,11 +52,11 @@ import { initI18n, t } from './lib/i18n.js';
         h('nav', { class: 'vk-header-nav' }, [
           h('a', {
             href: '/',
-            class: activeNav === 'convert' ? 'is-active' : '',
-          }, [t('nav.convert')]),
+            class: activeNav === 'documents' ? 'is-active' : '',
+          }, [t('nav.documents')]),
           h('a', {
-            href: '/settings',
-            class: activeNav === 'settings' ? 'is-active' : '',
+            href: '#',
+            onclick: openSettings,
           }, [t('nav.settings')]),
         ]),
 
@@ -137,20 +150,28 @@ import { initI18n, t } from './lib/i18n.js';
     return renderLogin(app);
   });
 
-  // Converter (home page)
+  // Documents list (home page)
   route('/', async () => {
     if (!(await requireAuth())) return;
     const content = h('div', {});
-    renderShell(content, { activeNav: 'convert' });
-    return renderConverter(content);
+    renderShell(content, { activeNav: 'documents' });
+    return renderList(content, { navigate, api: { get, post } });
   });
 
-  // Settings
-  route('/settings', async () => {
+  // Editor
+  route('/edit/:id', async ({ params }) => {
     if (!(await requireAuth())) return;
     const content = h('div', {});
-    renderShell(content, { activeNav: 'settings' });
-    return renderSettings(content);
+    renderShell(content, { activeNav: 'documents' });
+    return renderEditor(content, { draftId: params.id, navigate });
+  });
+
+  // Settings route - redirect to home and open modal
+  route('/settings', async () => {
+    if (!(await requireAuth())) return;
+    navigate('/');
+    // Small delay to let the home page render first
+    setTimeout(() => openSettings(), 50);
   });
 
   // 404 handler

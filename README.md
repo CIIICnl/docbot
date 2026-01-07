@@ -26,6 +26,14 @@ npm run dev
 
 Visit `http://localhost:3000` to use DreamDocs.
 
+## Production
+
+do ssh root@51...
+
+cd /opt/docbot
+git pull origin main
+docker compose up -d --build
+
 ## Notion Integration
 
 To enable Notion import:
@@ -65,51 +73,174 @@ dreamdocs/
 
 ## Themes
 
-DreamDocs uses a theme system for document styling. Themes are stored in the `/themes` directory.
+DreamDocs uses a powerful theme system for document styling. Themes control typography, colors, and page layout.
+
+### Theme Directory Structure
+
+```
+themes/
+└── my-theme/
+    ├── theme.json       # Theme configuration (required)
+    ├── styles.css       # Document styles (required)
+    ├── README.md        # Theme documentation (optional)
+    └── fonts/           # Font files
+        ├── heading/     # Heading fonts (optional subfolder)
+        ├── body/        # Body text fonts (optional subfolder)
+        └── captions/    # Code/caption fonts (optional subfolder)
+```
+
+### Creating a Custom Theme
+
+#### 1. Create the theme directory
+
+```bash
+mkdir -p themes/my-theme/fonts
+```
+
+#### 2. Add `theme.json` configuration
+
+```json
+{
+  "name": "My Theme",
+  "description": "A custom document theme",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "fonts": {
+    "heading": {
+      "family": "Inter",
+      "woff2": "fonts/Inter-SemiBold.woff2",
+      "ttf": "fonts/Inter-SemiBold.ttf"
+    },
+    "body": {
+      "family": "Inter",
+      "regular": {
+        "woff2": "fonts/Inter-Regular.woff2"
+      },
+      "bold": {
+        "woff2": "fonts/Inter-Bold.woff2"
+      },
+      "italic": {
+        "woff2": "fonts/Inter-Italic.woff2"
+      },
+      "boldItalic": {
+        "woff2": "fonts/Inter-BoldItalic.woff2"
+      }
+    },
+    "caption": {
+      "family": "JetBrains Mono",
+      "woff2": "fonts/JetBrainsMono-Regular.woff2"
+    }
+  },
+  "colors": {
+    "text": "#1a1a1a",
+    "heading": "#000000",
+    "link": "#0066cc",
+    "link-hover": "#0052a3",
+    "code-bg": "#f5f5f5",
+    "code-text": "#d6336c",
+    "border": "#e0e0e0",
+    "muted": "#666666",
+    "toc-bg": "#fafafa"
+  },
+  "pageSettings": {
+    "format": "A4",
+    "margins": {
+      "top": "2.5cm",
+      "right": "2cm",
+      "bottom": "2.5cm",
+      "left": "2cm"
+    }
+  }
+}
+```
+
+#### 3. Add `styles.css` with document styles
+
+Use CSS custom properties (generated from your `colors` config) for styling:
+
+| Variable | Purpose |
+|----------|---------|
+| `--doc-text` | Body text color |
+| `--doc-heading` | Heading color |
+| `--doc-link` | Link color |
+| `--doc-link-hover` | Link hover color |
+| `--doc-code-bg` | Code block background |
+| `--doc-code-text` | Inline code text color |
+| `--doc-border` | Border color |
+| `--doc-muted` | Muted/secondary text |
+| `--doc-toc-bg` | Table of contents background |
+
+Example styles.css structure:
+
+```css
+.document {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 11pt;
+  line-height: 1.6;
+  color: var(--doc-text, #1a1a1a);
+}
+
+.document h1 {
+  font-size: 28pt;
+  font-weight: 600;
+  color: var(--doc-heading, #000000);
+  border-bottom: 2px solid var(--doc-border, #e0e0e0);
+}
+
+/* ... additional styles */
+```
+
+### Font Configuration
+
+Fonts are organized by role:
+
+| Role | Purpose | Variants |
+|------|---------|----------|
+| `heading` | H1-H4 headings | Single file (used for all weights) |
+| `body` | Paragraph text | `regular`, `bold`, `italic`, `boldItalic` |
+| `caption` | Code blocks, page numbers | Single file |
+
+**Supported formats:**
+- `.woff2` - Recommended for web (smaller file size)
+- `.ttf` - Better PDF rendering compatibility
+
+If both formats are provided, TTF is used for PDF generation and WOFF2 for web preview.
 
 ### Default Theme
 
-The default theme uses Inter and JetBrains Mono fonts with a clean, minimal design.
+The default theme (`themes/default/`) provides a clean, minimal design using:
+- **Inter** - Modern sans-serif for body and headings
+- **JetBrains Mono** - Monospace font for code blocks
 
-### Creating Custom Themes
+### Private Themes
 
-1. Create a new folder in `/themes/`
-2. Add `theme.json` with metadata:
-   ```json
-   {
-     "name": "My Theme",
-     "description": "A custom document theme",
-     "fonts": [
-       { "family": "Inter", "weight": 400, "src": "fonts/Inter-Regular.woff2" }
-     ],
-     "colors": {
-       "text": "#1a1a1a",
-       "heading": "#000000",
-       "link": "#0066cc",
-       "code-bg": "#f5f5f5"
-     },
-     "pageSettings": {
-       "format": "A4",
-       "margins": { "top": "2.5cm", "right": "2cm", "bottom": "2.5cm", "left": "2cm" }
-     }
-   }
-   ```
-3. Add `styles.css` with document styles using `--doc-*` CSS variables:
-   - `--doc-text` - Body text color
-   - `--doc-heading` - Heading color
-   - `--doc-link` - Link color
-   - `--doc-code-bg` - Code block background
-   - `--doc-border` - Border color
+Add `"private": true` to theme.json to exclude a theme from public distribution:
+
+```json
+{
+  "name": "Corporate Theme",
+  "private": true,
+  ...
+}
+```
+
+### Setting the Default Theme
+
+Edit `server/services/themes.ts` to change the default theme:
+
+```typescript
+const DEFAULT_THEME_ID = 'my-theme';
+```
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Server | Node.js with native HTTP (TypeScript) |
-| Client | Vanilla JavaScript + Shoelace web components |
-| PDF Generation | Playwright (headless Chrome) |
-| Markdown | markdown-it with plugins |
-| Notion | Official @notionhq/client SDK |
+| Layer          | Technology                                   |
+| -------------- | -------------------------------------------- |
+| Server         | Node.js with native HTTP (TypeScript)        |
+| Client         | Vanilla JavaScript + Shoelace web components |
+| PDF Generation | Playwright (headless Chrome)                 |
+| Markdown       | markdown-it with plugins                     |
+| Notion         | Official @notionhq/client SDK                |
 
 ## Scripts
 
@@ -125,14 +256,14 @@ npm run format     # Format code
 
 ## API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/convert` | POST | Convert markdown to PDF/HTML |
-| `/api/convert/preview` | POST | Generate HTML preview only |
-| `/api/themes` | GET | List available themes |
-| `/api/themes/:id` | GET | Get theme details |
-| `/api/notion/fetch` | POST | Fetch Notion page as markdown |
-| `/api/notion/status` | GET | Check Notion integration status |
+| Endpoint               | Method | Description                     |
+| ---------------------- | ------ | ------------------------------- |
+| `/api/convert`         | POST   | Convert markdown to PDF/HTML    |
+| `/api/convert/preview` | POST   | Generate HTML preview only      |
+| `/api/themes`          | GET    | List available themes           |
+| `/api/themes/:id`      | GET    | Get theme details               |
+| `/api/notion/fetch`    | POST   | Fetch Notion page as markdown   |
+| `/api/notion/status`   | GET    | Check Notion integration status |
 
 ### Convert Request
 

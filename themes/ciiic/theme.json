@@ -13,6 +13,7 @@
     "body": {
       "family": "GT America",
       "regular": {
+        "ttf": "fonts/body/GT-America-Standard-Regular.ttf",
         "woff2": "fonts/body/GT-America-Standard-Regular.woff2"
       },
       "bold": {

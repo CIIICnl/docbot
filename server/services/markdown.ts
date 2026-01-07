@@ -108,8 +108,10 @@ export function parseMarkdown(content: string): MarkdownResult {
 /**
  * Generate HTML for table of contents
  */
-export function generateTocHtml(toc: TocEntry[]): string {
+export function generateTocHtml(toc: TocEntry[], locale: 'en' | 'nl' = 'en'): string {
   if (toc.length === 0) return '';
+
+  const tocTitle = locale === 'nl' ? 'Inhoudsopgave' : 'Contents';
 
   const items = toc
     .map((entry) => {
@@ -119,8 +121,8 @@ export function generateTocHtml(toc: TocEntry[]): string {
     .join('\n');
 
   return `
-    <nav class="document-toc" aria-label="Table of Contents">
-      <h2 class="toc-title">Contents</h2>
+    <nav class="document-toc" aria-label="${tocTitle}">
+      <h2 class="toc-title">${tocTitle}</h2>
       <ul class="toc-list">
         ${items}
       </ul>

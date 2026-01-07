@@ -7,6 +7,7 @@ export default {
     appName: 'DreamDocs',
     confirm: 'Confirm',
     cancel: 'Cancel',
+    close: 'Close',
     delete: 'Delete',
     save: 'Save',
     ok: 'OK',
@@ -16,7 +17,7 @@ export default {
 
   // Navigation
   nav: {
-    convert: 'Convert',
+    documents: 'Documents',
     settings: 'Settings',
     signOut: 'Sign out',
   },
@@ -72,6 +73,75 @@ export default {
       deleteAllDescription: 'Permanently delete all items. This cannot be undone.',
       deleteAllButton: 'Delete All',
     },
+  },
+
+  // List view
+  list: {
+    title: 'Your Documents',
+    empty: 'No documents yet',
+    emptyHint: 'Create your first document to get started.',
+    emptyDraft: 'Empty document',
+    newDocument: 'New Document',
+    localStorageNotice: 'Drafts are stored locally in your browser.',
+    delete: 'Delete',
+    deleteTitle: 'Delete Document',
+    deleteConfirm: 'Delete "{title}"? This cannot be undone.',
+    openDraft: 'Open {title}',
+    timeJustNow: 'Just now',
+    timeMinutes: '{count}m ago',
+    timeHours: '{count}h ago',
+    timeYesterday: 'Yesterday',
+    timeDays: '{count}d ago',
+  },
+
+  // New document modal
+  newDocument: {
+    title: 'New Document',
+    untitled: 'Untitled',
+    mode: {
+      empty: 'Empty',
+      paste: 'Paste',
+      upload: 'Upload',
+      notion: 'Notion',
+    },
+    titleLabel: 'Title',
+    titlePlaceholder: 'Document title...',
+    titleHintNotion: 'Leave empty to use the Notion page title',
+    contentLabel: 'Content',
+    contentPlaceholder: 'Paste your content here...',
+    notionUrlLabel: 'Notion Page URL',
+    notionUrlPlaceholder: 'https://notion.so/...',
+    selectFile: 'Select File',
+    noFileSelected: 'No file selected',
+    options: {
+      theme: 'Theme',
+      aiEnhance: 'Enhance with AI',
+      aiEnhanceHint: 'Automatically improve structure, fix typos, and enhance readability',
+      coverPage: 'Cover page',
+      pageNumbers: 'Page numbers',
+      toc: 'Table of contents',
+    },
+    create: 'Create',
+    import: 'Import',
+    importing: 'Importing...',
+    fetchingNotion: 'Fetching Notion page...',
+    enhancing: 'Enhancing Document',
+    enhancingMessage: 'Improving structure and fixing issues...',
+    enhanceDone: 'Enhancement complete',
+    errorNoFile: 'Please select a file',
+    errorNoUrl: 'Please enter a Notion page URL',
+    errorReadFile: 'Failed to read file: {error}',
+    errorNotion: 'Failed to import from Notion: {error}',
+    errorEnhance: 'Enhancement failed: {error}',
+  },
+
+  // Editor
+  editor: {
+    backToList: 'Documents',
+    saved: 'Saved',
+    saving: 'Saving...',
+    unsavedChanges: 'You have unsaved changes. Leave anyway?',
+    draftNotFound: 'Document not found',
   },
 
   // Converter input bar

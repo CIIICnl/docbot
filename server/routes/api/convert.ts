@@ -9,7 +9,6 @@ import { parseMarkdown, generateTocHtml } from '../../services/markdown.js';
 import { generatePdf, estimatePageCount } from '../../services/pdf.js';
 import { buildDocument, getPageSettings } from '../../templates/document.js';
 import { getDefaultThemeId, themeExists } from '../../services/themes.js';
-import { createCoverPage, mergePdfs } from '../../services/cover.js';
 import type { ConversionRequest, ConversionResult, ConversionMetadata } from '../../types/index.js';
 
 /**
@@ -59,38 +58,30 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
       const { title: extractedTitle } = parseMarkdown(body.content);
       const { html: contentHtml, toc } = parseMarkdown(contentToProcess);
       const title = options.title || extractedTitle || 'Document';
-      const tocHtml = options.generateToc ? generateTocHtml(toc) : '';
+      const locale = options.coverPageOptions?.locale || 'en';
+      const tocHtml = options.generateToc ? generateTocHtml(toc, locale) : '';
 
-      // Build document
+      // Build document (includes cover page if requested)
       const documentHtml = await buildDocument({
         title,
         content: contentHtml,
         toc: tocHtml,
         themeId: options.themeId,
         showToc: options.generateToc,
+        coverPage: options.coverPage,
+        coverPageOptions: options.coverPageOptions,
       });
 
       // Get page settings from theme
       const pageSettings = await getPageSettings(options.themeId);
 
-      // Generate main PDF
-      let pdfBuffer = await generatePdf({
+      // Generate PDF (cover page is now part of the HTML, so ToC links work correctly)
+      const pdfBuffer = await generatePdf({
         html: documentHtml,
         pageNumbers: options.pageNumbers,
         format: pageSettings.format,
         margins: pageSettings.margins,
       });
-
-      // Optionally add cover page
-      if (options.coverPage) {
-        const coverBuffer = await createCoverPage({
-          title,
-          themeId: options.themeId,
-          format: pageSettings.format,
-          coverPageOptions: options.coverPageOptions,
-        });
-        pdfBuffer = await mergePdfs(coverBuffer, pdfBuffer);
-      }
 
       // Build metadata
       const metadata: ConversionMetadata = {
@@ -140,7 +131,8 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
       // Parse markdown
       const { html: contentHtml, toc, title: extractedTitle } = parseMarkdown(body.content);
       const title = options.title || extractedTitle || 'Document';
-      const tocHtml = options.generateToc ? generateTocHtml(toc) : '';
+      const locale = options.coverPageOptions?.locale || 'en';
+      const tocHtml = options.generateToc ? generateTocHtml(toc, locale) : '';
 
       // Build document (preview version - uses URL fonts for speed)
       const documentHtml = await buildDocument({

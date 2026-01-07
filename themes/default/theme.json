@@ -15,6 +15,12 @@
       },
       "bold": {
         "woff2": "fonts/Inter-SemiBold.woff2"
+      },
+      "italic": {
+        "woff2": "fonts/Inter-Italic.woff2"
+      },
+      "boldItalic": {
+        "woff2": "fonts/Inter-SemiBoldItalic.woff2"
       }
     },
     "caption": {

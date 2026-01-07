@@ -109,38 +109,8 @@
   --vk-color-focus: rgba(37, 99, 235, 0.5);
 }
 
-/* Dark Theme */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --vk-color-bg: #0f172a;
-    --vk-color-bg-subtle: #1e293b;
-    --vk-color-bg-muted: #334155;
-
-    --vk-color-text: #f8fafc;
-    --vk-color-text-secondary: #cbd5e1;
-    --vk-color-text-muted: #64748b;
-
-    --vk-color-border: #334155;
-    --vk-color-border-subtle: #1e293b;
-
-    --vk-color-primary: #3b82f6;
-    --vk-color-primary-hover: #60a5fa;
-    --vk-color-primary-subtle: rgba(59, 130, 246, 0.15);
-
-    --vk-color-success: #22c55e;
-    --vk-color-success-subtle: rgba(34, 197, 94, 0.15);
-
-    --vk-color-warning: #eab308;
-    --vk-color-warning-subtle: rgba(234, 179, 8, 0.15);
-
-    --vk-color-danger: #ef4444;
-    --vk-color-danger-subtle: rgba(239, 68, 68, 0.15);
-
-    --vk-color-focus: rgba(59, 130, 246, 0.5);
-  }
-}
-
-[data-theme="dark"] {
+/* Dark Theme Colors - Mixin for DRY */
+@mixin dark-theme-colors {
   --vk-color-bg: #0f172a;
   --vk-color-bg-subtle: #1e293b;
   --vk-color-bg-muted: #334155;
@@ -166,4 +136,16 @@
   --vk-color-danger-subtle: rgba(239, 68, 68, 0.15);
 
   --vk-color-focus: rgba(59, 130, 246, 0.5);
+}
+
+/* Dark Theme - System preference */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    @include dark-theme-colors;
+  }
+}
+
+/* Dark Theme - Explicit setting */
+[data-theme="dark"] {
+  @include dark-theme-colors;
 }
