@@ -38,6 +38,8 @@ export interface ConversionMetadata {
   generatedAt: string;
   themeId: string;
   tocEntries: number;
+  /** Accessibility warnings detected during conversion */
+  accessibilityWarnings?: AccessibilityWarning[];
 }
 
 // ============================================================================
@@ -130,6 +132,15 @@ export interface MarkdownResult {
   html: string;
   toc: TocEntry[];
   title?: string;
+  /** Accessibility warnings (e.g., images missing alt text) */
+  accessibilityWarnings?: AccessibilityWarning[];
+}
+
+export interface AccessibilityWarning {
+  type: 'missing-alt-text' | 'empty-alt-text';
+  message: string;
+  /** Source reference (e.g., image src) */
+  source?: string;
 }
 
 export interface TocEntry {
@@ -163,6 +174,16 @@ export interface PdfOptions {
     bottom: string;
     left: string;
   };
+  /** PDF accessibility metadata */
+  metadata?: PdfMetadata;
+}
+
+export interface PdfMetadata {
+  title?: string;
+  author?: string;
+  subject?: string;
+  language?: string;
+  creator?: string;
 }
 
 // ============================================================================

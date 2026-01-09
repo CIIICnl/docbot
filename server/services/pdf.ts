@@ -1,7 +1,8 @@
 // PDF generation service using Playwright
 
 import type { Browser, Page } from 'playwright';
-import type { PdfOptions } from '../types/index.js';
+import { PDFDocument } from 'pdf-lib';
+import type { PdfOptions, PdfMetadata } from '../types/index.js';
 
 // Singleton browser instance for performance
 let browser: Browser | null = null;
@@ -20,6 +21,36 @@ async function getBrowser(): Promise<Browser> {
     console.log('PDF browser instance created');
   }
   return browser;
+}
+
+/**
+ * Add metadata to a PDF buffer for accessibility
+ */
+async function addPdfMetadata(pdfBuffer: Buffer, metadata: PdfMetadata): Promise<Buffer> {
+  const pdfDoc = await PDFDocument.load(pdfBuffer);
+
+  if (metadata.title) {
+    pdfDoc.setTitle(metadata.title);
+  }
+  if (metadata.author) {
+    pdfDoc.setAuthor(metadata.author);
+  }
+  if (metadata.subject) {
+    pdfDoc.setSubject(metadata.subject);
+  }
+  if (metadata.creator) {
+    pdfDoc.setCreator(metadata.creator);
+  }
+  if (metadata.language) {
+    pdfDoc.setLanguage(metadata.language);
+  }
+
+  // Set production date
+  pdfDoc.setCreationDate(new Date());
+  pdfDoc.setModificationDate(new Date());
+
+  const modifiedPdfBytes = await pdfDoc.save();
+  return Buffer.from(modifiedPdfBytes);
 }
 
 /**
@@ -46,6 +77,8 @@ export async function generatePdf(options: PdfOptions): Promise<Buffer> {
       },
       printBackground: true,
       preferCSSPageSize: true,
+      // Enable tagged PDF for accessibility (adds document structure for screen readers)
+      tagged: true,
     };
 
     // Add page numbers if requested
@@ -72,7 +105,14 @@ export async function generatePdf(options: PdfOptions): Promise<Buffer> {
     }
 
     const pdfBuffer = await page.pdf(pdfOptions);
-    return Buffer.from(pdfBuffer);
+    let result: Buffer = Buffer.from(pdfBuffer);
+
+    // Add PDF metadata if provided
+    if (options.metadata) {
+      result = await addPdfMetadata(result, options.metadata);
+    }
+
+    return result;
   } finally {
     await page.close();
   }

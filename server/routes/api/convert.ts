@@ -55,7 +55,7 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
       const contentToProcess = options.coverPage ? stripFirstH1(body.content) : body.content;
 
       // Parse markdown (use original content to extract title, processed content for body)
-      const { title: extractedTitle } = parseMarkdown(body.content);
+      const { title: extractedTitle, accessibilityWarnings } = parseMarkdown(body.content);
       const { html: contentHtml, toc } = parseMarkdown(contentToProcess);
       const title = options.title || extractedTitle || 'Document';
       const locale = options.coverPageOptions?.locale || 'en';
@@ -70,6 +70,7 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
         showToc: options.generateToc,
         coverPage: options.coverPage,
         coverPageOptions: options.coverPageOptions,
+        locale,
       });
 
       // Get page settings from theme
@@ -81,6 +82,11 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
         pageNumbers: options.pageNumbers,
         format: pageSettings.format,
         margins: pageSettings.margins,
+        metadata: {
+          title,
+          language: locale === 'nl' ? 'nl-NL' : 'en-US',
+          creator: 'DreamDocs',
+        },
       });
 
       // Build metadata
@@ -90,6 +96,7 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
         generatedAt: new Date().toISOString(),
         themeId: options.themeId,
         tocEntries: toc.length,
+        accessibilityWarnings: accessibilityWarnings?.length ? accessibilityWarnings : undefined,
       };
 
       // Return result
@@ -142,6 +149,7 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
         themeId: options.themeId,
         showToc: options.generateToc,
         useUrlFonts: true,
+        locale,
       });
 
       ok(res, { html: documentHtml, title });
