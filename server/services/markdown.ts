@@ -4,7 +4,7 @@ import MarkdownIt from 'markdown-it';
 import anchor from 'markdown-it-anchor';
 import footnote from 'markdown-it-footnote';
 import hljs from 'highlight.js';
-import type { MarkdownResult, TocEntry } from '../types/index.js';
+import type { MarkdownResult, TocEntry, AccessibilityWarning } from '../types/index.js';
 import { escapeHtml } from '../utils/html.js';
 
 // Configure markdown-it with plugins
@@ -58,6 +58,21 @@ md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
   return defaultRender(tokens, idx, options, env, self);
 };
 
+// Add scope="col" to table header cells for screen reader accessibility
+const defaultThRender =
+  md.renderer.rules.th_open ||
+  function (tokens, idx, options, _env, self) {
+    return self.renderToken(tokens, idx, options);
+  };
+
+md.renderer.rules.th_open = function (tokens, idx, options, env, self) {
+  const token = tokens[idx];
+  if (token) {
+    token.attrSet('scope', 'col');
+  }
+  return defaultThRender(tokens, idx, options, env, self);
+};
+
 /**
  * Extract table of contents entries from markdown tokens
  */
@@ -106,6 +121,54 @@ function extractTitle(tokens: ReturnType<typeof md.parse>): string | undefined {
 }
 
 /**
+ * Check images for accessibility issues (missing or empty alt text)
+ */
+function checkImageAccessibility(tokens: ReturnType<typeof md.parse>): AccessibilityWarning[] {
+  const warnings: AccessibilityWarning[] = [];
+
+  function processTokens(tokenList: ReturnType<typeof md.parse>) {
+    for (const token of tokenList) {
+      if (!token) continue;
+
+      // Check inline tokens for images
+      if (token.type === 'inline' && token.children) {
+        for (const child of token.children) {
+          if (child.type === 'image') {
+            const src = child.attrGet('src') || '';
+            const alt = child.attrGet('alt') || child.content || '';
+
+            // Get filename for better error messages
+            const filename = src.split('/').pop() || src;
+
+            if (!alt) {
+              warnings.push({
+                type: 'missing-alt-text',
+                message: `Image "${filename}" is missing alt text`,
+                source: src,
+              });
+            } else if (alt.trim() === '') {
+              warnings.push({
+                type: 'empty-alt-text',
+                message: `Image "${filename}" has empty alt text`,
+                source: src,
+              });
+            }
+          }
+        }
+      }
+
+      // Recursively check children
+      if (token.children) {
+        processTokens(token.children);
+      }
+    }
+  }
+
+  processTokens(tokens);
+  return warnings;
+}
+
+/**
  * Parse markdown content to HTML with TOC extraction
  */
 export function parseMarkdown(content: string): MarkdownResult {
@@ -116,10 +179,13 @@ export function parseMarkdown(content: string): MarkdownResult {
   const toc = extractToc(tokens);
   const title = extractTitle(tokens);
 
+  // Check for accessibility issues
+  const accessibilityWarnings = checkImageAccessibility(tokens);
+
   // Render to HTML
   const html = md.render(content);
 
-  return { html, toc, title };
+  return { html, toc, title, accessibilityWarnings };
 }
 
 /**

@@ -39,6 +39,15 @@ function splitIntoChunks(markdown: string, maxChunkSize: number = TOKEN_LIMITS.C
 }
 
 /**
+ * Strip markdown code fences if present (LLMs sometimes wrap output in code blocks)
+ */
+function stripCodeFences(text: string): string {
+  const trimmed = text.trim();
+  const match = trimmed.match(/^```(?:markdown)?\s*\n?([\s\S]*?)\n?```$/);
+  return match?.[1] ? match[1].trim() : trimmed;
+}
+
+/**
  * Translate a single chunk
  */
 async function translateChunk(
@@ -46,12 +55,13 @@ async function translateChunk(
   provider: LlmTranslateRequest['provider'],
   direction: TranslationDirection
 ): Promise<string> {
-  return callProvider({
+  const result = await callProvider({
     provider,
     systemPrompt: buildTranslationSystemPrompt(direction),
     userContent: chunk,
     maxTokens: TOKEN_LIMITS.TRANSLATE_MAX_TOKENS,
   });
+  return stripCodeFences(result);
 }
 
 /**

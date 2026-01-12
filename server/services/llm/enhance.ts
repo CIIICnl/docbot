@@ -13,24 +13,31 @@ import type { LlmEnhanceRequest, LlmEnhanceResult } from './types.js';
  * Parse the LLM response to extract markdown and changes
  */
 function parseResponse(response: string): LlmEnhanceResult {
+  // Strip markdown code fences if present (LLMs often wrap JSON in ```json blocks)
+  let cleanedResponse = response.trim();
+  const codeBlockMatch = cleanedResponse.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?```$/);
+  if (codeBlockMatch?.[1]) {
+    cleanedResponse = codeBlockMatch[1].trim();
+  }
+
   try {
     // Try to extract JSON from the response
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
       return {
-        enhanced: parsed.markdown || response,
+        enhanced: parsed.markdown || cleanedResponse,
         changes: Array.isArray(parsed.changes) ? parsed.changes : [],
         suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
         coverPage: parsed.coverPage || undefined,
       };
     }
   } catch {
-    // If JSON parsing fails, return the response as-is
+    // If JSON parsing fails, return the response as-is (without code fences)
   }
 
   return {
-    enhanced: response,
+    enhanced: cleanedResponse,
     changes: [{ description: 'Document was processed but change log could not be parsed' }],
     suggestions: [],
   };

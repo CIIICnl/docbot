@@ -46,6 +46,8 @@ export async function checkNotionAvailable(options = {}) {
 
 /**
  * @typedef {Object} LlmProviders
+ * @property {boolean} none - No AI (always available)
+ * @property {boolean} openai - OpenAI API available
  * @property {boolean} claude - Claude API available
  * @property {boolean} mistral - Mistral API available
  */
@@ -73,12 +75,12 @@ export async function checkLlmProviders(options = {}) {
     try {
       const result = await get('/api/llm/status');
       if (result.ok) {
-        llmProviders = result.data.providers || { claude: false, mistral: false };
+        llmProviders = result.data.providers || { none: true, openai: false, claude: false, mistral: false };
       } else {
-        llmProviders = { claude: false, mistral: false };
+        llmProviders = { none: true, openai: false, claude: false, mistral: false };
       }
     } catch {
-      llmProviders = { claude: false, mistral: false };
+      llmProviders = { none: true, openai: false, claude: false, mistral: false };
     }
     return llmProviders;
   })();
@@ -94,7 +96,7 @@ export async function checkLlmProviders(options = {}) {
  */
 export async function checkLlmAvailable(options = {}) {
   const providers = await checkLlmProviders(options);
-  return providers.claude || providers.mistral;
+  return providers.openai || providers.claude || providers.mistral;
 }
 
 /**

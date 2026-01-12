@@ -3,7 +3,7 @@
  * Type definitions for LLM service interfaces.
  */
 
-export type LlmProvider = 'claude' | 'mistral';
+export type LlmProvider = 'none' | 'openai' | 'claude' | 'mistral';
 
 export type ChangeCategory = 'structure' | 'typo' | 'readability' | 'other';
 
@@ -47,6 +47,8 @@ export interface LlmEnhanceResult {
 
 export interface LlmStatus {
   providers: {
+    none: boolean;
+    openai: boolean;
     claude: boolean;
     mistral: boolean;
   };

@@ -25,6 +25,8 @@ export interface DocumentOptions {
   coverPage?: boolean;
   /** Cover page options */
   coverPageOptions?: CoverPageOptions;
+  /** Document locale for accessibility (defaults to 'en') */
+  locale?: 'en' | 'nl';
 }
 
 /**
@@ -164,7 +166,11 @@ async function generateCoverPageHtml(
  * Build a complete HTML document ready for PDF generation
  */
 export async function buildDocument(options: DocumentOptions): Promise<string> {
-  const { title, content, toc, themeId, showToc, useUrlFonts, coverPage, coverPageOptions } = options;
+  const { title, content, toc, themeId, showToc, useUrlFonts, coverPage, coverPageOptions, locale } = options;
+
+  // Determine document language from locale or cover page options
+  const docLocale = locale || coverPageOptions?.locale || 'en';
+  const htmlLang = docLocale === 'nl' ? 'nl' : 'en';
 
   // Load theme data
   const theme = await getTheme(themeId);
@@ -182,7 +188,7 @@ export async function buildDocument(options: DocumentOptions): Promise<string> {
 
   // Build the document
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="${htmlLang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">

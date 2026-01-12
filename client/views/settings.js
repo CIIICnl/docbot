@@ -124,17 +124,22 @@ async function renderSettingsContent(container, options = {}) {
   });
 
   const defaultProvider = slSelect({
-    value: localStorage.getItem(STORAGE_KEYS.DEFAULT_PROVIDER) || 'claude',
+    value: localStorage.getItem(STORAGE_KEYS.DEFAULT_PROVIDER) || 'openai',
     hoist: true,
     style: 'width: 200px;',
   });
 
+  const noneOption = sl('sl-option', { value: 'none' }, [t('settings.ai.providerNone')]);
+  const openaiOption = sl('sl-option', { value: 'openai' }, [t('settings.ai.providerOpenAI')]);
   const claudeOption = sl('sl-option', { value: 'claude' }, [t('settings.ai.providerClaude')]);
   const mistralOption = sl('sl-option', { value: 'mistral' }, [t('settings.ai.providerMistral')]);
 
+  if (!llmProviders.openai) openaiOption.disabled = true;
   if (!llmProviders.claude) claudeOption.disabled = true;
   if (!llmProviders.mistral) mistralOption.disabled = true;
 
+  defaultProvider.appendChild(noneOption);
+  defaultProvider.appendChild(openaiOption);
   defaultProvider.appendChild(claudeOption);
   defaultProvider.appendChild(mistralOption);
 
@@ -143,7 +148,7 @@ async function renderSettingsContent(container, options = {}) {
     success(t('toast.providerChanged', { provider: e.target.value }));
   });
 
-  const aiAvailable = llmProviders.claude || llmProviders.mistral;
+  const aiAvailable = llmProviders.openai || llmProviders.claude || llmProviders.mistral;
 
   // Build AI section with full-width global context
   const aiSection = h('div', { class: 'vk-settings-section' }, [
