@@ -12,6 +12,8 @@ import type { LlmProvider, ProviderRequest } from './types.js';
  */
 export function getAvailableProviders(): Record<LlmProvider, boolean> {
   return {
+    none: true, // Always available - no AI
+    openai: !!process.env.OPENAI_API_KEY,
     claude: !!process.env.ANTHROPIC_API_KEY,
     mistral: !!process.env.MISTRAL_API_KEY,
   };
@@ -40,7 +42,12 @@ export function validateProvider(provider: LlmProvider): string | null {
  * Get API key for a provider
  */
 function getApiKey(provider: LlmProvider): string {
-  const keys: Record<LlmProvider, string | undefined> = {
+  if (provider === 'none') {
+    throw new Error('No API key needed for disabled AI');
+  }
+
+  const keys: Record<string, string | undefined> = {
+    openai: process.env.OPENAI_API_KEY,
     claude: process.env.ANTHROPIC_API_KEY,
     mistral: process.env.MISTRAL_API_KEY,
   };
@@ -50,6 +57,49 @@ function getApiKey(provider: LlmProvider): string {
     throw new Error(`${provider.toUpperCase()} API key is not configured`);
   }
   return key;
+}
+
+/**
+ * Call OpenAI API
+ */
+async function callOpenAI(request: ProviderRequest): Promise<string> {
+  const apiKey = getApiKey('openai');
+
+  const response = await fetch(LLM_ENDPOINTS.OPENAI, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: LLM_MODELS.OPENAI,
+      messages: [
+        {
+          role: 'system',
+          content: request.systemPrompt,
+        },
+        {
+          role: 'user',
+          content: request.userContent,
+        },
+      ],
+      max_tokens: request.maxTokens,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenAI API error: ${error}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+
+  if (!content) {
+    throw new Error('No response from OpenAI');
+  }
+
+  return content;
 }
 
 /**
@@ -127,6 +177,10 @@ async function callMistral(request: ProviderRequest): Promise<string> {
  */
 export async function callProvider(request: ProviderRequest): Promise<string> {
   switch (request.provider) {
+    case 'none':
+      throw new Error('AI enhancement is disabled');
+    case 'openai':
+      return callOpenAI(request);
     case 'claude':
       return callClaude(request);
     case 'mistral':

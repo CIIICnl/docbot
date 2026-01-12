@@ -11,12 +11,14 @@ export const THEMES = {
 
 // LLM model identifiers
 export const LLM_MODELS = {
+  OPENAI: 'gpt-5.2',
   CLAUDE: 'claude-sonnet-4-20250514',
   MISTRAL: 'mistral-large-latest',
 };
 
 // LLM API endpoints
 export const LLM_ENDPOINTS = {
+  OPENAI: 'https://api.openai.com/v1/chat/completions',
   MISTRAL: 'https://api.mistral.ai/v1/chat/completions',
 };
 
