@@ -134,8 +134,8 @@ export function createActionsBar({ store, onEnhanceComplete }) {
     try {
       const result = await fetch('/api/llm/status');
       const data = await result.json();
-      const available = data.providers?.claude || data.providers?.mistral;
-      store.set({ llmProviders: data.providers || { claude: false, mistral: false } });
+      const available = data.providers?.openai || data.providers?.claude || data.providers?.mistral;
+      store.set({ llmProviders: data.providers || { openai: false, claude: false, mistral: false } });
 
       if (!available) {
         enhanceGroup.hidden = true;
@@ -149,6 +149,12 @@ export function createActionsBar({ store, onEnhanceComplete }) {
 
   // Enhancement handler
   async function handleEnhance() {
+    const provider = getProvider();
+    if (provider === 'none') {
+      warning(t('toast.aiDisabled'));
+      return;
+    }
+
     const state = store.get();
 
     if (!state.content.trim()) {
@@ -239,6 +245,12 @@ export function createActionsBar({ store, onEnhanceComplete }) {
 
   // Translation handler
   async function handleTranslate() {
+    const provider = getProvider();
+    if (provider === 'none') {
+      warning(t('toast.aiDisabled'));
+      return;
+    }
+
     const state = store.get();
 
     if (!state.content.trim()) {

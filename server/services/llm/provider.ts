@@ -83,7 +83,7 @@ async function callOpenAI(request: ProviderRequest): Promise<string> {
           content: request.userContent,
         },
       ],
-      max_tokens: request.maxTokens,
+      max_completion_tokens: request.maxTokens,
     }),
   });
 

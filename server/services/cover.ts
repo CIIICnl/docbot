@@ -49,31 +49,12 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 /**
  * Format date for display with locale support
  * If a date string is provided, it's returned as-is (preserving user's format)
- * If no date is provided, generates today's date in the specified locale
+ * If no date is provided, returns undefined (nothing should be shown)
  */
-function formatDate(dateStr?: string, locale: 'en' | 'nl' = 'en'): string {
+function formatDate(dateStr?: string): string | undefined {
   // If user provided a date string, use it exactly as-is
-  if (dateStr) {
-    return dateStr;
-  }
-
-  // Generate today's date in the appropriate locale format
-  const date = new Date();
-
-  if (locale === 'nl') {
-    // Dutch format: "1 januari 2025"
-    const day = date.getDate();
-    const month = date.toLocaleDateString('nl-NL', { month: 'long' });
-    const year = date.getFullYear();
-    return `${day} ${month} ${year}`;
-  }
-
-  // English format: "January 1, 2025"
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  // Otherwise return undefined to indicate nothing should be shown
+  return dateStr || undefined;
 }
 
 /**
@@ -249,26 +230,34 @@ export async function createCoverPage(options: CreateCoverPageOptions): Promise<
   }
 
   // --- Draw Version/Date (top right, rotated 90° clockwise) ---
-  const version = coverPageOptions?.version || 'v1.0';
-  const locale = coverPageOptions?.locale || 'en';
-  const dateStr = formatDate(coverPageOptions?.date, locale);
-  const versionDateText = `${version}  |  ${dateStr}`;
-  const metaFontSize = 13;
+  // Only show if user provided values
+  const version = coverPageOptions?.version;
+  const dateStr = formatDate(coverPageOptions?.date);
 
-  // Position rotated text in top right corner
-  // -90 degrees (or 270) for clockwise rotation
-  // The text origin is at bottom-left of the text, so we need to position accordingly
-  const metaX = width - PADDING + 5;
-  const metaY = height - TOP_PADDING; // Start from top
+  // Build the text only with provided values
+  const metaParts: string[] = [];
+  if (version) metaParts.push(version);
+  if (dateStr) metaParts.push(dateStr);
 
-  page.drawText(versionDateText, {
-    x: metaX,
-    y: metaY,
-    size: metaFontSize,
-    font: bodyFont,
-    color: rgb(textRgb.r, textRgb.g, textRgb.b),
-    rotate: degrees(-90), // Clockwise rotation
-  });
+  if (metaParts.length > 0) {
+    const versionDateText = metaParts.join('  |  ');
+    const metaFontSize = 13;
+
+    // Position rotated text in top right corner
+    // -90 degrees (or 270) for clockwise rotation
+    // The text origin is at bottom-left of the text, so we need to position accordingly
+    const metaX = width - PADDING + 5;
+    const metaY = height - TOP_PADDING; // Start from top
+
+    page.drawText(versionDateText, {
+      x: metaX,
+      y: metaY,
+      size: metaFontSize,
+      font: bodyFont,
+      color: rgb(textRgb.r, textRgb.g, textRgb.b),
+      rotate: degrees(-90), // Clockwise rotation
+    });
+  }
 
   // --- Draw Logo (bottom, full width with padding) ---
   const logoBuffer = await loadLogoBuffer(themeId);

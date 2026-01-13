@@ -96,6 +96,12 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
         return true;
       }
 
+      // Check if AI is disabled
+      if (body.provider === 'none') {
+        badRequest(res, 'AI enhancement is disabled. Select an AI provider in settings.');
+        return true;
+      }
+
       // Check if provider is available
       const providerError = validateProvider(body.provider);
       if (providerError) {
@@ -147,6 +153,12 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
 
       if (!body.direction || !['nl-to-en', 'en-to-nl'].includes(body.direction)) {
         badRequest(res, 'Valid translation direction is required (nl-to-en or en-to-nl)');
+        return true;
+      }
+
+      // Check if AI is disabled
+      if (body.provider === 'none') {
+        badRequest(res, 'AI translation is disabled. Select an AI provider in settings.');
         return true;
       }
 

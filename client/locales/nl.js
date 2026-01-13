@@ -248,6 +248,7 @@ export default {
     noContent: 'Geen inhoud om te {action}',
     noContentEnhance: 'Geen inhoud om te verbeteren',
     noContentTranslate: 'Geen inhoud om te vertalen',
+    aiDisabled: 'AI is uitgeschakeld. Schakel een AI-provider in via Instellingen om deze functie te gebruiken.',
     noContentExport: 'Geen inhoud om te exporteren',
     noContentSave: 'Geen inhoud om op te slaan',
     selectOption: 'Selecteer minimaal een verbeteroptie',

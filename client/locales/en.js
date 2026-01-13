@@ -246,6 +246,7 @@ export default {
     noContent: 'No content to {action}',
     noContentEnhance: 'No content to enhance',
     noContentTranslate: 'No content to translate',
+    aiDisabled: 'AI is disabled. Enable an AI provider in Settings to use this feature.',
     noContentExport: 'No content to export',
     noContentSave: 'No content to save',
     selectOption: 'Please select at least one enhancement option',

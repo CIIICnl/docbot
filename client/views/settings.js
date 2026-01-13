@@ -9,7 +9,7 @@ import { getTheme, setTheme } from '../lib/theme.js';
 import { success } from '../lib/toast.js';
 import { slSelect, slButton, slTextarea, sl } from '../lib/shoelace.js';
 import { checkLlmProviders } from '../lib/feature-detection.js';
-import { STORAGE_KEYS, PLACEHOLDERS } from '../lib/constants.js';
+import { STORAGE_KEYS, PLACEHOLDERS, DEFAULTS } from '../lib/constants.js';
 import { t, getLocale, setLocale, getSupportedLocales } from '../lib/i18n.js';
 import { createModal } from '../lib/modal.js';
 
@@ -124,7 +124,7 @@ async function renderSettingsContent(container, options = {}) {
   });
 
   const defaultProvider = slSelect({
-    value: localStorage.getItem(STORAGE_KEYS.DEFAULT_PROVIDER) || 'openai',
+    value: localStorage.getItem(STORAGE_KEYS.DEFAULT_PROVIDER) || DEFAULTS.PROVIDER,
     hoist: true,
     style: 'width: 200px;',
   });

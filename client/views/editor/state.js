@@ -3,7 +3,7 @@
  * Centralized reactive state for the converter view.
  */
 
-import { STORAGE_KEYS } from '../../lib/constants.js';
+import { STORAGE_KEYS, DEFAULTS } from '../../lib/constants.js';
 
 /**
  * Create a reactive state store with subscribers
@@ -54,7 +54,7 @@ export function createConverterState() {
 
     // Available options
     themes: [],
-    llmProviders: { claude: false, mistral: false },
+    llmProviders: { openai: false, claude: false, mistral: false },
     notionAvailable: false,
 
     // AI changes
@@ -68,7 +68,7 @@ export function createConverterState() {
  * Get the current LLM provider from settings
  */
 export function getProvider() {
-  return localStorage.getItem(STORAGE_KEYS.DEFAULT_PROVIDER) || 'claude';
+  return localStorage.getItem(STORAGE_KEYS.DEFAULT_PROVIDER) || DEFAULTS.PROVIDER;
 }
 
 /**
