@@ -2,11 +2,19 @@
  * Authentication Module
  * Handles user authentication with signed session cookies.
  * Supports shared cookie domain for SSO across subdomains.
+ * Supports both environment-based and database-based authentication.
  */
 
 import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { parseCookies } from '../utils/cookies.js';
+import { isDatabaseAvailable } from '../db/client.js';
+import {
+  getDatabaseUser,
+  verifyPassword,
+  normalizeEmail,
+  type DbContext,
+} from '../storage/password-utils.js';
 
 const COOKIE_NAME = 'sb_session';
 
@@ -88,6 +96,11 @@ function derivePwKey(secret: string, email: string, password: string): Buffer {
 let cachedUsers: Map<string, StoredUser> | null = null;
 let warnedAuthMisconfig = false;
 
+/**
+ * Check if auth is enabled.
+ * Auth is enabled if:
+ * - AUTH_SECRET is set AND (AUTH_USERS_* is set OR database mode is available)
+ */
 export function authEnabled(): boolean {
   const hasUsers =
     !!String(process.env.AUTH_USERS_JSON || '').trim() ||
@@ -95,13 +108,17 @@ export function authEnabled(): boolean {
   const hasSecret = !!String(
     process.env.AUTH_SECRET || ''
   ).trim();
+  const hasDatabase = isDatabaseAvailable();
+
   if (hasUsers && !hasSecret && !warnedAuthMisconfig) {
     warnedAuthMisconfig = true;
     console.warn(
       '[auth] AUTH_USERS_* is set but AUTH_SECRET is missing; auth disabled until configured.'
     );
   }
-  return hasUsers && hasSecret;
+
+  // Auth is enabled if we have a secret AND (env users OR database)
+  return hasSecret && (hasUsers || hasDatabase);
 }
 
 export function devAuthBypassEnabled(): boolean {
@@ -344,5 +361,156 @@ export function verifyLogin(emailRaw: string, passwordRaw: string): UserWithVers
     name: u.name || '',
     isAdmin: role === 'admin',
     v: u.v,
+  };
+}
+
+/**
+ * Async login verification that checks database users first, then falls back to env users.
+ */
+export async function verifyLoginAsync(
+  emailRaw: string,
+  passwordRaw: string,
+  ctx?: DbContext
+): Promise<UserWithVersion | null> {
+  if (!authEnabled()) {
+    return {
+      email: 'anonymous',
+      role: 'admin',
+      name: '',
+      isAdmin: true,
+      v: 'anon',
+    };
+  }
+  if (devAuthBypassEnabled()) return { ...devBypassUser(), v: 'dev' };
+
+  const email = normalizeEmail(emailRaw);
+  if (!email) return null;
+  const password = String(passwordRaw || '');
+
+  // Try database authentication first (if available)
+  if (isDatabaseAvailable()) {
+    const dbUser = await getDatabaseUser(email, ctx);
+    if (dbUser?.password_hash && dbUser.auth_source === 'database') {
+      const isValid = await verifyPassword(password, dbUser.password_hash);
+      if (isValid) {
+        const adminEmail = getAdminEmail();
+        const role =
+          dbUser.role === 'admin' || email === adminEmail
+            ? 'admin'
+            : 'user';
+        // Use password_changed_at timestamp as version for session invalidation
+        const v = dbUser.password_changed_at
+          ? base64url(dbUser.password_changed_at).slice(0, 12)
+          : 'db';
+        return {
+          email,
+          role,
+          name: dbUser.name || '',
+          isAdmin: role === 'admin',
+          v,
+        };
+      }
+      // If DB user exists with database auth source but password doesn't match, fail
+      return null;
+    }
+  }
+
+  // Fall back to environment-based authentication
+  return verifyLogin(emailRaw, passwordRaw);
+}
+
+/**
+ * Async version of getUserFromRequest that validates sessions against database.
+ */
+export async function getUserFromRequestAsync(
+  req: IncomingMessage,
+  ctx?: DbContext
+): Promise<User | null> {
+  if (!authEnabled()) {
+    return {
+      email: 'anonymous',
+      role: 'admin',
+      name: '',
+      isAdmin: true,
+    };
+  }
+  if (devAuthBypassEnabled()) return devBypassUser();
+
+  const secret = getSecret();
+  const cookies = parseCookies(req.headers?.cookie);
+  const token = cookies[COOKIE_NAME];
+  if (!token) return null;
+
+  const [payloadB64, sig] = String(token).split('.');
+  if (!payloadB64 || !sig) return null;
+  const expected = sign(secret, payloadB64);
+  try {
+    if (
+      !crypto.timingSafeEqual(
+        Buffer.from(sig),
+        Buffer.from(expected)
+      )
+    )
+      return null;
+  } catch {
+    return null;
+  }
+
+  let payload: { email?: string; exp?: number; v?: string } | null = null;
+  try {
+    payload = JSON.parse(
+      base64urlToBuf(payloadB64).toString('utf8')
+    );
+  } catch {
+    return null;
+  }
+
+  const now = Date.now();
+  if (!payload?.exp || Number(payload.exp) < now) return null;
+  const email = normalizeEmail(payload?.email);
+  if (!email) return null;
+
+  // Check database user first (if available)
+  if (isDatabaseAvailable()) {
+    const dbUser = await getDatabaseUser(email, ctx);
+    if (dbUser?.auth_source === 'database') {
+      // Verify session version matches password_changed_at
+      const expectedV = dbUser.password_changed_at
+        ? base64url(dbUser.password_changed_at).slice(0, 12)
+        : 'db';
+      if (String(payload?.v || '') !== expectedV) {
+        // Password was changed, invalidate session
+        return null;
+      }
+      const adminEmail = getAdminEmail();
+      const role =
+        dbUser.role === 'admin' || email === adminEmail
+          ? 'admin'
+          : 'user';
+      return {
+        email,
+        role,
+        name: dbUser.name || '',
+        isAdmin: role === 'admin',
+      };
+    }
+  }
+
+  // Fall back to env-based user validation
+  const users = getUsers();
+  const u = users.get(email);
+  if (!u) return null;
+  if (String(payload?.v || '') !== String(u.v)) return null;
+
+  const adminEmail = getAdminEmail();
+  const role =
+    u.role === 'admin' || email === adminEmail
+      ? 'admin'
+      : 'user';
+  return {
+    email,
+    role,
+    name: u.name || '',
+    isAdmin: role === 'admin',
   };
 }

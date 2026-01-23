@@ -10,9 +10,9 @@ import {
   clearSessionCookie,
   devAuthBypassEnabled,
   devBypassUser,
-  getUserFromRequest,
+  getUserFromRequestAsync,
   setSessionCookie,
-  verifyLogin,
+  verifyLoginAsync,
   type UserWithVersion,
 } from '../../auth/auth.js';
 
@@ -40,7 +40,7 @@ export async function handleAuth({ req, res, url }: AuthContext): Promise<boolea
     const body = await json<{ email?: string; password?: string }>(req);
     const email = typeof body?.email === 'string' ? body.email : '';
     const password = typeof body?.password === 'string' ? body.password : '';
-    const user = verifyLogin(email, password);
+    const user = await verifyLoginAsync(email, password);
     if (!user) {
       unauthorized(res, 'Invalid email/password');
       return true;
@@ -66,7 +66,7 @@ export async function handleAuth({ req, res, url }: AuthContext): Promise<boolea
 
   // Get current user
   if (url.pathname === '/api/auth/me' && req.method === 'GET') {
-    const user = getUserFromRequest(req);
+    const user = await getUserFromRequestAsync(req);
     if (!user && authEnabled()) {
       unauthorized(res);
       return true;

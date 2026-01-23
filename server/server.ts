@@ -7,6 +7,7 @@ import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { handleApi } from './routes/api/index.js';
 import { serveStatic } from './routes/static.js';
 import { loadEnv, getConfig } from './config/env.js';
+import { initializeDatabase } from './db/client.js';
 
 async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host}`);
@@ -41,6 +42,9 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
 async function start(): Promise<void> {
   // Load environment variables
   await loadEnv();
+
+  // Initialize database connection (if STORAGE_MODE=postgres)
+  await initializeDatabase();
 
   const { port } = getConfig();
   const server = createServer(handleRequest);
