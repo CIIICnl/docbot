@@ -182,7 +182,11 @@ export default {
     importing: 'Importeren...',
     fetchingNotion: 'Notion-pagina ophalen...',
     enhancing: 'Document Verbeteren',
-    enhancingMessage: 'Structuur verbeteren en problemen oplossen...',
+    enhancingStructure: 'Documentstructuur optimaliseren...',
+    enhancingTypos: 'Typfouten en spelling corrigeren...',
+    enhancingReadability: 'Leesbaarheid verbeteren...',
+    enhancingSuggestions: 'Analyseren voor suggesties...',
+    enhancingMultiple: 'Je document verbeteren...',
     enhanceDone: 'Verbetering voltooid',
     errorNoFile: 'Selecteer een bestand',
     errorNoUrl: 'Voer een Notion-pagina URL in',
@@ -209,6 +213,7 @@ export default {
     toc: 'Inhoudsopgave',
     pageNumbers: 'Pagina #',
     coverPage: 'Voorblad',
+    pageBreakHeadings: 'H1/H2 nieuwe pagina',
     deleteLabel: 'Verwijderen',
   },
 
@@ -280,6 +285,7 @@ export default {
     reportCategoryOther: 'Overige Verbeteringen',
     reportGenerated: 'Deze instructies zijn gegenereerd door AI-documentanalyse.',
     untitledDocument: 'Naamloos document',
+    fetchingDetails: 'Gedetailleerde wijzigingen ophalen...',
   },
 
   // Markdown panel
@@ -367,6 +373,28 @@ export default {
         'De structuur wordt geperfectioneerd...',
         'De opmaak wordt opgeschoond...',
         'Het gaat glanzen...',
+      ],
+      // Option-specific messages
+      improvingStructure: [
+        'Documentstructuur optimaliseren...',
+        'Koppen perfectioneren...',
+        'De indeling verfijnen...',
+        'Herstructureren voor duidelijkheid...',
+        'Je content organiseren...',
+      ],
+      improvingTypos: [
+        'Op jacht naar typfouten...',
+        'Spelling corrigeren...',
+        'Kleine foutjes oplossen...',
+        'Details oppoetsen...',
+        'Die stiekeme foutjes opsporen...',
+      ],
+      improvingReadability: [
+        'Leesbaarheid verbeteren...',
+        'Zinnen vloeiender maken...',
+        'De flow verbeteren...',
+        'Makkelijker leesbaar maken...',
+        'De tekst verfijnen...',
       ],
       wrapping: ['Wijzigingen worden afgerond...', 'Bijna klaar...', 'De puntjes op de i...'],
     },

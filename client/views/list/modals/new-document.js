@@ -408,11 +408,26 @@ export async function openNewDocumentModal({
 
     // If AI enhance is enabled and there's content, run enhancement
     if (shouldEnhance) {
+      // Determine appropriate loading message based on selected options
+      const selectedCount = [aiOptions.fixStructure, aiOptions.fixTypos, aiOptions.improveReadability, aiOptions.getSuggestions].filter(Boolean).length;
+      let enhancingMessage;
+      if (selectedCount > 1) {
+        enhancingMessage = t('newDocument.enhancingMultiple');
+      } else if (aiOptions.fixStructure) {
+        enhancingMessage = t('newDocument.enhancingStructure');
+      } else if (aiOptions.fixTypos) {
+        enhancingMessage = t('newDocument.enhancingTypos');
+      } else if (aiOptions.improveReadability) {
+        enhancingMessage = t('newDocument.enhancingReadability');
+      } else {
+        enhancingMessage = t('newDocument.enhancingSuggestions');
+      }
+
       const loadingModal = showLoadingModal({
         h,
         root,
         title: t('newDocument.enhancing'),
-        initialMessage: t('newDocument.enhancingMessage'),
+        initialMessage: enhancingMessage,
       });
 
       try {
@@ -439,10 +454,13 @@ export async function openNewDocumentModal({
 
         // Store AI changes and suggestions to show in editor
         if ((result.data.changes && result.data.changes.length > 0) ||
-            (result.data.suggestions && result.data.suggestions.length > 0)) {
+            (result.data.suggestions && result.data.suggestions.length > 0) ||
+            result.data.overallImpression) {
           aiChanges = {
             changes: result.data.changes || [],
+            detailedChanges: result.data.detailedChanges || [],
             suggestions: result.data.suggestions || [],
+            overallImpression: result.data.overallImpression || null,
             originalContent: result.data.enhanced ? content : null,
           };
         }

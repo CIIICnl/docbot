@@ -181,7 +181,28 @@ export function createActionsBar({ store, onEnhanceComplete }) {
 
     const isSuggestionsOnly = options.getSuggestions && !willModify;
     const messagesKey = isSuggestionsOnly ? 'aiLoading.suggestions' : 'aiLoading.enhance';
-    const stage2Key = isSuggestionsOnly ? 'thinking' : 'improving';
+
+    // Determine stage2 message key based on selected options
+    let stage2Key;
+    if (isSuggestionsOnly) {
+      stage2Key = 'thinking';
+    } else {
+      // Count selected modification options
+      const selectedCount = [options.fixStructure, options.fixTypos, options.improveReadability].filter(Boolean).length;
+      if (selectedCount === 1) {
+        // Use option-specific messages when only one option is selected
+        if (options.fixStructure) {
+          stage2Key = 'improvingStructure';
+        } else if (options.fixTypos) {
+          stage2Key = 'improvingTypos';
+        } else {
+          stage2Key = 'improvingReadability';
+        }
+      } else {
+        // Use generic messages when multiple options are selected
+        stage2Key = 'improving';
+      }
+    }
 
     // Get messages from translations
     const analyzingMessages = t(`${messagesKey}.analyzing`);
@@ -225,7 +246,9 @@ export function createActionsBar({ store, onEnhanceComplete }) {
       onEnhanceComplete({
         enhanced: willModify ? result.data.enhanced : null,
         changes: result.data.changes || [],
+        detailedChanges: result.data.detailedChanges || [],
         suggestions: result.data.suggestions || [],
+        overallImpression: result.data.overallImpression || null,
         coverPage: result.data.coverPage,
         willModify,
       });
@@ -316,6 +339,7 @@ export function createActionsBar({ store, onEnhanceComplete }) {
           date: state.coverPageDate,
           locale: getLocale(),
         },
+        pageBreakHeadings: state.pageBreakHeadings,
       });
 
       const successKey = format === 'pdf' ? 'toast.pdfExported' : 'toast.htmlExported';
