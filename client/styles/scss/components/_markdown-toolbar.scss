@@ -1,0 +1,85 @@
+/**
+ * Markdown Toolbar
+ * Formatting toolbar for the markdown editor panel.
+ */
+
+.markdown-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vk-space-1);
+  padding: var(--vk-space-2) var(--vk-space-3);
+  background: var(--vk-color-bg-subtle);
+  border-bottom: 1px solid var(--vk-color-border);
+}
+
+.markdown-toolbar-group {
+  display: flex;
+  gap: var(--vk-space-1);
+
+  // Separator between groups
+  &:not(:last-child)::after {
+    content: '';
+    display: block;
+    width: 1px;
+    height: 24px;
+    background: var(--vk-color-border);
+    margin: auto var(--vk-space-2);
+  }
+}
+
+.markdown-toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--vk-color-text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--vk-radius-sm);
+  cursor: pointer;
+  transition: color var(--vk-transition-fast), background var(--vk-transition-fast);
+
+  &:hover {
+    color: var(--vk-color-text);
+    background: var(--vk-color-bg-muted);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--vk-color-focus);
+    outline-offset: -2px;
+  }
+
+  &:active {
+    background: var(--vk-color-bg-muted);
+    transform: scale(0.95);
+  }
+
+  sl-icon {
+    font-size: 1.125rem;
+  }
+}
+
+// Responsive: Stack groups on smaller screens
+@media (max-width: 640px) {
+  .markdown-toolbar {
+    padding: var(--vk-space-2);
+    gap: var(--vk-space-2);
+  }
+
+  .markdown-toolbar-group {
+    // Remove separator on mobile
+    &:not(:last-child)::after {
+      display: none;
+    }
+  }
+}
+
+// Even smaller screens: Hide less essential buttons
+@media (max-width: 480px) {
+  .markdown-toolbar-group:nth-child(3), // Headings
+  .markdown-toolbar-group:nth-child(7) { // Misc (quote, hr, table)
+    display: none;
+  }
+}

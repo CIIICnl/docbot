@@ -1,11 +1,12 @@
 /**
  * Markdown Panel Component
- * Editable markdown textarea with search functionality.
+ * Editable markdown textarea with search functionality and formatting toolbar.
  */
 
 import { h } from '../../lib/dom.js';
 import { slTextarea, slIcon } from '../../lib/shoelace.js';
 import { TextSearchController } from '../../lib/search-controller.js';
+import { MarkdownToolbar } from '../../lib/markdown-toolbar.js';
 import { t } from '../../lib/i18n.js';
 
 /**
@@ -32,6 +33,14 @@ export function createMarkdownPanel({ store, onContentChange }) {
   // Search controller
   const search = new TextSearchController(textarea);
 
+  // Formatting toolbar
+  const toolbar = new MarkdownToolbar(textarea, {
+    onChange: (content) => {
+      store.set({ content });
+      onContentChange(content);
+    },
+  });
+
   // Build element
   const element = h('div', { class: 'markdown-editor-panel' }, [
     h('div', { class: 'panel-header' }, [
@@ -41,6 +50,7 @@ export function createMarkdownPanel({ store, onContentChange }) {
       h('div', { class: 'panel-header-spacer' }),
       search.toggle,
     ]),
+    toolbar.element,
     search.searchBar,
     textarea,
   ]);
