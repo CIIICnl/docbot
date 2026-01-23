@@ -399,8 +399,14 @@ export async function verifyLoginAsync(
             ? 'admin'
             : 'user';
         // Use password_changed_at timestamp as version for session invalidation
+        // Must match slidecreator's calculation: SHA256 hash of timestamp, then base64url
         const v = dbUser.password_changed_at
-          ? base64url(dbUser.password_changed_at).slice(0, 12)
+          ? base64url(
+              crypto
+                .createHash('sha256')
+                .update(String(dbUser.password_changed_at))
+                .digest()
+            ).slice(0, 12)
           : 'db';
         return {
           email,
@@ -475,8 +481,14 @@ export async function getUserFromRequestAsync(
     const dbUser = await getDatabaseUser(email, ctx);
     if (dbUser?.auth_source === 'database') {
       // Verify session version matches password_changed_at
+      // Must match slidecreator's calculation: SHA256 hash of timestamp, then base64url
       const expectedV = dbUser.password_changed_at
-        ? base64url(dbUser.password_changed_at).slice(0, 12)
+        ? base64url(
+            crypto
+              .createHash('sha256')
+              .update(String(dbUser.password_changed_at))
+              .digest()
+          ).slice(0, 12)
         : 'db';
       if (String(payload?.v || '') !== expectedV) {
         // Password was changed, invalidate session
