@@ -125,3 +125,79 @@ export async function verifyUserPassword(
 
   return verifyPassword(password, user.password_hash);
 }
+
+const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * Validate password meets minimum requirements.
+ */
+export function validatePassword(password: string): { ok: boolean; reason?: string } {
+  const pw = String(password || '');
+  if (pw.length < MIN_PASSWORD_LENGTH) {
+    return { ok: false, reason: 'too_short' };
+  }
+  return { ok: true };
+}
+
+/**
+ * Set a user's password (creates/updates database user).
+ */
+export async function setUserPassword(
+  email: string,
+  password: string,
+  ctx?: DbContext
+): Promise<{ ok: boolean; reason?: string }> {
+  const normalized = normalizeEmail(email);
+  if (!normalized) {
+    return { ok: false, reason: 'invalid_email' };
+  }
+
+  const validation = validatePassword(password);
+  if (!validation.ok) {
+    return { ok: false, reason: validation.reason };
+  }
+
+  return withDbGuard({ ok: false, reason: 'unavailable' }, async (db) => {
+    const orgId = getOrgId(ctx);
+    const passwordHash = await hashPassword(password);
+    const now = new Date().toISOString();
+
+    // Check if user exists
+    const existingUser = await db
+      .selectFrom('users')
+      .select('id')
+      .where('email', '=', normalized)
+      .where('organization_id', '=', orgId)
+      .executeTakeFirst();
+
+    if (existingUser) {
+      // Update existing user
+      await db
+        .updateTable('users')
+        .set({
+          password_hash: passwordHash,
+          password_changed_at: now,
+          auth_source: 'database',
+          updated_at: now,
+        })
+        .where('id', '=', existingUser.id)
+        .execute();
+    } else {
+      // Create new user
+      await db
+        .insertInto('users')
+        .values({
+          organization_id: orgId,
+          email: normalized,
+          password_hash: passwordHash,
+          password_changed_at: now,
+          auth_source: 'database',
+          created_at: now,
+          updated_at: now,
+        })
+        .execute();
+    }
+
+    return { ok: true };
+  });
+}

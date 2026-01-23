@@ -25,8 +25,44 @@ export interface UsersTable {
   updated_at: string;
 }
 
+export interface PasswordResetTokensTable {
+  id: string;
+  user_email: string;
+  token_hash: string;
+  expires_at: string;
+  used_at: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export interface MagicLinkTokensTable {
+  id: string;
+  user_email: string;
+  token_hash: string;
+  expires_at: string;
+  used_at: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export interface AuthAuditLogTable {
+  id: string;
+  user_email: string | null;
+  event_type: string;
+  success: boolean;
+  ip_address: string | null;
+  user_agent: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
 export interface Database {
   users: UsersTable;
+  password_reset_tokens: PasswordResetTokensTable;
+  magic_link_tokens: MagicLinkTokensTable;
+  auth_audit_log: AuthAuditLogTable;
 }
 
 let db: Kysely<Database> | null = null;

@@ -10,6 +10,9 @@ import { renderList } from './views/list.js';
 import { renderEditor } from './views/editor/index.js';
 import { showSettingsModal } from './views/settings.js';
 import { renderLogin } from './views/login.js';
+import { renderForgotPassword } from './views/forgot-password.js';
+import { renderResetPassword } from './views/reset-password.js';
+import { renderMagicLogin } from './views/magic-login.js';
 import { getMeCached, logout, clearUserCache } from './lib/auth.js';
 import { initI18n, t } from './lib/i18n.js';
 import { get, post } from './lib/api.js';
@@ -148,6 +151,24 @@ import { get, post } from './lib/api.js';
     }
     empty(app);
     return renderLogin(app);
+  });
+
+  // Forgot password page (no auth required)
+  route('/forgot-password', async () => {
+    empty(app);
+    return renderForgotPassword(app);
+  });
+
+  // Reset password page (no auth required)
+  route('/reset-password', async () => {
+    empty(app);
+    return renderResetPassword(app);
+  });
+
+  // Magic login page (no auth required)
+  route('/magic-login', async () => {
+    empty(app);
+    return renderMagicLogin(app);
   });
 
   // Documents list (home page)

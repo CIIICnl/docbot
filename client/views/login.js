@@ -63,12 +63,46 @@ export async function renderLogin(root) {
       }, [t('login.submit')]),
 
       h('sl-button', {
+        variant: 'text',
+        class: 'login-link',
+        onclick: (e) => {
+          e.preventDefault();
+          navigate('/forgot-password');
+        },
+      }, [t('login.forgotPassword')]),
+
+      h('sl-button', {
         id: 'dev-btn',
         variant: 'text',
         class: 'login-dev',
         style: 'display: none',
         onclick: handleDevLogin,
       }, [t('login.devBypass')]),
+    ]),
+
+    // Magic link section
+    h('sl-divider', {}),
+    h('div', { class: 'login-magic-section' }, [
+      h('p', { class: 'login-magic-text' }, [t('login.orMagicLink')]),
+      h('form', { class: 'login-form', onsubmit: handleMagicLink }, [
+        h('sl-input', {
+          id: 'magic-email',
+          type: 'email',
+          label: t('login.emailLabel'),
+          placeholder: t('login.emailPlaceholder'),
+          autocomplete: 'email',
+          required: true,
+        }),
+
+        h('div', { id: 'magic-status', class: 'login-status' }),
+
+        h('sl-button', {
+          id: 'magic-btn',
+          type: 'submit',
+          variant: 'default',
+          class: 'login-submit',
+        }, [t('login.sendMagicLink')]),
+      ]),
     ]),
   ]);
 
@@ -110,10 +144,25 @@ export async function renderLogin(root) {
     .login-dev::part(base) {
       width: 100%;
     }
+    .login-link::part(base) {
+      width: 100%;
+    }
     .login-status {
       color: var(--sl-color-danger-600);
       font-size: var(--sl-font-size-small);
       min-height: 1.5em;
+    }
+    .login-status.is-success {
+      color: var(--sl-color-success-600);
+    }
+    .login-magic-section {
+      margin-top: var(--sl-spacing-small);
+    }
+    .login-magic-text {
+      text-align: center;
+      color: var(--sl-color-neutral-600);
+      font-size: var(--sl-font-size-small);
+      margin: 0 0 var(--sl-spacing-medium);
     }
   `]);
   root.appendChild(style);
@@ -178,6 +227,52 @@ export async function renderLogin(root) {
     } catch (err) {
       statusEl.textContent = err.message || t('login.devLoginFailed');
       devBtn.loading = false;
+    }
+  }
+
+  async function handleMagicLink(e) {
+    e.preventDefault();
+
+    const emailInput = root.querySelector('#magic-email');
+    const statusEl = root.querySelector('#magic-status');
+    const submitBtn = root.querySelector('#magic-btn');
+
+    const email = emailInput?.value?.trim() || '';
+
+    if (!email || !email.includes('@')) {
+      statusEl.textContent = t('login.errorInvalidEmail');
+      statusEl.className = 'login-status';
+      return;
+    }
+
+    statusEl.textContent = t('login.sendingMagicLink');
+    statusEl.className = 'login-status';
+    submitBtn.loading = true;
+    emailInput.disabled = true;
+
+    try {
+      const res = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        statusEl.textContent = t('login.magicLinkSent');
+        statusEl.className = 'login-status is-success';
+        emailInput.value = '';
+      } else {
+        statusEl.textContent = data.error || t('login.magicLinkError');
+        statusEl.className = 'login-status';
+      }
+    } catch {
+      statusEl.textContent = t('login.magicLinkError');
+      statusEl.className = 'login-status';
+    } finally {
+      submitBtn.loading = false;
+      emailInput.disabled = false;
     }
   }
 }

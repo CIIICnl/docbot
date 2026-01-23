@@ -6,6 +6,8 @@
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { handleAuth } from './auth.js';
+import { handlePasswordReset } from './password-reset.js';
+import { handleMagicLink } from './magic-link.js';
 import { handleConvert } from './convert.js';
 import { handleThemes } from './themes.js';
 import { handleNotion } from './notion.js';
@@ -27,6 +29,12 @@ export interface ApiContext {
 export async function handleApi(ctx: ApiContext): Promise<void> {
   // Auth routes (must be accessible without auth)
   if (await handleAuth(ctx)) return;
+
+  // Password reset routes (must be accessible without auth)
+  if (await handlePasswordReset(ctx)) return;
+
+  // Magic link routes (must be accessible without auth)
+  if (await handleMagicLink(ctx)) return;
 
   // Check authentication for all other routes
   const authedUser = getUserFromRequest(ctx.req);
