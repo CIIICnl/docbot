@@ -132,8 +132,16 @@ function htmlToMarkdown(html: string): string {
   // Links
   md = md.replace(/<a href="([^"]*)"[^>]*>(.*?)<\/a>/gi, '[$2]($1)');
 
-  // Images
-  md = md.replace(/<img src="([^"]*)"[^>]*\/?>/gi, '![]($1)');
+  // Images - handle src attribute in any position, preserve alt text (clean up newlines)
+  md = md.replace(/<img\s+(?:[^>]*?\s)?alt="([^"]*)"[^>]*?\ssrc="([^"]*)"[^>]*\/?>/gi, (_, alt, src) => {
+    const cleanAlt = alt.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+    return `![${cleanAlt}](${src})`;
+  });
+  md = md.replace(/<img\s+(?:[^>]*?\s)?src="([^"]*)"[^>]*?\salt="([^"]*)"[^>]*\/?>/gi, (_, src, alt) => {
+    const cleanAlt = alt.replace(/[\r\n]+/g, ' ').replace(/\s+/g, ' ').trim();
+    return `![${cleanAlt}](${src})`;
+  });
+  md = md.replace(/<img\s+(?:[^>]*?\s)?src="([^"]*)"[^>]*\/?>/gi, '![]($1)');
 
   // Lists - unordered
   md = md.replace(/<ul>/gi, '\n');
@@ -150,11 +158,17 @@ function htmlToMarkdown(html: string): string {
   // Line breaks
   md = md.replace(/<br\s*\/?>/gi, '\n');
 
-  // Tables
-  md = convertTables(md);
+  // Tables - preserve complex tables as HTML, convert simple ones to markdown
+  const preservedTables: string[] = [];
+  md = convertTables(md, preservedTables);
 
-  // Remove remaining HTML tags
+  // Remove remaining HTML tags (but not our table placeholders)
   md = md.replace(/<[^>]+>/g, '');
+
+  // Restore preserved HTML tables
+  preservedTables.forEach((table, index) => {
+    md = md.replace(`__PRESERVED_TABLE_${index}__`, table);
+  });
 
   // Decode HTML entities
   md = decodeHtmlEntities(md);
@@ -167,13 +181,87 @@ function htmlToMarkdown(html: string): string {
 }
 
 /**
- * Convert HTML tables to markdown
+ * Check if a table has merged cells (colspan or rowspan)
  */
-function convertTables(html: string): string {
+function hasTableMergedCells(tableContent: string): boolean {
+  return /colspan\s*=\s*["']?\d+["']?/i.test(tableContent) ||
+         /rowspan\s*=\s*["']?\d+["']?/i.test(tableContent);
+}
+
+/**
+ * Clean up HTML table for embedding (remove unnecessary attributes, preserve structure)
+ */
+function cleanHtmlTable(tableHtml: string): string {
+  let cleaned = tableHtml;
+
+  // Remove class attributes
+  cleaned = cleaned.replace(/\s+class\s*=\s*["'][^"']*["']/gi, '');
+
+  // Remove style attributes (but preserve width styles on col elements)
+  cleaned = cleaned.replace(/<col([^>]*)style\s*=\s*["']([^"']*)["']([^>]*)>/gi, (_match, before, style, after) => {
+    // Extract width from style if present
+    const widthMatch = style.match(/width:\s*([^;]+)/i);
+    if (widthMatch) {
+      return `<col${before}style="width: ${widthMatch[1].trim()}"${after}>`;
+    }
+    return `<col${before}${after}>`;
+  });
+
+  // Remove style attributes from other elements
+  cleaned = cleaned.replace(/<((?!col\b)[a-z]+)([^>]*)style\s*=\s*["'][^"']*["']([^>]*)>/gi, '<$1$2$3>');
+
+  // Clean up empty attribute lists
+  cleaned = cleaned.replace(/<([a-z]+)\s+>/gi, '<$1>');
+
+  // Clean up multiple spaces
+  cleaned = cleaned.replace(/\s{2,}/g, ' ');
+
+  // Ensure proper line breaks for readability
+  cleaned = cleaned.replace(/>\s*</g, '>\n<');
+
+  // Format the table nicely with indentation
+  let indentLevel = 0;
+  const lines = cleaned.split('\n');
+  const formattedLines = lines.map(line => {
+    const trimmed = line.trim();
+    if (!trimmed) return '';
+
+    // Decrease indent for closing tags
+    if (/^<\/(table|thead|tbody|tr|colgroup)>/i.test(trimmed)) {
+      indentLevel = Math.max(0, indentLevel - 1);
+    }
+
+    const indented = '  '.repeat(indentLevel) + trimmed;
+
+    // Increase indent for opening tags
+    if (/^<(table|thead|tbody|tr|colgroup)>/i.test(trimmed) ||
+        /^<(table|thead|tbody|tr|colgroup)\s/i.test(trimmed)) {
+      indentLevel++;
+    }
+
+    return indented;
+  }).filter(line => line.trim());
+
+  return '\n' + formattedLines.join('\n') + '\n';
+}
+
+/**
+ * Convert HTML tables to markdown, or preserve as HTML if they have merged cells
+ * Complex tables are stored in preservedTables array and replaced with placeholders
+ */
+function convertTables(html: string, preservedTables: string[]): string {
   // Match table blocks
   const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/gi;
 
-  return html.replace(tableRegex, (_, tableContent: string) => {
+  return html.replace(tableRegex, (fullMatch, tableContent: string) => {
+    // If table has merged cells, preserve as HTML using a placeholder
+    if (hasTableMergedCells(tableContent)) {
+      const index = preservedTables.length;
+      preservedTables.push(cleanHtmlTable(fullMatch));
+      return `__PRESERVED_TABLE_${index}__`;
+    }
+
+    // Otherwise convert to markdown
     const rows: string[][] = [];
 
     // Extract rows

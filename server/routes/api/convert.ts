@@ -5,7 +5,7 @@
 
 import type { ApiContext } from './index.js';
 import { json, ok, badRequest, serverError } from '../../utils/http.js';
-import { parseMarkdown, generateTocHtml } from '../../services/markdown.js';
+import { parseMarkdown, generateTocHtml, resolveMediaUrls } from '../../services/markdown.js';
 import { generatePdf, estimatePageCount } from '../../services/pdf.js';
 import { buildDocument, getPageSettings } from '../../templates/document.js';
 import { getDefaultThemeId, themeExists } from '../../services/themes.js';
@@ -51,14 +51,17 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
         options.themeId = getDefaultThemeId();
       }
 
+      // Resolve docbot:// media URLs to base64 for PDF embedding
+      const resolvedContent = await resolveMediaUrls(body.content, { asBase64: true });
+
       // If cover page is enabled, strip the first H1 from content to avoid duplication
-      const contentToProcess = options.coverPage ? stripFirstH1(body.content) : body.content;
+      const contentToProcess = options.coverPage ? stripFirstH1(resolvedContent) : resolvedContent;
 
       // Parse markdown (use original content to extract title, processed content for body)
-      const { title: extractedTitle, accessibilityWarnings } = parseMarkdown(body.content);
+      const { title: extractedTitle, accessibilityWarnings } = parseMarkdown(resolvedContent);
       const { html: contentHtml, toc } = parseMarkdown(contentToProcess);
       const title = options.title || extractedTitle || 'Document';
-      const locale = options.coverPageOptions?.locale || 'en';
+      const locale = options.locale || options.coverPageOptions?.locale || 'en';
       const tocHtml = options.generateToc ? generateTocHtml(toc, locale) : '';
 
       // Build document (includes cover page if requested)
@@ -71,6 +74,7 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
         coverPage: options.coverPage,
         coverPageOptions: options.coverPageOptions,
         locale,
+        pageBreakHeadings: options.pageBreakHeadings,
       });
 
       // Get page settings from theme
@@ -135,10 +139,13 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
         options.themeId = getDefaultThemeId();
       }
 
+      // Resolve docbot:// media URLs to presigned URLs for preview
+      const resolvedContent = await resolveMediaUrls(body.content, { asBase64: false });
+
       // Parse markdown
-      const { html: contentHtml, toc, title: extractedTitle } = parseMarkdown(body.content);
+      const { html: contentHtml, toc, title: extractedTitle } = parseMarkdown(resolvedContent);
       const title = options.title || extractedTitle || 'Document';
-      const locale = options.coverPageOptions?.locale || 'en';
+      const locale = options.locale || options.coverPageOptions?.locale || 'en';
       const tocHtml = options.generateToc ? generateTocHtml(toc, locale) : '';
 
       // Build document (preview version - uses URL fonts for speed)

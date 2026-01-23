@@ -6,12 +6,16 @@
 import type { ApiContext } from './index.js';
 import { json, ok, badRequest, serverError, validateRequired } from '../../utils/http.js';
 import { parseDocx } from '../../services/docx.js';
+import { getMediaProvider, isMediaAvailable } from '../../media/index.js';
+import { getDefaultOrganizationId } from '../../config/database.js';
 import {
   enhanceMarkdown,
+  getDetailedChanges,
   translateMarkdown,
   getLlmStatus,
   validateProvider,
   type LlmProvider,
+  type LlmChange,
   type TranslationDirection,
 } from '../../services/llm.js';
 
@@ -35,6 +39,13 @@ interface TranslateRequest {
   markdown: string;
   provider: LlmProvider;
   direction: TranslationDirection;
+}
+
+interface DetailedChangesRequest {
+  markdown: string;
+  changes: LlmChange[];
+  provider: LlmProvider;
+  language?: 'en' | 'nl';
 }
 
 /**
@@ -67,10 +78,40 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
       // Parse the document
       const result = await parseDocx(buffer);
 
+      // Upload images to media storage and replace base64 URLs
+      let markdown = result.markdown;
+      const uploadedImages: Array<{ name: string; mediaUrl: string }> = [];
+
+      if (isMediaAvailable() && result.images.length > 0) {
+        const provider = getMediaProvider();
+        const orgId = getDefaultOrganizationId();
+
+        for (const image of result.images) {
+          try {
+            const imageBuffer = Buffer.from(image.data, 'base64');
+            const key = provider.generateKey(orgId, image.name);
+
+            await provider.upload(key, imageBuffer, {
+              contentType: image.mimeType,
+            });
+
+            const mediaUrl = `docbot://media/${key}`;
+            uploadedImages.push({ name: image.name, mediaUrl });
+
+            // Replace base64 data URL with media URL in markdown
+            const base64Url = `data:${image.mimeType};base64,${image.data}`;
+            markdown = markdown.split(base64Url).join(mediaUrl);
+          } catch (uploadError) {
+            console.warn(`[docx] Failed to upload image ${image.name}:`, uploadError);
+            // Keep the base64 URL if upload fails
+          }
+        }
+      }
+
       ok(res, {
-        markdown: result.markdown,
+        markdown,
         title: result.title,
-        images: result.images,
+        images: uploadedImages.length > 0 ? uploadedImages : result.images,
         warnings: result.warnings,
       });
 
@@ -125,7 +166,9 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
       ok(res, {
         enhanced: result.enhanced,
         changes: result.changes,
+        detailedChanges: result.detailedChanges,
         suggestions: result.suggestions,
+        overallImpression: result.overallImpression,
         coverPage: result.coverPage,
       });
 
@@ -180,6 +223,52 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
         translated: result.translated,
         chunksProcessed: result.chunksProcessed,
       });
+
+      return true;
+    } catch (error) {
+      serverError(res, error as Error);
+      return true;
+    }
+  }
+
+  // POST /api/docx/detailed-changes - Get itemized changes for export
+  if (path === '/api/docx/detailed-changes' && req.method === 'POST') {
+    try {
+      const body = await json<DetailedChangesRequest>(req);
+
+      // Validate required fields
+      const validation = validateRequired(body as unknown as Record<string, unknown>, {
+        markdown: 'Markdown content is required',
+        changes: 'Changes array is required',
+        provider: 'LLM provider is required',
+      });
+      if (!validation.valid) {
+        badRequest(res, validation.message);
+        return true;
+      }
+
+      // Check if AI is disabled
+      if (body.provider === 'none') {
+        badRequest(res, 'AI is disabled. Select an AI provider in settings.');
+        return true;
+      }
+
+      // Check if provider is available
+      const providerError = validateProvider(body.provider);
+      if (providerError) {
+        badRequest(res, providerError);
+        return true;
+      }
+
+      // Get detailed changes
+      const detailedChanges = await getDetailedChanges({
+        markdown: body.markdown,
+        changes: body.changes,
+        provider: body.provider,
+        language: body.language,
+      });
+
+      ok(res, { detailedChanges });
 
       return true;
     } catch (error) {

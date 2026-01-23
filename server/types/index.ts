@@ -17,6 +17,10 @@ export interface ConversionOptions {
   title?: string;
   coverPage?: boolean;
   coverPageOptions?: CoverPageOptions;
+  /** Start H1 and H2 headings on a new page */
+  pageBreakHeadings?: boolean;
+  /** Document locale for TOC heading etc */
+  locale?: 'en' | 'nl';
 }
 
 export interface CoverPageOptions {
