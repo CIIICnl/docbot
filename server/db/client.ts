@@ -4,58 +4,59 @@
  */
 
 import pg from 'pg';
-import { Kysely, PostgresDialect, sql } from 'kysely';
+import { Kysely, PostgresDialect, sql, Generated } from 'kysely';
 import { getDatabaseConfig, isPostgresMode } from '../config/database.js';
 
 const { Pool } = pg;
 
 /**
  * Database table types
+ * Use Generated<T> for columns with database defaults (id, created_at)
  */
 export interface UsersTable {
-  id: string;
+  id: Generated<string>;
   organization_id: string;
   email: string;
   name: string | null;
-  role: string;
+  role: Generated<string>;
   password_hash: string | null;
   password_changed_at: string | null;
   auth_source: string | null;
-  created_at: string;
+  created_at: Generated<string>;
   updated_at: string;
 }
 
 export interface PasswordResetTokensTable {
-  id: string;
+  id: Generated<string>;
   user_email: string;
   token_hash: string;
   expires_at: string;
   used_at: string | null;
   ip_address: string | null;
   user_agent: string | null;
-  created_at: string;
+  created_at: Generated<string>;
 }
 
 export interface MagicLinkTokensTable {
-  id: string;
+  id: Generated<string>;
   user_email: string;
   token_hash: string;
   expires_at: string;
   used_at: string | null;
   ip_address: string | null;
   user_agent: string | null;
-  created_at: string;
+  created_at: Generated<string>;
 }
 
 export interface AuthAuditLogTable {
-  id: string;
+  id: Generated<string>;
   user_email: string | null;
   event_type: string;
   success: boolean;
   ip_address: string | null;
   user_agent: string | null;
   metadata: Record<string, unknown>;
-  created_at: string;
+  created_at: Generated<string>;
 }
 
 export interface Database {

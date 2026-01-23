@@ -124,7 +124,9 @@ export async function validateResetToken(
 
     // Mask email for display
     const email = row.user_email;
-    const [localPart, domain] = email.split('@');
+    const parts = email.split('@');
+    const localPart = parts[0] || '';
+    const domain = parts[1] || '';
     const maskedLocal =
       localPart.length > 2 ? localPart.slice(0, 2) + '***' : '***';
     const maskedEmail = `${maskedLocal}@${domain}`;

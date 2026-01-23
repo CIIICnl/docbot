@@ -25,11 +25,12 @@ import type { Kysely } from 'kysely';
  *   });
  * }
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function withDbGuard<T>(
-  fallback: T,
+  fallback: any,
   fn: (db: Kysely<Database>) => Promise<T>
 ): Promise<T> {
-  if (!isDatabaseAvailable()) return fallback;
+  if (!isDatabaseAvailable()) return fallback as T;
   const db = getDb();
   return fn(db);
 }
@@ -37,11 +38,12 @@ export async function withDbGuard<T>(
 /**
  * Synchronous version of withDbGuard for non-async functions.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function withDbGuardSync<T>(
-  fallback: T,
+  fallback: any,
   fn: (db: Kysely<Database>) => T
 ): T {
-  if (!isDatabaseAvailable()) return fallback;
+  if (!isDatabaseAvailable()) return fallback as T;
   const db = getDb();
   return fn(db);
 }
