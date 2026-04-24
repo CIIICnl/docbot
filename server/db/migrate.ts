@@ -27,7 +27,7 @@ interface Migration {
 async function ensureMigrationsTable(): Promise<void> {
   const db = getDb();
   await sql`
-    CREATE TABLE IF NOT EXISTS _migrations (
+    CREATE TABLE IF NOT EXISTS docbot_migrations (
       id VARCHAR(255) PRIMARY KEY,
       name VARCHAR(500) NOT NULL,
       applied_at TIMESTAMPTZ DEFAULT now()
@@ -41,7 +41,7 @@ async function ensureMigrationsTable(): Promise<void> {
 async function getAppliedMigrations(): Promise<Set<string>> {
   const db = getDb();
   const result = await db
-    .selectFrom('_migrations' as any)
+    .selectFrom('docbot_migrations' as any)
     .select(['id'])
     .execute();
   return new Set(result.map((r: any) => r.id));
@@ -53,7 +53,7 @@ async function getAppliedMigrations(): Promise<Set<string>> {
 async function recordMigration(id: string, name: string): Promise<void> {
   const db = getDb();
   await db
-    .insertInto('_migrations' as any)
+    .insertInto('docbot_migrations' as any)
     .values({ id, name })
     .execute();
 }
@@ -64,7 +64,7 @@ async function recordMigration(id: string, name: string): Promise<void> {
 async function removeMigrationRecord(id: string): Promise<void> {
   const db = getDb();
   await db
-    .deleteFrom('_migrations' as any)
+    .deleteFrom('docbot_migrations' as any)
     .where('id', '=', id)
     .execute();
 }
@@ -84,7 +84,7 @@ async function loadMigrations(): Promise<Migration[]> {
 
   const files = await fs.readdir(migrationsDir);
   const migrationFiles = files
-    .filter(f => f.endsWith('.ts') || f.endsWith('.js'))
+    .filter(f => (f.endsWith('.ts') || f.endsWith('.js')) && !f.endsWith('.d.ts'))
     .sort();
 
   const migrations: Migration[] = [];
