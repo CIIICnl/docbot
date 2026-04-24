@@ -13,7 +13,7 @@ import { handleThemes } from './themes.js';
 import { handleNotion } from './notion.js';
 import { handleDocx } from './docx.js';
 import { notFound, unauthorized } from '../../utils/http.js';
-import { authEnabled, getUserFromRequest, type User } from '../../auth/auth.js';
+import { authEnabled, getUserFromRequestAsync, type User } from '../../auth/auth.js';
 
 export interface ApiContext {
   req: IncomingMessage;
@@ -37,7 +37,7 @@ export async function handleApi(ctx: ApiContext): Promise<void> {
   if (await handleMagicLink(ctx)) return;
 
   // Check authentication for all other routes
-  const authedUser = getUserFromRequest(ctx.req);
+  const authedUser = await getUserFromRequestAsync(ctx.req);
   if (authEnabled() && !authedUser) {
     unauthorized(ctx.res);
     return;
