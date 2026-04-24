@@ -1,0 +1,26 @@
+version: '3.8'
+
+# Local development PostgreSQL database
+# Usage: docker-compose -f docker-compose.local.yml up -d
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: docbot-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: docbot
+      POSTGRES_PASSWORD: docbot
+      POSTGRES_DB: docbot
+    volumes:
+      - docbot_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U docbot -d docbot"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  docbot_pgdata:

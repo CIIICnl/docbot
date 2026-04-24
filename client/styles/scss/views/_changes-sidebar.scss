@@ -86,13 +86,21 @@
 }
 
 .changes-sidebar-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vk-space-1);
   padding: var(--vk-space-2) var(--vk-space-3);
   border-top: 1px solid var(--vk-color-border);
   background: var(--vk-color-bg-subtle);
   flex-shrink: 0;
 
   sl-button {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
+
+    &::part(label) {
+      padding: 0 var(--vk-space-1);
+    }
   }
 }
 
@@ -122,6 +130,27 @@
 .suggestion-text {
   color: var(--vk-color-text);
   line-height: 1.5;
+}
+
+/* Overall impression */
+.impression-header {
+  color: var(--vk-color-primary);
+}
+
+.overall-impression {
+  padding: var(--vk-space-3);
+  background: linear-gradient(135deg, var(--vk-color-bg-subtle) 0%, var(--vk-color-bg) 100%);
+  border-radius: var(--vk-radius-md);
+  border-left: 3px solid var(--vk-color-primary);
+  margin-bottom: var(--vk-space-2);
+}
+
+.impression-text {
+  color: var(--vk-color-text);
+  font-size: var(--vk-text-sm);
+  line-height: 1.6;
+  margin: 0;
+  font-style: italic;
 }
 
 /* Category colors */

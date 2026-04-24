@@ -41,7 +41,9 @@ export interface CoverPageMetadata {
 export interface LlmEnhanceResult {
   enhanced: string;
   changes: LlmChange[];
+  detailedChanges: LlmChange[];
   suggestions: LlmSuggestion[];
+  overallImpression?: string;
   coverPage?: CoverPageMetadata;
 }
 

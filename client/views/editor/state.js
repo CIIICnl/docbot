@@ -52,6 +52,9 @@ export function createConverterState() {
     coverPageVersion: '',
     coverPageDate: '',
 
+    // Page break options
+    pageBreakHeadings: false,
+
     // Available options
     themes: [],
     llmProviders: { openai: false, claude: false, mistral: false },

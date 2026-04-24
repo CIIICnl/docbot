@@ -61,12 +61,6 @@ export async function renderList(container, { navigate, api }) {
     ]),
   ]);
 
-  // Local storage notice
-  const notice = h('div', { class: 'local-storage-notice' }, [
-    h('sl-icon', { name: 'info-circle' }),
-    h('span', { text: t('list.localStorageNotice') }),
-  ]);
-
   // Draft grid
   const grid = h('div', { class: 'draft-grid' });
 
@@ -132,7 +126,6 @@ export async function renderList(container, { navigate, api }) {
   // Build layout
   const layout = h('div', { class: 'list-layout' }, [
     header,
-    notice,
     grid,
     emptyState,
   ]);

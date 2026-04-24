@@ -16,12 +16,24 @@ import { renderMagicLogin } from './views/magic-login.js';
 import { getMeCached, logout, clearUserCache } from './lib/auth.js';
 import { initI18n, t } from './lib/i18n.js';
 import { get, post } from './lib/api.js';
+import { enableSync, syncFromServer, isSyncEnabled } from './lib/drafts.js';
 
 // Initialize app
 (async function init() {
   // Initialize theme and i18n
   initTheme();
   await initI18n();
+
+  // Check server configuration and enable sync if database is available
+  try {
+    const configRes = await get('/api/auth/config');
+    if (configRes.ok && configRes.data?.databaseEnabled) {
+      enableSync();
+      console.log('[app] Database sync enabled');
+    }
+  } catch (err) {
+    console.warn('[app] Failed to fetch config:', err);
+  }
 
   // Get app container
   const app = $('#app');
@@ -174,6 +186,14 @@ import { get, post } from './lib/api.js';
   // Documents list (home page)
   route('/', async () => {
     if (!(await requireAuth())) return;
+
+    // Sync from server in background if database mode is enabled
+    if (isSyncEnabled()) {
+      syncFromServer().catch((err) => {
+        console.warn('[app] Failed to sync from server:', err);
+      });
+    }
+
     const content = h('div', {});
     renderShell(content, { activeNav: 'documents' });
     return renderList(content, { navigate, api: { get, post } });

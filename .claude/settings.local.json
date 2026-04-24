@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(git clone https://github.com/jaapstronks/vibekit.git temp_vibekit)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push -u origin main)",
+      "Bash(cd:*)",
+      "Bash(curl:*)",
+      "Bash(node:*)",
+      "Bash(npx playwright install chromium)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(grep:*)",
+      "Bash(npm install)",
+      "Bash(npm run build:client:*)",
+      "Bash(du:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(timeout 3 npm run start:*)",
+      "Bash(npm run build:*)",
+      "Bash(PORT=3001 npm run dev:*)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill -9)",
+      "Bash(tree:*)",
+      "Bash(timeout 5 npm run start:*)",
+      "Bash(cd /Users/jstronks/Github\\\\ NW/docbot && npx tsx:*)",
+      "Bash(pg_isready:*)",
+      "Bash(/opt/homebrew/bin/psql:*)",
+      "Bash(/usr/local/bin/psql:*)",
+      "Bash(psql:*)",
+      "Bash(/opt/homebrew/opt/postgresql@16/bin/psql:*)",
+      "Bash(kill:*)",
+      "Bash(xargs:*)",
+      "Bash(pkill:*)"
+    ],
+    "defaultMode": "acceptEdits"
+  }
+}

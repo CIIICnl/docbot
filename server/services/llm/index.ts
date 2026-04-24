@@ -21,7 +21,7 @@ export type {
 export { getAvailableProviders, isProviderAvailable, validateProvider } from './provider.js';
 
 // Re-export enhancement
-export { enhanceMarkdown } from './enhance.js';
+export { enhanceMarkdown, getDetailedChanges, type GetDetailedChangesRequest } from './enhance.js';
 
 // Re-export translation
 export { translateMarkdown } from './translate.js';

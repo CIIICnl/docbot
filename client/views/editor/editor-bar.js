@@ -64,6 +64,14 @@ export function createEditorBar({ store, draftTitle, onTitleChange }) {
     updateCoverMetadataVisibility();
   });
 
+  // Page break headings toggle
+  const pageBreakHeadingsSwitch = slSwitch({ checked: store.get('pageBreakHeadings'), size: 'small' });
+  const pageBreakHeadingsLabel = h('label', { class: 'input-toggle-label' }, [pageBreakHeadingsSwitch, ' ' + t('input.pageBreakHeadings')]);
+
+  pageBreakHeadingsSwitch.addEventListener('sl-change', (e) => {
+    store.set({ pageBreakHeadings: e.target.checked });
+  });
+
   // Cover page metadata fields
   const subtitleInput = slInput({
     placeholder: t('placeholders.subtitle'),
@@ -121,6 +129,7 @@ export function createEditorBar({ store, draftTitle, onTitleChange }) {
         tocLabel,
         pageNumLabel,
         coverPageLabel,
+        pageBreakHeadingsLabel,
       ]),
     ]),
     coverMetadataRow,

@@ -6,6 +6,7 @@
 export {
   buildEnhanceSystemPrompt,
   buildEnhanceUserPrompt,
+  buildDetailedChangesPrompt,
   type EnhancePromptOptions,
 } from './enhance.js';
 

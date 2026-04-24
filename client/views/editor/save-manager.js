@@ -1,6 +1,6 @@
 /**
  * Save Manager
- * Handles autosave functionality for drafts.
+ * Handles autosave functionality for drafts with server sync.
  */
 
 import { updateDraft } from '../../lib/drafts.js';
@@ -59,6 +59,7 @@ export function createSaveManager({ store, draftId, autosaveDelay = 1500 }) {
           version: state.coverPageVersion,
           date: state.coverPageDate,
         },
+        pageBreakHeadings: state.pageBreakHeadings,
       },
     });
 
