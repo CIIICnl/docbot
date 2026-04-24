@@ -19,5 +19,8 @@ export {
   getLlmStatus,
   validateProvider,
   enhanceMarkdown,
+  getDetailedChanges,
   translateMarkdown,
+  // Request types
+  type GetDetailedChangesRequest,
 } from './llm/index.js';

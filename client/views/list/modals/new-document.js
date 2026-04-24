@@ -486,7 +486,7 @@ export async function openNewDocumentModal({
     }
 
     // Create the draft
-    const draft = createDraft({ title, content, settings, aiChanges });
+    const draft = await createDraft({ title, content, settings, aiChanges });
 
     // Notify and navigate
     onCreated?.(draft);

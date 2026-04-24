@@ -49,6 +49,7 @@ export async function renderEditor(container, { draftId, navigate }) {
     coverPageSubtitle: draft.settings?.coverPageOptions?.subtitle || '',
     coverPageVersion: draft.settings?.coverPageOptions?.version || '',
     coverPageDate: draft.settings?.coverPageOptions?.date || '',
+    pageBreakHeadings: draft.settings?.pageBreakHeadings === true,
   });
 
   // Create save manager
@@ -70,6 +71,7 @@ export async function renderEditor(container, { draftId, navigate }) {
       'coverPageSubtitle',
       'coverPageVersion',
       'coverPageDate',
+      'pageBreakHeadings',
     ];
     const changed = saveableFields.some((key) => state[key] !== prev[key]);
     if (changed) {
@@ -125,7 +127,7 @@ export async function renderEditor(container, { draftId, navigate }) {
 
   const actionsBar = createActionsBar({
     store,
-    onEnhanceComplete: ({ enhanced, changes, suggestions, coverPage, willModify }) => {
+    onEnhanceComplete: ({ enhanced, changes, detailedChanges, suggestions, overallImpression, coverPage, willModify }) => {
       if (willModify && enhanced) {
         store.set({ content: enhanced });
         markdownPanel.setValue(enhanced);
@@ -141,8 +143,8 @@ export async function renderEditor(container, { draftId, navigate }) {
         });
       }
 
-      if (changes.length > 0 || suggestions.length > 0) {
-        changesSidebar.displayChanges(changes, suggestions);
+      if (changes.length > 0 || suggestions.length > 0 || overallImpression) {
+        changesSidebar.displayChanges(changes, detailedChanges, suggestions, overallImpression);
         changesSidebar.show();
         if (editorAreaEl) {
           editorAreaEl.classList.add('has-changes');
@@ -184,7 +186,7 @@ export async function renderEditor(container, { draftId, navigate }) {
 
   // Check if draft has AI changes to display (from new document creation)
   if (draft.aiChanges) {
-    const { changes, suggestions, originalContent } = draft.aiChanges;
+    const { changes, detailedChanges, suggestions, overallImpression, originalContent } = draft.aiChanges;
 
     // Store original content for undo
     if (originalContent) {
@@ -192,8 +194,8 @@ export async function renderEditor(container, { draftId, navigate }) {
     }
 
     // Display changes in sidebar
-    if (changes.length > 0 || suggestions.length > 0) {
-      changesSidebar.displayChanges(changes, suggestions);
+    if (changes.length > 0 || suggestions.length > 0 || overallImpression) {
+      changesSidebar.displayChanges(changes, detailedChanges || [], suggestions, overallImpression);
       changesSidebar.show();
       editorAreaEl.classList.add('has-changes');
     }

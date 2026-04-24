@@ -56,7 +56,12 @@ Always preserve:
 
 `;
 
-const SUGGESTIONS_INTRO = `Provide thoughtful suggestions and questions about:
+const SUGGESTIONS_INTRO = `First, provide an overall impression of the document - a brief assessment (2-4 sentences) covering:
+- The document's strengths and what it does well
+- The overall quality of writing and organization
+- The main areas that could use improvement
+
+Then provide thoughtful suggestions and questions about:
 - Content that might be missing or unclear
 - Sections that could be reorganized for better flow
 - Points that need more explanation or examples
@@ -78,21 +83,24 @@ IMPORTANT: Write all change descriptions and suggestions in Dutch (Nederlands). 
   return `## Output Format
 Return a JSON object with these fields:
 1. "markdown": ${willModify ? 'The improved markdown content' : 'The original markdown content unchanged'}
-2. "changes": An array of objects describing each change made (empty if no modifications were requested), each with:
-   - "description": A user-friendly explanation of what was changed and why. The user may not know markdown, so describe changes in plain terms. For example:
-     - Instead of "Converted **text** to ## heading", write "Changed 'Introduction' from bold text to a proper section heading (H2)"
-     - Include the actual text/heading name when relevant so users can identify where the change was made
-   - "location": Where in the document this change was made (e.g., "Introduction section", "near the beginning")
-   - "category": One of: "structure" (heading conversions, list formatting, hierarchy fixes), "typo" (spelling, double spaces, punctuation), "readability" (sentence rewording, clarity improvements), or "other"
-3. "suggestions": An array of feedback items (empty if feedback was not requested), each with:
-   - "text": The suggestion or question in a helpful, constructive tone
-   - "location": Where in the document this applies (e.g., "Methods section", "paragraph about pricing")
-4. "coverPage": An object with metadata for the document cover page. ALWAYS include all three fields:
-   - "subtitle": A subtitle or tagline. If explicitly mentioned in the document, use that. Otherwise, generate a brief descriptive subtitle (5-10 words) that captures the document's purpose or main topic. Always provide something.
-   - "version": A version number. If mentioned in the document (e.g., "v1.0", "Version 2.3", "Draft 1"), use that. Otherwise, use "v1.0" as the default.
-   - "date": A document date. If mentioned in the document (e.g., "January 2025", "2025-01-07", "Updated: March 2024"), use that. Otherwise, use today's date in a readable format like "January 2025".
+2. "changes": A SUMMARIZED array of changes for quick overview display. Group similar changes together for readability. Each entry should have:
+   - "description": A user-friendly summary of what was changed (e.g., "Fixed several typos including 'teh' → 'the', 'recieve' → 'receive'", "Converted bold headings to proper section headings")
+   - "location": General location (e.g., "Throughout the document", "In the Introduction and Methods sections")
+   - "category": One of: "structure", "typo", "readability", or "other"
+3. "detailedChanges": (OPTIONAL - include if possible) A COMPLETE array listing EVERY SINGLE individual change separately. This is used for generating editing instructions. If you fix 10 typos, create 10 separate entries. Each entry should have:
+   - "description": A specific editing instruction for ONE change (e.g., "Change 'teh' to 'the'", "Change the bold text 'Introduction' to a heading level 2")
+   - "location": Precise location so an editor can find it (e.g., "In the 'Overview' section, first paragraph, third sentence", "Under the 'Pricing' heading, in the bullet list")
+   - "category": One of: "structure", "typo", "readability", or "other"
+4. "suggestions": An array of feedback items (empty if feedback was not requested), each with:
+   - "text": The suggestion or question in a helpful, constructive tone, phrased as an actionable recommendation
+   - "location": Be specific about where in the document this applies
+5. "overallImpression": A brief overall assessment of the document (2-4 sentences). Only include this field if feedback/suggestions were requested.
+6. "coverPage": An object with metadata for the document cover page. ALWAYS include all three fields:
+   - "subtitle": A subtitle or tagline. If explicitly mentioned in the document, use that. Otherwise, generate a brief descriptive subtitle (5-10 words).
+   - "version": A version number. If mentioned in the document, use that. Otherwise, use "v1.0" as the default.
+   - "date": A document date. If mentioned in the document, use that. Otherwise, use today's date in a readable format like "January 2025".
 
-Only include substantive changes in the changes array, not minor whitespace adjustments.${languageInstruction}`;
+Priority: Always include "markdown", "changes", "suggestions", "coverPage". Include "detailedChanges" if there's sufficient output capacity - it will be fetched separately if not included.${languageInstruction}`;
 };
 
 /**
@@ -163,4 +171,51 @@ export function buildEnhanceUserPrompt(markdown: string, documentContext?: strin
   prompt += `Please improve the formatting of this markdown document:\n\n${markdown}`;
 
   return prompt;
+}
+
+/**
+ * Build prompts for extracting detailed changes from summarized changes
+ * Used when detailed changes weren't included in the initial response
+ */
+export function buildDetailedChangesPrompt(
+  markdown: string,
+  changesSummary: Array<{ description: string; location?: string; category?: string }>,
+  language?: 'en' | 'nl'
+): { systemPrompt: string; userPrompt: string } {
+  const languageInstruction = language === 'nl'
+    ? `\n\nIMPORTANT: Write all descriptions in Dutch (Nederlands).`
+    : '';
+
+  const systemPrompt = `You are a document editor assistant. Your task is to expand summarized changes into individual, actionable editing instructions.
+
+You will be given:
+1. A document
+2. A summary of changes that were made to it
+
+Your job is to identify EVERY SINGLE individual change and list them separately with precise locations.
+
+## Output Format
+Return a JSON object with one field:
+"detailedChanges": An array where EACH individual change is a separate entry. For example, if the summary says "Fixed 5 typos", you must list all 5 typos as separate entries.
+
+Each entry should have:
+- "description": A specific editing instruction for ONE change (e.g., "Change 'teh' to 'the'", "Change the bold text 'Introduction' to a heading level 2")
+- "location": Precise location so an editor can find it (e.g., "In the 'Overview' section, first paragraph, third sentence", "Under the 'Pricing' heading, in the bullet list")
+- "category": One of: "structure", "typo", "readability", or "other"
+
+Be thorough - list EVERY change, no matter how small. These instructions will be given to someone manually editing the original document.${languageInstruction}`;
+
+  const summaryText = changesSummary
+    .map((c, i) => `${i + 1}. ${c.description}${c.location ? ` (${c.location})` : ''}`)
+    .join('\n');
+
+  const userPrompt = `## Document
+${markdown}
+
+## Summary of Changes Made
+${summaryText}
+
+Please expand these summarized changes into individual, specific editing instructions.`;
+
+  return { systemPrompt, userPrompt };
 }

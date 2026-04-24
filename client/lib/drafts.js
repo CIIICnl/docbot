@@ -1,9 +1,268 @@
 /**
  * Draft Management
- * LocalStorage-based draft saving and loading.
+ * LocalStorage-based draft saving with server API sync when online.
  */
 
 import { STORAGE_KEYS, DEFAULTS } from './constants.js';
+
+// API sync state
+let syncEnabled = false;
+let syncInProgress = false;
+let pendingSyncs = new Map(); // draftId -> pending update
+
+/**
+ * Check if server API is available
+ * @returns {Promise<boolean>}
+ */
+async function checkApiAvailable() {
+  try {
+    const resp = await fetch('/api/documents?limit=1', { method: 'GET' });
+    return resp.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Enable server sync (called when database mode is detected)
+ */
+export function enableSync() {
+  syncEnabled = true;
+}
+
+/**
+ * Disable server sync
+ */
+export function disableSync() {
+  syncEnabled = false;
+}
+
+/**
+ * Check if sync is enabled
+ * @returns {boolean}
+ */
+export function isSyncEnabled() {
+  return syncEnabled;
+}
+
+/**
+ * Sync a draft to the server
+ * @param {Object} draft - Draft to sync
+ * @returns {Promise<Object|null>} Synced document or null
+ */
+async function syncDraftToServer(draft) {
+  if (!syncEnabled || !draft.serverId) return null;
+
+  try {
+    const resp = await fetch(`/api/documents/${draft.serverId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: draft.title,
+        content: draft.content,
+        settings: draft.settings,
+        aiChanges: draft.aiChanges,
+      }),
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.document;
+    }
+  } catch (err) {
+    console.warn('[drafts] Failed to sync to server:', err);
+  }
+  return null;
+}
+
+/**
+ * Create a draft on the server
+ * @param {Object} draft - Draft to create
+ * @returns {Promise<string|null>} Server document ID or null
+ */
+async function createDraftOnServer(draft) {
+  if (!syncEnabled) return null;
+
+  try {
+    const resp = await fetch('/api/documents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: draft.title,
+        content: draft.content,
+        settings: draft.settings,
+        aiChanges: draft.aiChanges,
+      }),
+    });
+
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.document?.id || null;
+    }
+  } catch (err) {
+    console.warn('[drafts] Failed to create on server:', err);
+  }
+  return null;
+}
+
+/**
+ * Delete a draft from the server
+ * @param {string} serverId - Server document ID
+ * @returns {Promise<boolean>}
+ */
+async function deleteDraftFromServer(serverId) {
+  if (!syncEnabled || !serverId) return false;
+
+  try {
+    const resp = await fetch(`/api/documents/${serverId}`, {
+      method: 'DELETE',
+    });
+    return resp.ok;
+  } catch (err) {
+    console.warn('[drafts] Failed to delete from server:', err);
+    return false;
+  }
+}
+
+/**
+ * Fetch documents from server and merge with local drafts
+ * @returns {Promise<Array>} Merged draft list
+ */
+export async function syncFromServer() {
+  if (!syncEnabled) return getDrafts();
+
+  try {
+    const resp = await fetch('/api/documents');
+    if (!resp.ok) return getDrafts();
+
+    const data = await resp.json();
+    const serverDocs = data.documents || [];
+    const localDrafts = getDrafts();
+
+    // Create a map of server docs by ID
+    const serverMap = new Map(serverDocs.map((d) => [d.id, d]));
+
+    // Update local drafts with server data
+    const mergedDrafts = [];
+    const seenServerIds = new Set();
+
+    // First, update existing local drafts with server versions
+    for (const local of localDrafts) {
+      if (local.serverId && serverMap.has(local.serverId)) {
+        const server = serverMap.get(local.serverId);
+        seenServerIds.add(local.serverId);
+
+        // Compare timestamps, use newer version
+        const localTime = new Date(local.modifiedAt || local.savedAt || 0).getTime();
+        const serverTime = new Date(server.updatedAt).getTime();
+
+        if (serverTime > localTime) {
+          // Server is newer, update local
+          mergedDrafts.push({
+            ...local,
+            title: server.title,
+            content: server.content,
+            settings: server.settings,
+            aiChanges: server.aiChanges,
+            modifiedAt: server.updatedAt,
+          });
+        } else if (localTime > serverTime) {
+          // Local is newer, sync to server
+          mergedDrafts.push(local);
+          syncDraftToServer(local);
+        } else {
+          mergedDrafts.push(local);
+        }
+      } else if (!local.serverId) {
+        // Local-only draft, try to create on server
+        const serverId = await createDraftOnServer(local);
+        mergedDrafts.push({
+          ...local,
+          serverId,
+        });
+      } else {
+        // Draft has serverId but not on server (deleted remotely)
+        // Keep locally for safety, but mark as local-only
+        mergedDrafts.push({
+          ...local,
+          serverId: null,
+        });
+      }
+    }
+
+    // Add server docs that don't exist locally
+    for (const server of serverDocs) {
+      if (!seenServerIds.has(server.id)) {
+        mergedDrafts.push({
+          id: `draft_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          serverId: server.id,
+          title: server.title,
+          content: server.content,
+          settings: server.settings,
+          aiChanges: server.aiChanges,
+          createdAt: server.createdAt,
+          modifiedAt: server.updatedAt,
+        });
+      }
+    }
+
+    // Sort by modified date
+    mergedDrafts.sort((a, b) => {
+      const aTime = new Date(a.modifiedAt || a.savedAt || 0).getTime();
+      const bTime = new Date(b.modifiedAt || b.savedAt || 0).getTime();
+      return bTime - aTime;
+    });
+
+    // Save merged list to localStorage
+    saveDrafts(mergedDrafts);
+
+    return mergedDrafts;
+  } catch (err) {
+    console.warn('[drafts] Failed to sync from server:', err);
+    return getDrafts();
+  }
+}
+
+/**
+ * Import all localStorage drafts to server
+ * @returns {Promise<{imported: Array, failed: Array}>}
+ */
+export async function importLocalDraftsToServer() {
+  const localDrafts = getDrafts().filter((d) => !d.serverId);
+
+  if (localDrafts.length === 0) {
+    return { imported: [], failed: [] };
+  }
+
+  try {
+    const resp = await fetch('/api/documents/import-local', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ drafts: localDrafts }),
+    });
+
+    if (!resp.ok) {
+      return { imported: [], failed: localDrafts.map((d) => ({ localId: d.id, error: 'API error' })) };
+    }
+
+    const result = await resp.json();
+
+    // Update local drafts with server IDs
+    const drafts = getDrafts();
+    for (const item of result.imported || []) {
+      const idx = drafts.findIndex((d) => d.id === item.localId);
+      if (idx !== -1) {
+        drafts[idx].serverId = item.id;
+      }
+    }
+    saveDrafts(drafts);
+
+    return result;
+  } catch (err) {
+    console.warn('[drafts] Failed to import to server:', err);
+    return { imported: [], failed: localDrafts.map((d) => ({ localId: d.id, error: String(err) })) };
+  }
+}
 
 /**
  * Get all saved drafts
@@ -43,9 +302,9 @@ export function getDraftById(draftId) {
  * @param {string} options.content - Draft content
  * @param {Object} [options.settings] - Optional settings
  * @param {Object} [options.aiChanges] - AI enhancement changes/suggestions to show
- * @returns {Object} The created draft
+ * @returns {Promise<Object>} The created draft
  */
-export function createDraft({ title, content, settings = {}, aiChanges = null }) {
+export async function createDraft({ title, content, settings = {}, aiChanges = null }) {
   const drafts = getDrafts();
   const now = new Date().toISOString();
   const id = `draft_${Date.now()}`;
@@ -66,10 +325,21 @@ export function createDraft({ title, content, settings = {}, aiChanges = null })
         version: '',
         date: '',
       },
+      pageBreakHeadings: settings.pageBreakHeadings === true,
     },
     // Store AI changes to display in editor (one-time, cleared after viewing)
     aiChanges: aiChanges || null,
+    // Server document ID (if synced)
+    serverId: null,
   };
+
+  // Try to create on server first
+  if (syncEnabled) {
+    const serverId = await createDraftOnServer(draft);
+    if (serverId) {
+      draft.serverId = serverId;
+    }
+  }
 
   drafts.unshift(draft);
 
@@ -147,6 +417,14 @@ export function updateDraft(draftId, updates) {
 
   drafts[index] = draft;
   saveDrafts(drafts);
+
+  // Sync to server in background (don't await)
+  if (syncEnabled && draft.serverId) {
+    syncDraftToServer(draft).catch((err) => {
+      console.warn('[drafts] Background sync failed:', err);
+    });
+  }
+
   return draft;
 }
 
@@ -155,8 +433,18 @@ export function updateDraft(draftId, updates) {
  * @param {string} draftId - Draft ID to delete
  */
 export function deleteDraft(draftId) {
-  const drafts = getDrafts().filter((d) => d.id !== draftId);
-  saveDrafts(drafts);
+  const drafts = getDrafts();
+  const draft = drafts.find((d) => d.id === draftId);
+
+  // Delete from server in background if synced
+  if (syncEnabled && draft?.serverId) {
+    deleteDraftFromServer(draft.serverId).catch((err) => {
+      console.warn('[drafts] Failed to delete from server:', err);
+    });
+  }
+
+  const filtered = drafts.filter((d) => d.id !== draftId);
+  saveDrafts(filtered);
 }
 
 /**

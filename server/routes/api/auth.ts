@@ -15,6 +15,7 @@ import {
   verifyLoginAsync,
   type UserWithVersion,
 } from '../../auth/auth.js';
+import { isDatabaseAvailable } from '../../db/client.js';
 
 interface AuthContext {
   req: IncomingMessage;
@@ -72,6 +73,16 @@ export async function handleAuth({ req, res, url }: AuthContext): Promise<boolea
       return true;
     }
     ok(res, { user });
+    return true;
+  }
+
+  // Get app configuration (public endpoint)
+  if (url.pathname === '/api/auth/config' && req.method === 'GET') {
+    ok(res, {
+      authEnabled: authEnabled(),
+      databaseEnabled: isDatabaseAvailable(),
+      devBypassEnabled: devAuthBypassEnabled(),
+    });
     return true;
   }
 

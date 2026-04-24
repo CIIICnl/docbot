@@ -27,6 +27,8 @@ export interface DocumentOptions {
   coverPageOptions?: CoverPageOptions;
   /** Document locale for accessibility (defaults to 'en') */
   locale?: 'en' | 'nl';
+  /** Start H1 and H2 headings on a new page */
+  pageBreakHeadings?: boolean;
 }
 
 /**
@@ -166,7 +168,7 @@ async function generateCoverPageHtml(
  * Build a complete HTML document ready for PDF generation
  */
 export async function buildDocument(options: DocumentOptions): Promise<string> {
-  const { title, content, toc, themeId, showToc, useUrlFonts, coverPage, coverPageOptions, locale } = options;
+  const { title, content, toc, themeId, showToc, useUrlFonts, coverPage, coverPageOptions, locale, pageBreakHeadings } = options;
 
   // Determine document language from locale or cover page options
   const docLocale = locale || coverPageOptions?.locale || 'en';
@@ -234,6 +236,24 @@ export async function buildDocument(options: DocumentOptions): Promise<string> {
       padding: 1em;
       background: var(--doc-code-bg, #f5f5f5);
     }
+
+    ${pageBreakHeadings ? `
+    /* Page break before H1 and H2 headings */
+    .document h1,
+    .document h2 {
+      page-break-before: always;
+      break-before: page;
+    }
+
+    /* Prevent page break before first heading after ToC or at document start */
+    .document > h1:first-child,
+    .document > h2:first-child,
+    .toc + h1,
+    .toc + h2 {
+      page-break-before: auto;
+      break-before: auto;
+    }
+    ` : ''}
   </style>
 </head>
 <body>

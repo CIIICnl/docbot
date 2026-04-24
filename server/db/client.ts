@@ -59,11 +59,107 @@ export interface AuthAuditLogTable {
   created_at: Generated<string>;
 }
 
+export interface DocumentSettings {
+  themeId: string;
+  generateToc: boolean;
+  pageNumbers: boolean;
+  coverPage: boolean;
+  coverPageOptions?: {
+    subtitle?: string;
+    version?: string;
+    date?: string;
+  };
+  pageBreakHeadings?: boolean;
+}
+
+export interface DocumentsTable {
+  id: Generated<string>;
+  organization_id: string;
+  user_id: string | null;
+  owner_email: string;
+  title: string;
+  content: string;
+  settings: DocumentSettings;
+  ai_changes: Record<string, unknown> | null;
+  created_at: Generated<string>;
+  updated_at: Generated<string>;
+  trashed_at: string | null;
+  trashed_by: string | null;
+}
+
+export interface DocumentVersionsTable {
+  id: Generated<string>;
+  document_id: string;
+  organization_id: string;
+  created_by: string | null;
+  reason: string;
+  label: string | null;
+  revision: number | null;
+  title: string | null;
+  content: string;
+  settings: DocumentSettings | null;
+  created_at: Generated<string>;
+}
+
+export interface DocumentCollaboratorsTable {
+  id: Generated<string>;
+  document_id: string;
+  organization_id: string;
+  user_email: string;
+  permission: string;
+  invited_by: string | null;
+  invited_at: Generated<string>;
+  revoked_at: string | null;
+}
+
+export interface DocumentLocksTable {
+  document_id: string;
+  holder_email: string;
+  holder_name: string | null;
+  acquired_at: Generated<string>;
+  expires_at: string;
+}
+
+export interface DocumentLockRequestsTable {
+  id: Generated<string>;
+  document_id: string;
+  requester_email: string;
+  message: string | null;
+  status: Generated<string>;
+  responded_at: string | null;
+  responded_by: string | null;
+  created_at: Generated<string>;
+}
+
+export interface DocumentCommentsTable {
+  id: Generated<string>;
+  document_id: string;
+  parent_id: string | null;
+  organization_id: string;
+  author_email: string;
+  author_name: string | null;
+  body: string;
+  anchor_text: string | null;
+  anchor_start: number | null;
+  anchor_end: number | null;
+  status: Generated<string>;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  created_at: Generated<string>;
+  updated_at: Generated<string>;
+}
+
 export interface Database {
   users: UsersTable;
   password_reset_tokens: PasswordResetTokensTable;
   magic_link_tokens: MagicLinkTokensTable;
   auth_audit_log: AuthAuditLogTable;
+  documents: DocumentsTable;
+  document_versions: DocumentVersionsTable;
+  document_collaborators: DocumentCollaboratorsTable;
+  document_locks: DocumentLocksTable;
+  document_lock_requests: DocumentLockRequestsTable;
+  document_comments: DocumentCommentsTable;
 }
 
 let db: Kysely<Database> | null = null;

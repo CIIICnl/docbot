@@ -6,6 +6,7 @@ import footnote from 'markdown-it-footnote';
 import hljs from 'highlight.js';
 import type { MarkdownResult, TocEntry, AccessibilityWarning } from '../types/index.js';
 import { escapeHtml } from '../utils/html.js';
+import { resolveMediaUrl } from '../routes/api/media.js';
 
 // Configure markdown-it with plugins
 const md = new MarkdownIt({
@@ -194,7 +195,7 @@ export function parseMarkdown(content: string): MarkdownResult {
 export function generateTocHtml(toc: TocEntry[], locale: 'en' | 'nl' = 'en'): string {
   if (toc.length === 0) return '';
 
-  const tocTitle = locale === 'nl' ? 'Inhoudsopgave' : 'Contents';
+  const tocTitle = locale === 'nl' ? 'Inhoudsopgave' : 'Table of Contents';
 
   const items = toc
     .map((entry) => {
@@ -222,4 +223,58 @@ export function countWords(content: string): number {
     .replace(/[#*`\[\]()]/g, '')
     .split(/\s+/)
     .filter((word) => word.length > 0).length;
+}
+
+/**
+ * Resolve docbot:// media URLs in markdown content
+ * Converts them to base64 data URLs for PDF embedding or presigned URLs for preview
+ */
+export async function resolveMediaUrls(
+  content: string,
+  options: { asBase64?: boolean } = {}
+): Promise<string> {
+  // Find all docbot://media/ URLs in the content
+  const mediaUrlPattern = /docbot:\/\/media\/[^\s)"']+/g;
+  const matches = content.match(mediaUrlPattern);
+
+  if (!matches || matches.length === 0) {
+    return content;
+  }
+
+  // Resolve each URL (deduplicate first)
+  const uniqueUrls = [...new Set(matches)];
+  const urlMap = new Map<string, string>();
+
+  await Promise.all(
+    uniqueUrls.map(async (url) => {
+      try {
+        const resolved = await resolveMediaUrl(url, { asBase64: options.asBase64 });
+        if (resolved) {
+          urlMap.set(url, resolved);
+        }
+      } catch (err) {
+        console.warn(`[markdown] Failed to resolve media URL: ${url}`, err);
+      }
+    })
+  );
+
+  // Replace all URLs in content
+  let result = content;
+  for (const [original, resolved] of urlMap) {
+    result = result.split(original).join(resolved);
+  }
+
+  return result;
+}
+
+/**
+ * Parse markdown with media URL resolution for PDF/print
+ * Resolves docbot:// URLs to base64 for embedding in PDFs
+ */
+export async function parseMarkdownForPdf(content: string): Promise<MarkdownResult> {
+  // First resolve media URLs to base64
+  const resolvedContent = await resolveMediaUrls(content, { asBase64: true });
+
+  // Then parse as normal
+  return parseMarkdown(resolvedContent);
 }

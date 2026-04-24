@@ -7,7 +7,7 @@ import { h } from '../../lib/dom.js';
 import { post } from '../../lib/api.js';
 import { slIcon } from '../../lib/shoelace.js';
 import { DOMSearchController, SEARCH_HIGHLIGHT_CSS } from '../../lib/search-controller.js';
-import { t } from '../../lib/i18n.js';
+import { t, getLocale } from '../../lib/i18n.js';
 
 /**
  * Create the preview panel
@@ -72,6 +72,7 @@ export function createPreviewPanel({ store }) {
           generateToc: state.generateToc,
           pageNumbers: false,
           title: state.contentTitle,
+          locale: getLocale(),
         },
       });
 
