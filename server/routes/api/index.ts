@@ -18,6 +18,7 @@ import { handleCollaboration } from './collaboration.js';
 import { handleEvents } from './events.js';
 import { notFound, unauthorized } from '../../utils/http.js';
 import { authEnabled, getUserFromRequestAsync, type User } from '../../auth/auth.js';
+import { normalizeEmail } from '../../storage/password-utils.js';
 
 export interface ApiContext {
   req: IncomingMessage;
@@ -41,24 +42,48 @@ export async function handleApi(ctx: ApiContext): Promise<void> {
   if (await handleMagicLink(ctx)) return;
 
   // Service-to-service token for trusted internal callers (e.g. dashboard.ciiic.nl
-  // generating PDFs). Only accepted on /api/convert* — other routes still require
-  // a real user session.
+  // generating PDFs, ciiicbot saving conversation outputs). Accepted on:
+  //  - /api/convert*           — stateless render, no on-behalf-of needed
+  //  - POST /api/documents      — create a doc on behalf of an existing user
+  //                               (requires X-On-Behalf-Of: <email>)
+  // Other routes still require a real user session.
   const internalToken = String(process.env.DOCBOT_INTERNAL_TOKEN || '').trim();
   const authHeader = String(ctx.req.headers['authorization'] || '');
   const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
   const isConvertPath = ctx.url.pathname.startsWith('/api/convert');
-  const internalAuthMatches =
-    isConvertPath && internalToken && bearer && bearer === internalToken;
+  const isDocumentsCreate =
+    ctx.url.pathname === '/api/documents' && ctx.req.method === 'POST';
+  const tokenMatches = !!(internalToken && bearer && bearer === internalToken);
 
-  // Check authentication for all other routes
-  const authedUser = internalAuthMatches
-    ? {
-        email: 'internal-service',
-        role: 'admin' as const,
-        name: 'Internal Service',
-        isAdmin: true,
-      }
-    : await getUserFromRequestAsync(ctx.req);
+  let authedUser: User | null;
+  if (tokenMatches && isConvertPath) {
+    authedUser = {
+      email: 'internal-service',
+      role: 'admin',
+      name: 'Internal Service',
+      isAdmin: true,
+    };
+  } else if (tokenMatches && isDocumentsCreate) {
+    // Trust the X-On-Behalf-Of email: the calling service (ciiicbot)
+    // has already verified the user via the shared sb_session cookie
+    // before delegating to us. We don't require a row in our `users`
+    // table — SSO users are recognized at runtime without a DB record,
+    // matching how cookie-authed createDocument calls already work.
+    const onBehalfHeader = String(ctx.req.headers['x-on-behalf-of'] || '').trim();
+    const onBehalfEmail = normalizeEmail(onBehalfHeader);
+    if (!onBehalfEmail) {
+      unauthorized(ctx.res, 'X-On-Behalf-Of header is required for /api/documents');
+      return;
+    }
+    authedUser = {
+      email: onBehalfEmail,
+      role: 'user',
+      name: onBehalfEmail,
+      isAdmin: false,
+    };
+  } else {
+    authedUser = await getUserFromRequestAsync(ctx.req);
+  }
   if (authEnabled() && !authedUser) {
     unauthorized(ctx.res);
     return;
