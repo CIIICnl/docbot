@@ -296,6 +296,69 @@ export function getDraftById(draftId) {
 }
 
 /**
+ * Find a draft whose serverId matches the given UUID. Used when an
+ * incoming /edit/:id route carries a server document UUID rather than
+ * a local draft id (e.g. when ciiicbot saves a doc via the internal
+ * API and links the user straight to the editor).
+ * @param {string} serverId - Server document UUID
+ * @returns {Object|null}
+ */
+export function findDraftByServerId(serverId) {
+  const drafts = getDrafts();
+  return drafts.find((d) => d.serverId === serverId) || null;
+}
+
+/**
+ * Hydrate a localStorage draft from a server document. Used when a
+ * server UUID is opened directly (no matching local draft exists yet)
+ * — typically after an external save (ciiicbot) lands the user on
+ * /edit/<uuid>. Idempotent: if a matching draft already exists by
+ * serverId it's returned as-is. Otherwise fetches /api/documents/:id,
+ * builds a draft with `serverId` set, persists it, and returns it.
+ * Returns null when sync is disabled or the server doc isn't found.
+ * @param {string} serverId
+ * @returns {Promise<Object|null>}
+ */
+export async function loadOrCreateDraftForServerId(serverId) {
+  const existing = findDraftByServerId(serverId);
+  if (existing) return existing;
+  if (!syncEnabled) return null;
+
+  try {
+    const resp = await fetch(`/api/documents/${serverId}`);
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    const doc = data.document;
+    if (!doc) return null;
+
+    const drafts = getDrafts();
+    const now = new Date().toISOString();
+    const draft = {
+      id: `draft_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      title: doc.title || 'Untitled',
+      content: doc.content || '',
+      createdAt: doc.createdAt || now,
+      modifiedAt: doc.updatedAt || now,
+      settings: doc.settings || {
+        themeId: DEFAULTS.THEME,
+        generateToc: true,
+        pageNumbers: true,
+        coverPage: false,
+        coverPageOptions: { subtitle: '', version: '', date: '' },
+      },
+      aiChanges: doc.aiChanges || null,
+      serverId,
+    };
+    drafts.unshift(draft);
+    saveDrafts(drafts);
+    return draft;
+  } catch (err) {
+    console.warn('[drafts] Failed to hydrate from server:', err);
+    return null;
+  }
+}
+
+/**
  * Create a new draft with default settings
  * @param {Object} options
  * @param {string} options.title - Draft title

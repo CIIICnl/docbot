@@ -27,8 +27,10 @@ export interface DocumentOptions {
   coverPageOptions?: CoverPageOptions;
   /** Document locale for accessibility (defaults to 'en') */
   locale?: 'en' | 'nl';
-  /** Start H1 and H2 headings on a new page */
-  pageBreakHeadings?: boolean;
+  /** Start each H1 on a new page (chapter-style). */
+  pageBreakBeforeH1?: boolean;
+  /** Start each H2 on a new page (section-style). */
+  pageBreakBeforeH2?: boolean;
 }
 
 /**
@@ -168,7 +170,19 @@ async function generateCoverPageHtml(
  * Build a complete HTML document ready for PDF generation
  */
 export async function buildDocument(options: DocumentOptions): Promise<string> {
-  const { title, content, toc, themeId, showToc, useUrlFonts, coverPage, coverPageOptions, locale, pageBreakHeadings } = options;
+  const {
+    title,
+    content,
+    toc,
+    themeId,
+    showToc,
+    useUrlFonts,
+    coverPage,
+    coverPageOptions,
+    locale,
+    pageBreakBeforeH1,
+    pageBreakBeforeH2,
+  } = options;
 
   // Determine document language from locale or cover page options
   const docLocale = locale || coverPageOptions?.locale || 'en';
@@ -237,22 +251,18 @@ export async function buildDocument(options: DocumentOptions): Promise<string> {
       background: var(--doc-code-bg, #f5f5f5);
     }
 
-    ${pageBreakHeadings ? `
-    /* Page break before H1 and H2 headings */
-    .document h1,
-    .document h2 {
-      page-break-before: always;
-      break-before: page;
-    }
-
-    /* Prevent page break before first heading after ToC or at document start */
+    ${pageBreakBeforeH1 ? `
+    /* Each H1 starts on a new page (chapter-style) */
+    .document h1 { page-break-before: always; break-before: page; }
     .document > h1:first-child,
+    .toc + h1 { page-break-before: auto; break-before: auto; }
+    ` : ''}
+
+    ${pageBreakBeforeH2 ? `
+    /* Each H2 starts on a new page (section-style) */
+    .document h2 { page-break-before: always; break-before: page; }
     .document > h2:first-child,
-    .toc + h1,
-    .toc + h2 {
-      page-break-before: auto;
-      break-before: auto;
-    }
+    .toc + h2 { page-break-before: auto; break-before: auto; }
     ` : ''}
   </style>
 </head>

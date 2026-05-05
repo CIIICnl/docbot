@@ -69,7 +69,12 @@ export interface DocumentSettings {
     version?: string;
     date?: string;
   };
+  /** @deprecated Use `pageBreakBeforeH1` / `pageBreakBeforeH2`. */
   pageBreakHeadings?: boolean;
+  pageBreakBeforeH1?: boolean;
+  pageBreakBeforeH2?: boolean;
+  /** Heading levels to include in TOC. Default `[2, 3]`. */
+  tocLevels?: number[];
 }
 
 export interface DocumentsTable {

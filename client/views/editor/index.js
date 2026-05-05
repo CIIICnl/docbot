@@ -5,7 +5,12 @@
 
 import { h, empty } from '../../lib/dom.js';
 import { t } from '../../lib/i18n.js';
-import { getDraftById, updateDraft } from '../../lib/drafts.js';
+import {
+  getDraftById,
+  findDraftByServerId,
+  loadOrCreateDraftForServerId,
+  updateDraft,
+} from '../../lib/drafts.js';
 import { get } from '../../lib/api.js';
 import { warning } from '../../lib/toast.js';
 import { createConverterState } from './state.js';
@@ -27,8 +32,26 @@ import { sl, slButton } from '../../lib/shoelace.js';
 export async function renderEditor(container, { draftId, navigate }) {
   empty(container);
 
-  // Load draft
-  const draft = getDraftById(draftId);
+  // Resolve the route id to a localStorage draft. Three cases:
+  //   1. `draft_<ts>_…`  → direct match in localStorage (the common path)
+  //   2. UUID matching `serverId` of an existing draft → reuse it
+  //   3. UUID with no local draft yet → fetch the server doc and seed
+  //      a draft. Happens when an external caller (ciiicbot) creates
+  //      a document via the internal API and links the user straight
+  //      to /edit/<server-uuid> without going through the client's
+  //      draft-creation flow.
+  let draft = getDraftById(draftId);
+  if (!draft) draft = findDraftByServerId(draftId);
+  if (!draft) {
+    draft = await loadOrCreateDraftForServerId(draftId);
+    if (draft) {
+      // Bring the URL in line with the local draft id so save/sync
+      // (which keys on draftId) and the address bar agree on which
+      // draft is open.
+      navigate(`/edit/${draft.id}`, { replace: true });
+      draftId = draft.id;
+    }
+  }
   if (!draft) {
     warning(t('editor.draftNotFound'));
     navigate('/');

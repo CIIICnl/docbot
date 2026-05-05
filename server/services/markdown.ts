@@ -162,9 +162,17 @@ md.renderer.rules.th_open = function (tokens, idx, options, env, self) {
 };
 
 /**
- * Extract table of contents entries from markdown tokens
+ * Extract table of contents entries from markdown tokens.
+ *
+ * `levels` filters which heading levels are included. Default `[2, 3]`
+ * matches the historical behaviour (H2 + H3). Pass e.g. `[1, 2]` for
+ * chapter-style documents that use H1 as section markers.
  */
-function extractToc(tokens: ReturnType<typeof md.parse>): TocEntry[] {
+function extractToc(
+  tokens: ReturnType<typeof md.parse>,
+  levels: number[] = [2, 3]
+): TocEntry[] {
+  const allowed = new Set(levels);
   const toc: TocEntry[] = [];
 
   for (let i = 0; i < tokens.length; i++) {
@@ -172,8 +180,7 @@ function extractToc(tokens: ReturnType<typeof md.parse>): TocEntry[] {
     if (!token) continue;
     if (token.type === 'heading_open') {
       const level = parseInt(token.tag.slice(1), 10);
-      // Only include h2 and h3 in TOC
-      if (level >= 2 && level <= 3) {
+      if (allowed.has(level)) {
         const contentToken = tokens[i + 1];
         if (contentToken && contentToken.type === 'inline') {
           const text = contentToken.content;
@@ -257,14 +264,20 @@ function checkImageAccessibility(tokens: ReturnType<typeof md.parse>): Accessibi
 }
 
 /**
- * Parse markdown content to HTML with TOC extraction
+ * Parse markdown content to HTML with TOC extraction.
+ *
+ * `tocLevels` controls which heading levels appear in the TOC; defaults
+ * to `[2, 3]` for backwards compatibility.
  */
-export function parseMarkdown(content: string): MarkdownResult {
+export function parseMarkdown(
+  content: string,
+  tocLevels: number[] = [2, 3]
+): MarkdownResult {
   // Parse to tokens first (for TOC extraction)
   const tokens = md.parse(content, {});
 
   // Extract metadata
-  const toc = extractToc(tokens);
+  const toc = extractToc(tokens, tocLevels);
   const title = extractTitle(tokens);
 
   // Check for accessibility issues
@@ -277,16 +290,25 @@ export function parseMarkdown(content: string): MarkdownResult {
 }
 
 /**
- * Generate HTML for table of contents
+ * Generate HTML for table of contents.
+ *
+ * Indent classes are derived from each entry's offset relative to the
+ * shallowest level in the TOC, so the same CSS hooks work whether the
+ * TOC contains [2, 3], [1, 2], or [1, 2, 3]. The shallowest level is
+ * flush; one level deeper gets `toc-indent`; two levels deeper gets
+ * `toc-indent-2` (themes ship a deeper-indent rule for that case).
  */
 export function generateTocHtml(toc: TocEntry[], locale: 'en' | 'nl' = 'en'): string {
   if (toc.length === 0) return '';
 
   const tocTitle = locale === 'nl' ? 'Inhoudsopgave' : 'Table of Contents';
+  const minLevel = toc.reduce((min, e) => Math.min(min, e.level), Infinity);
 
   const items = toc
     .map((entry) => {
-      const indent = entry.level === 3 ? 'toc-indent' : '';
+      const offset = entry.level - minLevel;
+      const indent =
+        offset <= 0 ? '' : offset === 1 ? 'toc-indent' : 'toc-indent-2';
       return `<li class="toc-item ${indent}"><a href="#${entry.id}">${escapeHtml(entry.text)}</a></li>`;
     })
     .join('\n');
