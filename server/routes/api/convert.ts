@@ -57,9 +57,16 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
       // If cover page is enabled, strip the first H1 from content to avoid duplication
       const contentToProcess = options.coverPage ? stripFirstH1(resolvedContent) : resolvedContent;
 
+      // Resolve heading-break flags. Per-level flags win; the legacy
+      // `pageBreakHeadings` boolean fills in for both when set, so older
+      // callers (dashboard.ciiic.nl) keep working unchanged.
+      const breakH1 = options.pageBreakBeforeH1 ?? options.pageBreakHeadings ?? false;
+      const breakH2 = options.pageBreakBeforeH2 ?? options.pageBreakHeadings ?? false;
+      const tocLevels = options.tocLevels ?? [2, 3];
+
       // Parse markdown (use original content to extract title, processed content for body)
-      const { title: extractedTitle, accessibilityWarnings } = parseMarkdown(resolvedContent);
-      const { html: contentHtml, toc } = parseMarkdown(contentToProcess);
+      const { title: extractedTitle, accessibilityWarnings } = parseMarkdown(resolvedContent, tocLevels);
+      const { html: contentHtml, toc } = parseMarkdown(contentToProcess, tocLevels);
       const title = options.title || extractedTitle || 'Document';
       const locale = options.locale || options.coverPageOptions?.locale || 'en';
       const tocHtml = options.generateToc ? generateTocHtml(toc, locale) : '';
@@ -74,7 +81,8 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
         coverPage: options.coverPage,
         coverPageOptions: options.coverPageOptions,
         locale,
-        pageBreakHeadings: options.pageBreakHeadings,
+        pageBreakBeforeH1: breakH1,
+        pageBreakBeforeH2: breakH2,
       });
 
       // Get page settings from theme
@@ -142,8 +150,10 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
       // Resolve docbot:// media URLs to presigned URLs for preview
       const resolvedContent = await resolveMediaUrls(body.content, { asBase64: false });
 
+      const tocLevels = options.tocLevels ?? [2, 3];
+
       // Parse markdown
-      const { html: contentHtml, toc, title: extractedTitle } = parseMarkdown(resolvedContent);
+      const { html: contentHtml, toc, title: extractedTitle } = parseMarkdown(resolvedContent, tocLevels);
       const title = options.title || extractedTitle || 'Document';
       const locale = options.locale || options.coverPageOptions?.locale || 'en';
       const tocHtml = options.generateToc ? generateTocHtml(toc, locale) : '';

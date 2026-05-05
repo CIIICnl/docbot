@@ -17,8 +17,24 @@ export interface ConversionOptions {
   title?: string;
   coverPage?: boolean;
   coverPageOptions?: CoverPageOptions;
-  /** Start H1 and H2 headings on a new page */
+  /**
+   * @deprecated Use `pageBreakBeforeH1` / `pageBreakBeforeH2` instead.
+   * When set, applies to both H1 and H2 unless overridden by the
+   * level-specific flags. Kept for backwards compatibility with callers
+   * that haven't migrated yet (e.g. dashboard.ciiic.nl).
+   */
   pageBreakHeadings?: boolean;
+  /** Start each H1 on a new page. Overrides `pageBreakHeadings` for H1. */
+  pageBreakBeforeH1?: boolean;
+  /** Start each H2 on a new page. Overrides `pageBreakHeadings` for H2. */
+  pageBreakBeforeH2?: boolean;
+  /**
+   * Heading levels to include in the table of contents. Defaults to
+   * `[2, 3]` (H2 + H3) — the historical behaviour. Pass `[1, 2]` to
+   * include H1 and H2 (typical for chapter-style documents) or
+   * `[1, 2, 3]` for full depth.
+   */
+  tocLevels?: number[];
   /** Document locale for TOC heading etc */
   locale?: 'en' | 'nl';
 }
