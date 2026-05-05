@@ -39,6 +39,93 @@ md.use(anchor, {
 // Add footnote support
 md.use(footnote);
 
+/**
+ * Wrap solo-image paragraphs in <figure> with a <figcaption>.
+ *
+ * Pattern that triggers it: a paragraph whose only meaningful inline
+ * child is a single image (whitespace-only siblings are ignored).
+ * The image's alt text becomes the caption — bot output uses the form
+ * '![beschrijving — Foto: Naam](url)' so the caption already carries
+ * the photographer credit; CSS in themes/ciiic/styles.css renders it
+ * small/grey/monospace tight under the image.
+ *
+ * Inline images embedded in a sentence are left alone (still <p><img>).
+ */
+md.core.ruler.push('image_figures', (state) => {
+  const tokens = state.tokens;
+  for (let i = 0; i < tokens.length - 2; i++) {
+    const open = tokens[i];
+    const inline = tokens[i + 1];
+    const close = tokens[i + 2];
+    if (
+      !open ||
+      !inline ||
+      !close ||
+      open.type !== 'paragraph_open' ||
+      inline.type !== 'inline' ||
+      close.type !== 'paragraph_close'
+    ) {
+      continue;
+    }
+    const meaningful = (inline.children ?? []).filter(
+      (c) => !(c.type === 'text' && c.content.trim() === '')
+    );
+    if (meaningful.length !== 1) continue;
+    const imgToken = meaningful[0];
+    if (!imgToken || imgToken.type !== 'image') continue;
+
+    open.type = 'figure_open';
+    open.tag = 'figure';
+    close.type = 'figure_close';
+    close.tag = 'figure';
+
+    const alt = (imgToken.content || imgToken.attrGet('alt') || '').trim();
+    if (!alt) continue;
+
+    // Split "beschrijving — Foto: Naam" so the credit sits on its own
+    // line under the description (smaller, lower opacity in CSS).
+    const credit = alt.match(/^(.*?)\s+—\s+(Foto:\s+.+)$/);
+    const captionOpen = new state.Token('figcaption_open', 'figcaption', 1);
+    captionOpen.block = true;
+    const captionInline = new state.Token('inline', '', 0);
+    captionInline.children = [];
+    if (credit) {
+      const description = (credit[1] ?? '').trim();
+      const photographer = (credit[2] ?? '').trim();
+      const descSpanOpen = new state.Token('html_inline', '', 0);
+      descSpanOpen.content = '<span class="caption-text">';
+      const descText = new state.Token('text', '', 0);
+      descText.content = description;
+      const descSpanClose = new state.Token('html_inline', '', 0);
+      descSpanClose.content = '</span>';
+      const creditSpanOpen = new state.Token('html_inline', '', 0);
+      creditSpanOpen.content = '<span class="caption-credit">';
+      const creditText = new state.Token('text', '', 0);
+      creditText.content = photographer;
+      const creditSpanClose = new state.Token('html_inline', '', 0);
+      creditSpanClose.content = '</span>';
+      captionInline.children.push(
+        descSpanOpen,
+        descText,
+        descSpanClose,
+        creditSpanOpen,
+        creditText,
+        creditSpanClose
+      );
+    } else {
+      const text = new state.Token('text', '', 0);
+      text.content = alt;
+      captionInline.children.push(text);
+    }
+    captionInline.content = alt;
+    const captionClose = new state.Token('figcaption_close', 'figcaption', -1);
+    captionClose.block = true;
+
+    tokens.splice(i + 2, 0, captionOpen, captionInline, captionClose);
+    i += 3;
+  }
+});
+
 // Enable tables (built into markdown-it)
 md.enable('table');
 
