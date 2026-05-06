@@ -335,6 +335,41 @@ export function countWords(content: string): number {
 }
 
 /**
+ * Add a width-cap transformation to ImageKit URLs that don't already
+ * carry a `tr=` parameter. ImageKit serves the original asset by
+ * default — a 5 MB JPEG straight from the asset library — and Chromium's
+ * print-to-PDF rasterises that at print DPI, blowing up a 7 KB markdown
+ * doc with three photos to a 90+ MB PDF. Capping width at 1600px (more
+ * than enough for a 16cm-wide print column at 300 DPI) typically
+ * shrinks the source to ~150-300 KB without visible loss.
+ *
+ * - Only touches `*.imagekit.io` hosts.
+ * - Skips URLs that already include a `tr=` segment (someone deliberately
+ *   set a transformation we shouldn't override).
+ * - Keeps any existing query string (e.g. `?updatedAt=...`) intact.
+ */
+const IMAGEKIT_HOST_RE = /^[a-z0-9-]+\.imagekit\.io$/i;
+const IMAGEKIT_DEFAULT_TRANSFORM = 'w-1600,q-85';
+
+export function optimizeImageKitUrls(content: string): string {
+  // Match URLs in markdown image syntax `![...](URL)` and HTML `<img src="URL">`.
+  // Conservative: stop on whitespace, closing paren, or quote.
+  const urlRe = /https:\/\/[a-z0-9.-]+\.imagekit\.io\/[^\s)"'<>]+/gi;
+  return content.replace(urlRe, (raw) => {
+    let url: URL;
+    try {
+      url = new URL(raw);
+    } catch {
+      return raw;
+    }
+    if (!IMAGEKIT_HOST_RE.test(url.hostname)) return raw;
+    if (url.searchParams.has('tr')) return raw;
+    url.searchParams.set('tr', IMAGEKIT_DEFAULT_TRANSFORM);
+    return url.toString();
+  });
+}
+
+/**
  * Resolve docbot:// media URLs in markdown content
  * Converts them to base64 data URLs for PDF embedding or presigned URLs for preview
  */
@@ -384,6 +419,11 @@ export async function parseMarkdownForPdf(content: string): Promise<MarkdownResu
   // First resolve media URLs to base64
   const resolvedContent = await resolveMediaUrls(content, { asBase64: true });
 
+  // Cap source-image width on ImageKit URLs so headless Chromium doesn't
+  // rasterise multi-megapixel originals into the printed PDF (see comment
+  // on optimizeImageKitUrls).
+  const optimized = optimizeImageKitUrls(resolvedContent);
+
   // Then parse as normal
-  return parseMarkdown(resolvedContent);
+  return parseMarkdown(optimized);
 }
