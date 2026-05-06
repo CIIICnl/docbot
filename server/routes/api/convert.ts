@@ -5,7 +5,12 @@
 
 import type { ApiContext } from './index.js';
 import { json, ok, badRequest, serverError } from '../../utils/http.js';
-import { parseMarkdown, generateTocHtml, resolveMediaUrls } from '../../services/markdown.js';
+import {
+  parseMarkdown,
+  generateTocHtml,
+  resolveMediaUrls,
+  optimizeImageKitUrls,
+} from '../../services/markdown.js';
 import { generatePdf, estimatePageCount } from '../../services/pdf.js';
 import { buildDocument, getPageSettings } from '../../templates/document.js';
 import { getDefaultThemeId, themeExists } from '../../services/themes.js';
@@ -51,8 +56,12 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
         options.themeId = getDefaultThemeId();
       }
 
-      // Resolve docbot:// media URLs to base64 for PDF embedding
-      const resolvedContent = await resolveMediaUrls(body.content, { asBase64: true });
+      // Resolve docbot:// media URLs to base64 for PDF embedding, then
+      // cap ImageKit source images so headless Chromium doesn't rasterise
+      // multi-megapixel originals into the printed PDF (see comment on
+      // optimizeImageKitUrls in services/markdown.ts).
+      const resolvedRaw = await resolveMediaUrls(body.content, { asBase64: true });
+      const resolvedContent = optimizeImageKitUrls(resolvedRaw);
 
       // If cover page is enabled, strip the first H1 from content to avoid duplication
       const contentToProcess = options.coverPage ? stripFirstH1(resolvedContent) : resolvedContent;
