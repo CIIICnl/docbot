@@ -109,17 +109,30 @@ async function callClaude(request: ProviderRequest): Promise<string> {
   const apiKey = getApiKey('claude');
   const client = new Anthropic({ apiKey });
 
-  const message = await client.messages.create({
-    model: LLM_MODELS.CLAUDE,
-    max_tokens: request.maxTokens,
-    messages: [
-      {
-        role: 'user',
-        content: request.userContent,
-      },
-    ],
-    system: request.systemPrompt,
-  });
+  // Stream to avoid the SDK's 10-minute non-streaming guard, which trips
+  // on large max_tokens values for slower models like Opus.
+  const message = await client.messages
+    .stream({
+      model: LLM_MODELS.CLAUDE,
+      max_tokens: request.maxTokens,
+      messages: [
+        {
+          role: 'user',
+          content: request.userContent,
+        },
+      ],
+      system: request.systemPrompt,
+    })
+    .finalMessage();
+
+  if (message.stop_reason && message.stop_reason !== 'end_turn') {
+    console.warn(
+      `[claude] non-terminal stop_reason="${message.stop_reason}" ` +
+        `(model=${LLM_MODELS.CLAUDE}, max_tokens=${request.maxTokens}, ` +
+        `output_tokens=${message.usage?.output_tokens}). ` +
+        `If "max_tokens", JSON output was likely truncated and parse will fail.`
+    );
+  }
 
   const textContent = message.content.find((block) => block.type === 'text');
   if (!textContent || textContent.type !== 'text') {
