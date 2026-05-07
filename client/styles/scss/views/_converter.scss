@@ -97,6 +97,15 @@
   &.has-changes {
     grid-template-columns: 1fr 1fr 380px;
   }
+
+  // Image manager between markdown and preview
+  &.has-images {
+    grid-template-columns: minmax(0, 1fr) 280px minmax(0, 1fr);
+  }
+
+  &.has-images.has-changes {
+    grid-template-columns: minmax(0, 1fr) 280px minmax(0, 1fr) 380px;
+  }
 }
 
 /* Actions bar at bottom */
@@ -161,10 +170,26 @@
   }
 }
 
+@media (max-width: 1400px) {
+  .converter-editor-area.has-images {
+    grid-template-columns: minmax(0, 1fr) 240px minmax(0, 1fr);
+  }
+
+  .converter-editor-area.has-images.has-changes {
+    grid-template-columns: minmax(0, 1fr) 240px minmax(0, 1fr) 48px;
+  }
+}
+
 @media (max-width: 1000px) {
   .converter-editor-area,
-  .converter-editor-area.has-changes {
+  .converter-editor-area.has-changes,
+  .converter-editor-area.has-images,
+  .converter-editor-area.has-images.has-changes {
     grid-template-columns: 1fr;
+  }
+
+  .converter-editor-area.has-images .images-panel {
+    max-height: 320px;
   }
 
   .converter-editor-area.has-changes .changes-sidebar {

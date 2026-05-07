@@ -302,6 +302,27 @@ export default {
     refresh: 'Voorbeeld vernieuwen',
   },
 
+  // Images panel
+  images: {
+    title: 'Afbeeldingen',
+    empty: 'Nog geen afbeeldingen in dit document. Gebruik Toevoegen om er een te uploaden.',
+    countOne: '1 afbeelding',
+    countMany: '{count} afbeeldingen',
+    addBtn: 'Toevoegen',
+    replaceBtn: 'Vervangen',
+    copyMarkdown: 'Markdown-verwijzing kopiëren',
+    copied: 'Markdown-verwijzing gekopieerd',
+    copyFailed: 'Kopiëren naar klembord mislukt',
+    replaced: 'Afbeelding vervangen',
+    refMissing: 'Afbeeldingsverwijzing niet meer in document',
+    externalImage: 'Externe afbeelding — niet vervangbaar',
+    usedTimes: '{count}× gebruikt',
+    addCopied: 'Geüpload — markdown-verwijzing op klembord',
+    addAppended: 'Geüpload — onderaan document toegevoegd',
+    tooLarge: 'Afbeelding is groter dan {max}',
+    uploadFailed: 'Uploaden mislukt: {reason}',
+  },
+
   // 404 page
   notFound: {
     title: 'Pagina niet gevonden',
