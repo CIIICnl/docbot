@@ -34,34 +34,6 @@ export interface DocumentOptions {
 }
 
 /**
- * Format date for display with locale support
- * If a date string is provided, it's returned as-is (preserving user's format)
- * If no date is provided, generates today's date in the specified locale
- */
-function formatDate(dateStr?: string, locale: 'en' | 'nl' = 'en'): string {
-  // If user provided a date string, use it exactly as-is
-  if (dateStr) {
-    return dateStr;
-  }
-
-  // Generate today's date in the appropriate locale format
-  const date = new Date();
-
-  if (locale === 'nl') {
-    const day = date.getDate();
-    const month = date.toLocaleDateString('nl-NL', { month: 'long' });
-    const year = date.getFullYear();
-    return `${day} ${month} ${year}`;
-  }
-
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-}
-
-/**
  * Load logo as base64 data URL for embedding in HTML
  */
 async function loadLogoDataUrl(themeId: string): Promise<string | null> {
@@ -99,10 +71,27 @@ async function generateCoverPageHtml(
   const headingFont = theme?.fonts?.heading?.family || 'Inter, sans-serif';
   const bodyFont = theme?.fonts?.body?.family || 'Inter, sans-serif';
 
-  const version = coverPageOptions?.version || 'v1.0';
-  const locale = coverPageOptions?.locale || 'en';
-  const dateStr = formatDate(coverPageOptions?.date, locale);
-  const subtitle = coverPageOptions?.subtitle || '';
+  const subtitle = coverPageOptions?.subtitle?.trim() || '';
+  const version = coverPageOptions?.version?.trim() || '';
+  const dateStr = coverPageOptions?.date?.trim() || '';
+
+  const metaParts: string[] = [];
+  if (version) metaParts.push(escapeHtml(version));
+  if (dateStr) metaParts.push(escapeHtml(dateStr));
+  const metaHtml = metaParts.length > 0
+    ? `
+      <div style="
+        position: absolute;
+        top: 60px;
+        right: 40px;
+        font-family: ${bodyFont};
+        font-size: 16pt;
+        font-weight: 400;
+        writing-mode: vertical-rl;
+        white-space: nowrap;
+      ">${metaParts.join('  |  ')}</div>
+    `
+    : '';
 
   const logoDataUrl = await loadLogoDataUrl(themeId);
 
@@ -141,16 +130,7 @@ async function generateCoverPageHtml(
       </div>
 
       <!-- Version and date (vertical text, top right) -->
-      <div style="
-        position: absolute;
-        top: 60px;
-        right: 40px;
-        font-family: ${bodyFont};
-        font-size: 16pt;
-        font-weight: 400;
-        writing-mode: vertical-rl;
-        white-space: nowrap;
-      ">${escapeHtml(version)}  |  ${escapeHtml(dateStr)}</div>
+      ${metaHtml}
 
       <!-- Logo (bottom) -->
       ${logoDataUrl ? `
