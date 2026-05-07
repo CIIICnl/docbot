@@ -25,15 +25,52 @@ const md = new MarkdownIt({
   },
 });
 
+/**
+ * Extract clean heading text from an inline token's children, skipping
+ * footnote references so they don't leak into anchor IDs or the ToC.
+ *
+ * Two ref shapes are filtered:
+ * - `footnote_ref` tokens — markdown-it-footnote's native `[^N]` syntax
+ * - `[N]` text inside an `<a href="#footnote-…">` — what the DOCX
+ *   importer emits (mammoth converts Word footnotes to plain links)
+ */
+function extractHeadingText(children: ReturnType<typeof md.parse>[number]['children']): string {
+  if (!children) return '';
+  let result = '';
+  let inFootnoteLink = false;
+  for (const child of children) {
+    if (child.type === 'footnote_ref') continue;
+    if (child.type === 'link_open') {
+      const href = child.attrGet('href') || '';
+      if (href.startsWith('#footnote')) {
+        inFootnoteLink = true;
+        continue;
+      }
+    }
+    if (child.type === 'link_close' && inFootnoteLink) {
+      inFootnoteLink = false;
+      continue;
+    }
+    if (inFootnoteLink) continue;
+    if (child.type === 'text' || child.type === 'code_inline') {
+      result += child.content;
+    }
+  }
+  return result.trim();
+}
+
+const slugifyHeading = (s: string): string =>
+  s
+    .toLowerCase()
+    .trim()
+    .replace(/[\s]+/g, '-')
+    .replace(/[^\w-]/g, '');
+
 // Add anchor plugin for heading IDs
 md.use(anchor, {
   permalink: false,
-  slugify: (s: string) =>
-    s
-      .toLowerCase()
-      .trim()
-      .replace(/[\s]+/g, '-')
-      .replace(/[^\w-]/g, ''),
+  slugify: slugifyHeading,
+  getTokensText: extractHeadingText,
 });
 
 // Add footnote support
@@ -183,12 +220,9 @@ function extractToc(
       if (allowed.has(level)) {
         const contentToken = tokens[i + 1];
         if (contentToken && contentToken.type === 'inline') {
-          const text = contentToken.content;
-          const id = text
-            .toLowerCase()
-            .trim()
-            .replace(/[\s]+/g, '-')
-            .replace(/[^\w-]/g, '');
+          const text = extractHeadingText(contentToken.children);
+          if (!text) continue;
+          const id = slugifyHeading(text);
           toc.push({ id, text, level });
         }
       }
