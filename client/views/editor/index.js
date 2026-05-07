@@ -16,6 +16,7 @@ import { warning } from '../../lib/toast.js';
 import { createConverterState } from './state.js';
 import { createEditorBar } from './editor-bar.js';
 import { createMarkdownPanel } from './markdown-panel.js';
+import { createImagesPanel } from './images-panel.js';
 import { createPreviewPanel } from './preview-panel.js';
 import { createChangesSidebar } from './changes-sidebar.js';
 import { createActionsBar } from './actions-bar.js';
@@ -132,6 +133,15 @@ export async function renderEditor(container, { draftId, navigate }) {
 
   const previewPanel = createPreviewPanel({ store });
 
+  const imagesPanel = createImagesPanel({
+    store,
+    setMarkdown: (next) => {
+      store.set({ content: next });
+      markdownPanel.setValue(next);
+      previewPanel.updatePreview();
+    },
+  });
+
   const changesSidebar = createChangesSidebar({
     store,
     onUndo: () => {
@@ -188,8 +198,9 @@ export async function renderEditor(container, { draftId, navigate }) {
   }
 
   // Build layout
-  editorAreaEl = h('div', { class: 'converter-editor-area' }, [
+  editorAreaEl = h('div', { class: 'converter-editor-area has-images' }, [
     markdownPanel.element,
+    imagesPanel.element,
     previewPanel.element,
     changesSidebar.element,
   ]);
@@ -242,6 +253,7 @@ export async function renderEditor(container, { draftId, navigate }) {
     saveManager.flush();
     saveManager.destroy();
     unsubscribe();
+    imagesPanel.destroy();
     window.removeEventListener('beforeunload', handleBeforeUnload);
   };
 }

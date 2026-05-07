@@ -300,6 +300,27 @@ export default {
     refresh: 'Refresh Preview',
   },
 
+  // Images panel
+  images: {
+    title: 'Images',
+    empty: 'No images in this document yet. Use Add to upload one.',
+    countOne: '1 image',
+    countMany: '{count} images',
+    addBtn: 'Add',
+    replaceBtn: 'Replace',
+    copyMarkdown: 'Copy markdown reference',
+    copied: 'Markdown reference copied',
+    copyFailed: 'Could not copy to clipboard',
+    replaced: 'Image replaced',
+    refMissing: 'Image reference no longer in document',
+    externalImage: 'External — cannot replace',
+    usedTimes: 'used {count}×',
+    addCopied: 'Uploaded — markdown reference copied to clipboard',
+    addAppended: 'Uploaded — appended to end of document',
+    tooLarge: 'Image is larger than {max}',
+    uploadFailed: 'Upload failed: {reason}',
+  },
+
   // 404 page
   notFound: {
     title: 'Page Not Found',
