@@ -12,7 +12,7 @@ export const THEMES = {
 // LLM model identifiers
 export const LLM_MODELS = {
   OPENAI: 'gpt-5.2',
-  CLAUDE: 'claude-sonnet-4-20250514',
+  CLAUDE: 'claude-opus-4-7',
   MISTRAL: 'mistral-large-latest',
 };
 

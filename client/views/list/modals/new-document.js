@@ -408,31 +408,74 @@ export async function openNewDocumentModal({
 
     // If AI enhance is enabled and there's content, run enhancement
     if (shouldEnhance) {
-      // Determine appropriate loading message based on selected options
-      const selectedCount = [aiOptions.fixStructure, aiOptions.fixTypos, aiOptions.improveReadability, aiOptions.getSuggestions].filter(Boolean).length;
-      let enhancingMessage;
-      if (selectedCount > 1) {
-        enhancingMessage = t('newDocument.enhancingMultiple');
-      } else if (aiOptions.fixStructure) {
-        enhancingMessage = t('newDocument.enhancingStructure');
-      } else if (aiOptions.fixTypos) {
-        enhancingMessage = t('newDocument.enhancingTypos');
-      } else if (aiOptions.improveReadability) {
-        enhancingMessage = t('newDocument.enhancingReadability');
+      // Pick rotating-message arrays based on which options are selected,
+      // mirroring the editor's actions-bar.js. Modifying-vs-suggestions-only
+      // splits the source pool; if exactly one modify-option is on, use the
+      // option-specific array so messages match what the user picked.
+      const willModify = aiOptions.fixStructure || aiOptions.fixTypos || aiOptions.improveReadability;
+      const isSuggestionsOnly = aiOptions.getSuggestions && !willModify;
+      const messagesKey = isSuggestionsOnly ? 'aiLoading.suggestions' : 'aiLoading.enhance';
+
+      let stage2Key;
+      if (isSuggestionsOnly) {
+        stage2Key = 'thinking';
       } else {
-        enhancingMessage = t('newDocument.enhancingSuggestions');
+        const modifyCount = [aiOptions.fixStructure, aiOptions.fixTypos, aiOptions.improveReadability].filter(Boolean).length;
+        if (modifyCount === 1) {
+          if (aiOptions.fixStructure) stage2Key = 'improvingStructure';
+          else if (aiOptions.fixTypos) stage2Key = 'improvingTypos';
+          else stage2Key = 'improvingReadability';
+        } else {
+          stage2Key = 'improving';
+        }
       }
+
+      const analyzingMessages = t(`${messagesKey}.analyzing`);
+      const stage2Messages = [...t(`${messagesKey}.${stage2Key}`)].sort(() => Math.random() - 0.5);
+      const wrappingMessages = t(`${messagesKey}.wrapping`);
+      const pickRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+      // Truncate long titles so the modal line doesn't wrap awkwardly.
+      const titlePrefix = title && title.length > 50 ? `${title.slice(0, 47)}…` : title;
+      const personalize = (msg, includeTitle) =>
+        includeTitle && titlePrefix ? `${titlePrefix} — ${msg}` : msg;
 
       const loadingModal = showLoadingModal({
         h,
         root,
         title: t('newDocument.enhancing'),
-        initialMessage: enhancingMessage,
+        initialMessage: personalize(pickRandom(analyzingMessages), false),
       });
 
-      try {
-        loadingModal.setProgress(20);
+      // Eased progress curve: 5% → ~92% asymptotically over ~90s. The LLM call
+      // is non-streaming so we have no real signal — this just guarantees the
+      // bar always moves forward instead of sitting at 20%.
+      const PROGRESS_INITIAL = 5;
+      const PROGRESS_TARGET = 92;
+      const PROGRESS_TAU_MS = 30000;
+      const startTime = Date.now();
+      loadingModal.setProgress(PROGRESS_INITIAL);
+      const progressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const pct = PROGRESS_INITIAL + (PROGRESS_TARGET - PROGRESS_INITIAL) * (1 - Math.exp(-elapsed / PROGRESS_TAU_MS));
+        loadingModal.setProgress(pct);
+      }, 500);
 
+      // Rotate messages every 3s. Stage2 keeps cycling for long calls so the
+      // user doesn't stare at a single "Almost done..." for a minute.
+      let messageIndex = 0;
+      let stage2Index = 0;
+      const messageInterval = setInterval(() => {
+        messageIndex++;
+        const includeTitle = messageIndex % 3 !== 0;
+        const useWrapping = messageIndex >= 4 && messageIndex % 5 === 0;
+        const msg = useWrapping
+          ? pickRandom(wrappingMessages)
+          : stage2Messages[stage2Index++ % stage2Messages.length];
+        loadingModal.update(personalize(msg, includeTitle));
+      }, 3000);
+
+      try {
         const provider = localStorage.getItem(STORAGE_KEYS.DEFAULT_PROVIDER) || DEFAULTS.PROVIDER;
         const globalContext = localStorage.getItem(STORAGE_KEYS.GLOBAL_CONTEXT) || '';
 
@@ -444,7 +487,8 @@ export async function openNewDocumentModal({
           ...aiOptions,
         });
 
-        loadingModal.setProgress(80);
+        clearInterval(messageInterval);
+        clearInterval(progressInterval);
 
         if (!result.ok) {
           throw new Error(result.data?.error || 'Enhancement failed');
@@ -479,6 +523,8 @@ export async function openNewDocumentModal({
         await new Promise((r) => setTimeout(r, 500));
         loadingModal.close();
       } catch (err) {
+        clearInterval(messageInterval);
+        clearInterval(progressInterval);
         loadingModal.close();
         error(t('newDocument.errorEnhance', { error: err.message }));
         // Continue without enhancement
