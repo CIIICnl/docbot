@@ -107,6 +107,10 @@
   --vk-color-danger-subtle: #fef2f2;
 
   --vk-color-focus: rgba(37, 99, 235, 0.5);
+
+  /* Brand accent (CIIIC yellow-green) - used for editor selection */
+  --vk-color-brand-accent: #dbff00;
+  --vk-color-brand-accent-text: #0f172a;
 }
 
 /* Dark Theme Colors - Mixin for DRY */
@@ -136,6 +140,10 @@
   --vk-color-danger-subtle: rgba(239, 68, 68, 0.15);
 
   --vk-color-focus: rgba(59, 130, 246, 0.5);
+
+  /* Brand accent stays the same in dark mode, but text on it stays dark for contrast */
+  --vk-color-brand-accent: #dbff00;
+  --vk-color-brand-accent-text: #0f172a;
 }
 
 /* Dark Theme - System preference */

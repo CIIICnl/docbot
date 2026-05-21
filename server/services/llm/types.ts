@@ -33,6 +33,7 @@ export interface LlmEnhanceRequest {
 }
 
 export interface CoverPageMetadata {
+  title?: string;
   subtitle?: string;
   version?: string;
   date?: string;

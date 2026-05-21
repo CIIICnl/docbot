@@ -516,6 +516,11 @@ export async function openNewDocumentModal({
             version: result.data.coverPage.version || '',
             date: result.data.coverPage.date || '',
           };
+          // If the AI extracted a title from the body's leading H1, prefer it
+          // over the user-supplied placeholder (but only when one was found).
+          if (result.data.coverPage.title) {
+            title = result.data.coverPage.title;
+          }
         }
 
         loadingModal.setProgress(100);

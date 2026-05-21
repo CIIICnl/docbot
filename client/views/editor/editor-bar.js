@@ -118,6 +118,23 @@ export function createEditorBar({ store, draftTitle, onTitleChange }) {
   }
   updateCoverMetadataVisibility();
 
+  // Sync inputs when the store changes externally (e.g. after AI enhance).
+  // Guarded against echoing user input back into a flicker loop.
+  const unsubscribe = store.subscribe((state) => {
+    if (state.contentTitle !== titleInput.value) {
+      titleInput.value = state.contentTitle || '';
+    }
+    if ((state.coverPageSubtitle || '') !== subtitleInput.value) {
+      subtitleInput.value = state.coverPageSubtitle || '';
+    }
+    if ((state.coverPageVersion || '') !== versionInput.value) {
+      versionInput.value = state.coverPageVersion || '';
+    }
+    if ((state.coverPageDate || '') !== dateInput.value) {
+      dateInput.value = state.coverPageDate || '';
+    }
+  });
+
   // Build element
   const element = h('div', { class: 'editor-bar' }, [
     h('div', { class: 'editor-bar-row' }, [
@@ -139,6 +156,9 @@ export function createEditorBar({ store, draftTitle, onTitleChange }) {
     element,
     setTitle(title) {
       titleInput.value = title;
+    },
+    destroy() {
+      unsubscribe();
     },
     setThemes(themes) {
       // Clear existing options

@@ -169,11 +169,15 @@ export async function renderEditor(container, { draftId, navigate }) {
 
       // Store cover page metadata if extracted
       if (coverPage) {
-        store.set({
+        const updates = {
           coverPageSubtitle: coverPage.subtitle || '',
           coverPageVersion: coverPage.version || 'v1.0',
           coverPageDate: coverPage.date || '',
-        });
+        };
+        if (coverPage.title) {
+          updates.contentTitle = coverPage.title;
+        }
+        store.set(updates);
       }
 
       if (changes.length > 0 || suggestions.length > 0 || overallImpression) {

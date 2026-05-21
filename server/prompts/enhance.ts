@@ -22,6 +22,16 @@ Fix formatting and structure issues:
 - Tables formatted with spaces/tabs instead of proper markdown table syntax
 - Excessive whitespace or line breaks
 
+### Extract cover-page metadata from the body
+If the document starts with a top-level heading ("# Title") and/or a version/date line directly below it (e.g. "Versie 21 mei 2026", "Version 1.2", "v1.0 — January 2026", "Datum: 14-03-2026"), do BOTH of the following:
+1. Put the heading text into coverPage.title, and the version/date into coverPage.version and coverPage.date (split them if a single line contains both — the bare version goes to "version", the date to "date").
+2. REMOVE those lines from the returned "markdown" so the body no longer contains them. The app renders title and version/date on a generated cover page; leaving them in the body would duplicate them.
+Only do this when the heading + version/date clearly act as document metadata at the very top — not for headings deeper in the document.
+
+### Remove manually-authored tables of contents
+If the document contains a hand-written table of contents (a block of lines listing section titles with page numbers, or a heading like "Inhoudsopgave" / "Table of Contents" / "Contents" followed by such a list), REMOVE the entire TOC block from the returned "markdown". The app generates a table of contents automatically, so a manual one would duplicate it.
+Signs of a manual TOC: numbered or unnumbered lines like "3.2 Dynamische 'doe-aanpak' 7" or "Introduction .......... 4", often with trailing page numbers, usually appearing near the start of the document before the actual content begins. Do NOT remove section headings later in the document that happen to have similar numbering — only remove the upfront listing.
+
 `;
 
 const TYPOS_PROMPT = `## Typo Corrections
@@ -95,10 +105,11 @@ Return a JSON object with these fields:
    - "text": The suggestion or question in a helpful, constructive tone, phrased as an actionable recommendation
    - "location": Be specific about where in the document this applies
 5. "overallImpression": A brief overall assessment of the document (2-4 sentences). Only include this field if feedback/suggestions were requested.
-6. "coverPage": An object with metadata for the document cover page. ALWAYS include all three fields:
+6. "coverPage": An object with metadata for the document cover page. Include all fields below:
+   - "title": The document's main title. ONLY include this field when the body starts with a leading H1 that you removed as part of the structure pass (see "Extract cover-page metadata from the body" above). Omit the field if the document didn't start with an H1, so the existing title in the UI is not overwritten.
    - "subtitle": A subtitle or tagline. If explicitly mentioned in the document, use that. Otherwise, generate a brief descriptive subtitle (5-10 words).
-   - "version": A version number. If mentioned in the document, use that. Otherwise, use "v1.0" as the default.
-   - "date": A document date. If mentioned in the document, use that. Otherwise, use today's date in a readable format like "January 2025".
+   - "version": A version number. If a version line was present at the top, use it (e.g. "v1.2", "Versie 3"). Otherwise, use "v1.0" as the default.
+   - "date": A document date. If a date was present at the top (e.g. "21 mei 2026" from a "Versie 21 mei 2026" line), use it. Otherwise, use today's date in a readable format like "January 2025".
 
 Priority: Always include "markdown", "changes", "suggestions", "coverPage". Include "detailedChanges" if there's sufficient output capacity - it will be fetched separately if not included.${languageInstruction}`;
 };

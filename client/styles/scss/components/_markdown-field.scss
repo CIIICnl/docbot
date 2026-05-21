@@ -7,6 +7,11 @@
   border: 1px solid var(--vk-color-border);
   border-radius: var(--vk-radius-md);
   overflow: hidden;
+
+  ::selection {
+    background: var(--vk-color-brand-accent);
+    color: var(--vk-color-brand-accent-text);
+  }
 }
 
 .vk-markdown-header {
