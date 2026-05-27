@@ -108,7 +108,7 @@ Return a JSON object with these fields:
 6. "coverPage": An object with metadata for the document cover page. Include all fields below:
    - "title": The document's main title. ONLY include this field when the body starts with a leading H1 that you removed as part of the structure pass (see "Extract cover-page metadata from the body" above). Omit the field if the document didn't start with an H1, so the existing title in the UI is not overwritten.
    - "subtitle": A subtitle or tagline. If explicitly mentioned in the document, use that. Otherwise, generate a brief descriptive subtitle (5-10 words).
-   - "version": A version number. If a version line was present at the top, use it (e.g. "v1.2", "Versie 3"). Otherwise, use "v1.0" as the default.
+   - "version": A version number ONLY (e.g. "v1.2", "Versie 3"). If a version line was present at the top, use it. Otherwise, use "v1.0" as the default. NEVER include the date here - the date belongs solely in the "date" field, and repeating it duplicates it on the cover.
    - "date": A document date. If a date was present at the top (e.g. "21 mei 2026" from a "Versie 21 mei 2026" line), use it. Otherwise, use today's date in a readable format like "January 2025".
 
 Priority: Always include "markdown", "changes", "suggestions", "coverPage". Include "detailedChanges" if there's sufficient output capacity - it will be fetched separately if not included.${languageInstruction}`;

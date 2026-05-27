@@ -17,13 +17,27 @@ import { getDefaultThemeId, themeExists } from '../../services/themes.js';
 import type { ConversionRequest, ConversionResult, ConversionMetadata } from '../../types/index.js';
 
 /**
- * Remove the first H1 from markdown content (for cover page)
- * This prevents the title from appearing twice when a cover page is used
+ * Remove the first H1 from markdown content when it is the document title
+ * shown on the cover page. This prevents the title appearing twice, but only
+ * when the body's first heading actually matches the cover title - an
+ * unrelated opening heading like "# Inleiding" must stay in the body.
  */
-function stripFirstH1(markdown: string): string {
-  // Match first H1 (# at start of line, not ##)
-  // Also handles H1 with leading whitespace on the line
-  const h1Regex = /^(\s*#\s+[^\n]+\n?)/m;
+function stripFirstH1(markdown: string, coverTitle?: string): string {
+  // Match first H1 (# at start of line, not ##), capturing its text.
+  const h1Regex = /^\s*#\s+([^\n]+)\n?/m;
+  const match = markdown.match(h1Regex);
+  if (!match) return markdown;
+
+  const normalize = (s: string) => s.trim().replace(/\s+/g, ' ').toLowerCase();
+  const headingText = match[1] ?? '';
+
+  // Without an explicit cover title the first H1 *is* the title, so the
+  // historical strip-it behaviour is correct. With a title set, only strip
+  // when the heading matches it.
+  if (coverTitle && normalize(headingText) !== normalize(coverTitle)) {
+    return markdown;
+  }
+
   return markdown.replace(h1Regex, '');
 }
 
@@ -63,9 +77,6 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
       const resolvedRaw = await resolveMediaUrls(body.content, { asBase64: true });
       const resolvedContent = optimizeImageKitUrls(resolvedRaw);
 
-      // If cover page is enabled, strip the first H1 from content to avoid duplication
-      const contentToProcess = options.coverPage ? stripFirstH1(resolvedContent) : resolvedContent;
-
       // Resolve heading-break flags. Per-level flags win; the legacy
       // `pageBreakHeadings` boolean fills in for both when set, so older
       // callers (dashboard.ciiic.nl) keep working unchanged.
@@ -73,10 +84,16 @@ export async function handleConvert(ctx: ApiContext): Promise<boolean> {
       const breakH2 = options.pageBreakBeforeH2 ?? options.pageBreakHeadings ?? false;
       const tocLevels = options.tocLevels ?? [2, 3];
 
-      // Parse markdown (use original content to extract title, processed content for body)
+      // Resolve the cover title first so we can tell whether the body's first
+      // H1 is the title (strip it) or unrelated content (keep it).
       const { title: extractedTitle, accessibilityWarnings } = parseMarkdown(resolvedContent, tocLevels);
-      const { html: contentHtml, toc } = parseMarkdown(contentToProcess, tocLevels);
       const title = options.title || extractedTitle || 'Document';
+
+      // If cover page is enabled, strip the first H1 only when it is the title.
+      const contentToProcess = options.coverPage ? stripFirstH1(resolvedContent, title) : resolvedContent;
+
+      // Parse markdown (processed content for body)
+      const { html: contentHtml, toc } = parseMarkdown(contentToProcess, tocLevels);
       const locale = options.locale || options.coverPageOptions?.locale || 'en';
       const tocHtml = options.generateToc ? generateTocHtml(toc, locale) : '';
 

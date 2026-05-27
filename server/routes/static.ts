@@ -36,7 +36,7 @@ const MIME_TYPES: Record<string, string> = {
   '.map': 'application/json',
 };
 
-export async function serveStatic({ res, url }: StaticContext): Promise<void> {
+export async function serveStatic({ req, res, url }: StaticContext): Promise<void> {
   const root = getRoot();
   const clientDir = join(root, 'client');
 
@@ -72,14 +72,32 @@ export async function serveStatic({ res, url }: StaticContext): Promise<void> {
   }
 
   try {
-    const content = await readFile(filePath);
+    const fileStats = await stat(filePath);
     const ext = extname(filePath);
     const mimeType = MIME_TYPES[ext] || 'application/octet-stream';
+    const lastModified = fileStats.mtime.toUTCString();
 
+    // The app's own bundles (HTML/CSS/JS) ship under fixed, unhashed names, so
+    // a long max-age leaves browsers running new JS against a stale stylesheet
+    // (the broken-grid bug). Force revalidation for those and only hard-cache
+    // genuinely immutable assets: versioned vendor files, fonts, and images.
+    const revalidate = ext === '.html' || ext === '.css' || ext === '.js' || ext === '.mjs' || ext === '.map';
+    const cacheControl = revalidate ? 'no-cache' : 'public, max-age=31536000, immutable';
+
+    // Honour conditional requests so revalidation stays cheap (304, no body).
+    const ifModifiedSince = req.headers['if-modified-since'];
+    if (ifModifiedSince && new Date(ifModifiedSince).getTime() >= Math.floor(fileStats.mtime.getTime() / 1000) * 1000) {
+      res.writeHead(304, { 'Cache-Control': cacheControl, 'Last-Modified': lastModified });
+      res.end();
+      return;
+    }
+
+    const content = await readFile(filePath);
     res.writeHead(200, {
       'Content-Type': mimeType,
       'Content-Length': content.length,
-      'Cache-Control': ext === '.html' ? 'no-cache' : 'max-age=31536000',
+      'Cache-Control': cacheControl,
+      'Last-Modified': lastModified,
     });
     res.end(content);
   } catch {

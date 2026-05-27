@@ -10,6 +10,27 @@ import { stripBase64Images, restoreBase64Images } from './images.js';
 import type { LlmEnhanceRequest, LlmEnhanceResult, LlmChange, LlmProvider, UILanguage } from './types.js';
 
 /**
+ * Clean up cover-page metadata returned by the LLM.
+ *
+ * The model is asked to split a combined "Versie 21 21 mei 2026" line into a
+ * bare version and a date, but it often leaves the date glued onto the version
+ * too, so the date renders twice on the cover. When the date also appears
+ * inside the version string, strip it back out.
+ */
+function normalizeCoverPage(
+  cover: LlmEnhanceResult['coverPage']
+): LlmEnhanceResult['coverPage'] {
+  if (!cover || !cover.version || !cover.date) return cover;
+
+  const date = cover.date.trim();
+  if (date && cover.version.includes(date)) {
+    const cleaned = cover.version.replace(date, '').replace(/[\s,;.–-]+$/u, '').trim();
+    if (cleaned) cover.version = cleaned;
+  }
+  return cover;
+}
+
+/**
  * Parse the LLM response to extract markdown and changes
  */
 function parseResponse(response: string): LlmEnhanceResult {
@@ -34,7 +55,7 @@ function parseResponse(response: string): LlmEnhanceResult {
         detailedChanges: detailedChanges.length > 0 ? detailedChanges : changes,
         suggestions: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
         overallImpression: parsed.overallImpression || undefined,
-        coverPage: parsed.coverPage || undefined,
+        coverPage: normalizeCoverPage(parsed.coverPage || undefined),
       };
     }
   } catch {
