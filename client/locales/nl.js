@@ -321,6 +321,16 @@ export default {
     addAppended: 'Geüpload — onderaan document toegevoegd',
     tooLarge: 'Afbeelding is groter dan {max}',
     uploadFailed: 'Uploaden mislukt: {reason}',
+    altLabel: 'Alt-tekst',
+    altPlaceholder: 'Beschrijving voor schermlezers (toegankelijkheid)',
+    captionLabel: 'Bijschrift',
+    captionPlaceholder: 'Zichtbaar onder de afbeelding (optioneel)',
+    fieldsDisabled: 'Alt en bijschrift instelbaar bij markdown-afbeeldingen',
+    metaUpdated: 'Alt-tekst en bijschrift bijgewerkt',
+    beeldbankBtn: 'Beeldbank',
+    beeldbankTitle: 'Kies uit Beeldbank',
+    beeldbankInserted: 'Afbeelding uit Beeldbank toegevoegd',
+    beeldbankUnavailable: 'Beeldbank-picker niet beschikbaar',
   },
 
   // 404 page

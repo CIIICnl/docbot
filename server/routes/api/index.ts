@@ -10,6 +10,7 @@ import { handlePasswordReset } from './password-reset.js';
 import { handleMagicLink } from './magic-link.js';
 import { handleConvert } from './convert.js';
 import { handleThemes } from './themes.js';
+import { handleConfig } from './config.js';
 import { handleNotion } from './notion.js';
 import { handleDocx } from './docx.js';
 import { handleDocuments } from './documents.js';
@@ -40,6 +41,9 @@ export async function handleApi(ctx: ApiContext): Promise<void> {
 
   // Magic link routes (must be accessible without auth)
   if (await handleMagicLink(ctx)) return;
+
+  // Public runtime config (non-sensitive)
+  if (await handleConfig(ctx)) return;
 
   // Service-to-service token for trusted internal callers (e.g. dashboard.ciiic.nl
   // generating PDFs, ciiicbot saving conversation outputs). Accepted on:

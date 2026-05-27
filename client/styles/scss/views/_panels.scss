@@ -293,6 +293,19 @@
   letter-spacing: 0.04em;
 }
 
+.images-panel-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-space-1);
+}
+
+.images-panel-field::part(form-control-label) {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--vk-color-text-muted);
+}
+
 .images-panel-actions {
   display: flex;
   align-items: center;

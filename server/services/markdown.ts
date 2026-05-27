@@ -77,13 +77,19 @@ md.use(anchor, {
 md.use(footnote);
 
 /**
- * Wrap solo-image paragraphs in <figure> with a <figcaption>.
+ * Wrap solo-image paragraphs in <figure>, with an optional <figcaption>.
  *
  * Pattern that triggers it: a paragraph whose only meaningful inline
  * child is a single image (whitespace-only siblings are ignored).
- * The image's alt text becomes the caption — bot output uses the form
- * '![beschrijving — Foto: Naam](url)' so the caption already carries
- * the photographer credit; CSS in themes/ciiic/styles.css renders it
+ *
+ * alt vs caption are separate concerns:
+ *   - The image's alt text (![ALT](url)) stays purely as the img alt
+ *     attribute — accessibility, not rendered visibly.
+ *   - The visible caption comes from the markdown title slot
+ *     (![ALT](url "CAPTION")). Without a title there is no figcaption.
+ *
+ * The caption may carry a photographer credit in the form
+ * 'beschrijving - Foto: Naam'; CSS in themes/ciiic/styles.css renders it
  * small/grey/monospace tight under the image.
  *
  * Inline images embedded in a sentence are left alone (still <p><img>).
@@ -116,12 +122,20 @@ md.core.ruler.push('image_figures', (state) => {
     close.type = 'figure_close';
     close.tag = 'figure';
 
-    const alt = (imgToken.content || imgToken.attrGet('alt') || '').trim();
-    if (!alt) continue;
+    // Caption text comes from the title slot only; alt is left on the img.
+    const captionText = (imgToken.attrGet('title') || '').trim();
+    // Drop the title attr so it isn't duplicated as an img tooltip.
+    const titleIdx = imgToken.attrIndex('title');
+    if (titleIdx >= 0) imgToken.attrs?.splice(titleIdx, 1);
 
-    // Split "beschrijving — Foto: Naam" so the credit sits on its own
-    // line under the description (smaller, lower opacity in CSS).
-    const credit = alt.match(/^(.*?)\s+—\s+(Foto:\s+.+)$/);
+    // No caption: keep the <figure> wrapper (consistent styling) but emit
+    // no figcaption.
+    if (!captionText) continue;
+
+    // Split "beschrijving - Foto: Naam" so the credit sits on its own
+    // line under the description (smaller, lower opacity in CSS). The
+    // separator may be a hyphen, en dash or em dash.
+    const credit = captionText.match(/^(.*?)\s+[-–—]\s+(Foto:\s+.+)$/);
     const captionOpen = new state.Token('figcaption_open', 'figcaption', 1);
     captionOpen.block = true;
     const captionInline = new state.Token('inline', '', 0);
@@ -151,10 +165,10 @@ md.core.ruler.push('image_figures', (state) => {
       );
     } else {
       const text = new state.Token('text', '', 0);
-      text.content = alt;
+      text.content = captionText;
       captionInline.children.push(text);
     }
-    captionInline.content = alt;
+    captionInline.content = captionText;
     const captionClose = new state.Token('figcaption_close', 'figcaption', -1);
     captionClose.block = true;
 

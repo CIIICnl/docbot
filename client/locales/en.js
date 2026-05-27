@@ -319,6 +319,16 @@ export default {
     addAppended: 'Uploaded — appended to end of document',
     tooLarge: 'Image is larger than {max}',
     uploadFailed: 'Upload failed: {reason}',
+    altLabel: 'Alt text',
+    altPlaceholder: 'Description for screen readers (accessibility)',
+    captionLabel: 'Caption',
+    captionPlaceholder: 'Shown below the image (optional)',
+    fieldsDisabled: 'Alt and caption editable for markdown images',
+    metaUpdated: 'Alt text and caption updated',
+    beeldbankBtn: 'Beeldbank',
+    beeldbankTitle: 'Choose from Beeldbank',
+    beeldbankInserted: 'Image added from Beeldbank',
+    beeldbankUnavailable: 'Beeldbank picker unavailable',
   },
 
   // 404 page

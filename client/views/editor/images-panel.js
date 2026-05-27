@@ -6,7 +6,8 @@
 
 import { h, empty } from '../../lib/dom.js';
 import { get } from '../../lib/api.js';
-import { slIcon, slIconButton, slButton, slSpinner } from '../../lib/shoelace.js';
+import { slIcon, slIconButton, slButton, slSpinner, slInput } from '../../lib/shoelace.js';
+import { getBeeldbankPickerUrl } from '../../lib/config.js';
 import { success, error, warning } from '../../lib/toast.js';
 import { t } from '../../lib/i18n.js';
 import { formatFileSize } from '../../lib/file-upload.js';
@@ -18,40 +19,81 @@ const MEDIA_URL_RE = /docbot:\/\/media\/[^\s)"'>]+/g;
 // Cache resolved presigned URLs so we don't ping /api/media on every refresh
 const previewUrlCache = new Map();
 
+// Markdown image with an optional title (caption) in any of the three
+// markdown quote styles: "...", '...', or (...).
+const MD_IMAGE_RE = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+(?:"([^"]*)"|'([^']*)'|\(([^)]*)\)))?\)/g;
+
 /**
  * Extract every markdown image reference from the source.
- * Returns an array of `{ url, alt, count }` (deduplicated by url).
+ * Returns an array of `{ url, alt, caption, count, markdown }` deduplicated
+ * by url. `caption` is the markdown title slot; `markdown` is true when the
+ * url appears in `![](...)` syntax (so alt/caption are editable).
  */
 function extractImageRefs(markdown) {
   const refs = new Map();
 
-  // Markdown image syntax: ![alt](url)
-  const mdRegex = /!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  MD_IMAGE_RE.lastIndex = 0;
   let m;
-  while ((m = mdRegex.exec(markdown)) !== null) {
+  while ((m = MD_IMAGE_RE.exec(markdown)) !== null) {
     const url = m[2];
     const alt = m[1] || '';
+    const caption = m[3] ?? m[4] ?? m[5] ?? '';
     const existing = refs.get(url);
     if (existing) {
       existing.count++;
       if (!existing.alt && alt) existing.alt = alt;
+      if (!existing.caption && caption) existing.caption = caption;
+      existing.markdown = true;
     } else {
-      refs.set(url, { url, alt, count: 1 });
+      refs.set(url, { url, alt, caption, count: 1, markdown: true });
     }
   }
 
   // Catch raw docbot:// URLs that aren't wrapped in markdown image syntax
-  // (e.g. inside an HTML <img src="docbot://...">)
+  // (e.g. inside an HTML <img src="docbot://...">). Alt/caption editing is
+  // not offered for these (no markdown token to rewrite).
   const raw = markdown.match(MEDIA_URL_RE);
   if (raw) {
     for (const url of raw) {
       if (!refs.has(url)) {
-        refs.set(url, { url, alt: '', count: 1 });
+        refs.set(url, { url, alt: '', caption: '', count: 1, markdown: false });
       }
     }
   }
 
   return Array.from(refs.values());
+}
+
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Build a markdown image reference. Caption goes into the title slot using a
+ * quote style that doesn't collide with its contents.
+ */
+function buildImageRef(alt, url, caption) {
+  const safeAlt = (alt || '').replace(/[\r\n]+/g, ' ').replace(/[[\]]/g, '').trim();
+  const cap = (caption || '').replace(/[\r\n]+/g, ' ').trim();
+  if (!cap) return `![${safeAlt}](${url})`;
+  let quoted;
+  if (!cap.includes('"')) quoted = `"${cap}"`;
+  else if (!cap.includes("'")) quoted = `'${cap}'`;
+  else quoted = `(${cap.replace(/[()]/g, '')})`;
+  return `![${safeAlt}](${url} ${quoted})`;
+}
+
+/**
+ * Rewrite every markdown image reference pointing at `url` with new alt and
+ * caption. Returns the updated markdown (or the original if nothing matched).
+ */
+function rewriteImageRef(markdown, url, { alt, caption }) {
+  const re = new RegExp(
+    `!\\[[^\\]]*\\]\\(${escapeRegExp(url)}(?:\\s+(?:"[^"]*"|'[^']*'|\\([^)]*\\)))?\\)`,
+    'g'
+  );
+  const replacement = buildImageRef(alt, url, caption);
+  return markdown.replace(re, replacement);
 }
 
 function isDocbotUrl(url) {
@@ -144,6 +186,41 @@ export function createImagesPanel({ store, setMarkdown }) {
     onClick: () => addInput.click(),
   });
 
+  const beeldbankBtn = slButton({
+    variant: 'default',
+    size: 'small',
+    icon: 'images',
+    text: t('images.beeldbankBtn'),
+    onClick: () => handleBeeldbank(),
+  });
+
+  async function handleBeeldbank() {
+    const pickerUrl = await getBeeldbankPickerUrl();
+    if (!pickerUrl) {
+      error(t('images.beeldbankUnavailable'));
+      return;
+    }
+    let mod;
+    try {
+      mod = await import('./beeldbank-picker.js');
+    } catch {
+      error(t('images.beeldbankUnavailable'));
+      return;
+    }
+    mod.openBeeldbankPicker({
+      pickerUrl,
+      title: t('images.beeldbankTitle'),
+      onPick: ({ url, altText, caption }) => {
+        if (!url) return;
+        const ref = buildImageRef(altText || '', url, caption || '');
+        const state = store.get();
+        const next = (state.content || '').replace(/\s*$/, '\n\n') + ref + '\n';
+        setMarkdown(next);
+        success(t('images.beeldbankInserted'));
+      },
+    });
+  }
+
   addInput.addEventListener('change', async () => {
     const file = addInput.files?.[0];
     addInput.value = '';
@@ -183,6 +260,7 @@ export function createImagesPanel({ store, setMarkdown }) {
       h('span', { class: 'panel-title' }, [t('images.title')]),
       h('span', { class: 'panel-subtitle text-muted images-panel-count' }, ['']),
       h('div', { class: 'panel-header-spacer' }),
+      beeldbankBtn,
       addBtn,
       addInput,
     ]),
@@ -245,7 +323,7 @@ export function createImagesPanel({ store, setMarkdown }) {
       label: t('images.copyMarkdown'),
       onClick: async () => {
         try {
-          await navigator.clipboard.writeText(`![${ref.alt || ''}](${ref.url})`);
+          await navigator.clipboard.writeText(buildImageRef(ref.alt, ref.url, ref.caption));
           success(t('images.copied'));
         } catch {
           error(t('images.copyFailed'));
@@ -263,13 +341,50 @@ export function createImagesPanel({ store, setMarkdown }) {
         h('div', { class: 'images-panel-tag text-muted' }, [t('images.externalImage')]),
     ]);
 
+    let fields;
+    if (ref.markdown) {
+      const altInput = slInput({
+        size: 'small',
+        value: ref.alt || '',
+        label: t('images.altLabel'),
+        placeholder: t('images.altPlaceholder'),
+        class: 'images-panel-field',
+      });
+      const captionInput = slInput({
+        size: 'small',
+        value: ref.caption || '',
+        label: t('images.captionLabel'),
+        placeholder: t('images.captionPlaceholder'),
+        class: 'images-panel-field',
+      });
+      const onChange = () => handleMetaChange(ref, altInput, captionInput);
+      altInput.addEventListener('sl-change', onChange);
+      captionInput.addEventListener('sl-change', onChange);
+      fields = h('div', { class: 'images-panel-fields' }, [altInput, captionInput]);
+    } else {
+      fields = h('div', { class: 'images-panel-tag text-muted' }, [t('images.fieldsDisabled')]);
+    }
+
     const actions = h('div', { class: 'images-panel-actions' }, [replaceBtn, copyBtn]);
 
     return h('div', { class: 'images-panel-card', dataset: { position: String(position) } }, [
       h('div', { class: 'images-panel-card-position' }, [`#${position}`]),
       thumbWrap,
-      h('div', { class: 'images-panel-card-body' }, [meta, actions]),
+      h('div', { class: 'images-panel-card-body' }, [meta, fields, actions]),
     ]);
+  }
+
+  function handleMetaChange(ref, altInput, captionInput) {
+    const alt = altInput.value || '';
+    const caption = captionInput.value || '';
+    const state = store.get();
+    const before = state.content || '';
+    const after = rewriteImageRef(before, ref.url, { alt, caption });
+    if (after === before) return;
+    ref.alt = alt;
+    ref.caption = caption;
+    setMarkdown(after);
+    success(t('images.metaUpdated'));
   }
 
   async function handleReplace(ref) {
