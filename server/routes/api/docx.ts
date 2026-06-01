@@ -81,19 +81,33 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
       // Upload images to media storage and replace base64 URLs
       let markdown = result.markdown;
       const uploadedImages: Array<{ name: string; mediaUrl: string }> = [];
+      // Surfaced back to the caller (and logged) so a silently-failing media
+      // backend doesn't masquerade as a clean import. See the read-back note
+      // below.
+      const mediaWarnings: string[] = [];
 
       if (isMediaAvailable() && result.images.length > 0) {
         const provider = getMediaProvider();
         const orgId = getDefaultOrganizationId();
 
         for (const image of result.images) {
+          const imageBuffer = Buffer.from(image.data, 'base64');
+          const key = provider.generateKey(orgId, image.name);
           try {
-            const imageBuffer = Buffer.from(image.data, 'base64');
-            const key = provider.generateKey(orgId, image.name);
-
             await provider.upload(key, imageBuffer, {
               contentType: image.mimeType,
             });
+
+            // Read-back check: confirm the object is actually retrievable
+            // before we rewrite the markdown to a docbot:// ref. An upload
+            // that "succeeds" but doesn't persist (ephemeral container path
+            // wiped on redeploy, or an S3 write that never landed) would
+            // otherwise leave a dangling ref that renders as a blank image -
+            // exactly the prod failure that prompted this hardening.
+            const stored = await provider.exists(key);
+            if (!stored) {
+              throw new Error('upload reported success but object is not retrievable (read-back failed)');
+            }
 
             const mediaUrl = `docbot://media/${key}`;
             uploadedImages.push({ name: image.name, mediaUrl });
@@ -102,8 +116,16 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
             const base64Url = `data:${image.mimeType};base64,${image.data}`;
             markdown = markdown.split(base64Url).join(mediaUrl);
           } catch (uploadError) {
-            console.warn(`[docx] Failed to upload image ${image.name}:`, uploadError);
-            // Keep the base64 URL if upload fails
+            const msg = uploadError instanceof Error ? uploadError.message : String(uploadError);
+            // Loud, with the context needed to diagnose prod: which provider,
+            // which key. Quiet console.warn was how this went unnoticed.
+            console.error(
+              `[docx] Media upload FAILED for "${image.name}" (provider=${provider.name}, key=${key}): ${msg}`
+            );
+            mediaWarnings.push(
+              `Afbeelding "${image.name}" kon niet worden opgeslagen (provider: ${provider.name}): ${msg}. Ze is nu inline (base64) opgenomen.`
+            );
+            // Keep the base64 URL in the markdown so the image still renders.
           }
         }
       }
@@ -112,7 +134,7 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
         markdown,
         title: result.title,
         images: uploadedImages.length > 0 ? uploadedImages : result.images,
-        warnings: result.warnings,
+        warnings: [...result.warnings, ...mediaWarnings],
       });
 
       return true;
