@@ -12,7 +12,7 @@ import { showLoading } from '../../lib/loading.js';
 import { parseDocumentFile, isWordDocument } from '../../lib/file-processing.js';
 import { slButton, slSelect, slSwitch, slInput, sl } from '../../lib/shoelace.js';
 import { getDrafts, saveDraft, deleteDraft } from '../../lib/drafts.js';
-import { t } from '../../lib/i18n.js';
+import { t, maybeOfferLanguageSwitch } from '../../lib/i18n.js';
 
 /**
  * Create the input bar component
@@ -184,6 +184,8 @@ export function createInputBar({ store, onContentChange }) {
       } else {
         success(t('toast.loadedFile', { filename: file.name }));
       }
+
+      await maybeOfferLanguageSwitch(result.detectedLanguage);
     } catch (err) {
       error(t('toast.parseFailed', { error: err.message }));
     } finally {

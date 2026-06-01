@@ -4,7 +4,7 @@
  */
 
 import { h } from '../../../lib/dom.js';
-import { t } from '../../../lib/i18n.js';
+import { t, maybeOfferLanguageSwitch } from '../../../lib/i18n.js';
 import { post } from '../../../lib/api.js';
 import { populateThemeSelect } from '../../../lib/document-themes.js';
 import { checkNotionAvailable } from '../../../lib/feature-detection.js';
@@ -549,6 +549,7 @@ export async function openNewDocumentModal({
    */
   async function readFileContent(file) {
     const result = await parseDocumentFile(file);
+    await maybeOfferLanguageSwitch(result.detectedLanguage);
     return result.markdown;
   }
 

@@ -135,6 +135,7 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
         title: result.title,
         images: uploadedImages.length > 0 ? uploadedImages : result.images,
         warnings: [...result.warnings, ...mediaWarnings],
+        detectedLanguage: result.detectedLanguage,
       });
 
       return true;

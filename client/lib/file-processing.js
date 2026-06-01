@@ -51,6 +51,7 @@ export async function parseWordDocument(file) {
     markdown: result.data.markdown,
     title: result.data.title || file.name.replace(/\.docx$/i, ''),
     warnings: result.data.warnings || [],
+    detectedLanguage: result.data.detectedLanguage ?? null,
   };
 }
 

@@ -8,6 +8,7 @@ import { createDropZone, readFileAsArrayBuffer, formatFileSize } from '../../lib
 import { post } from '../../lib/api.js';
 import { success, error, warning } from '../../lib/toast.js';
 import { slIcon, slButton } from '../../lib/shoelace.js';
+import { maybeOfferLanguageSwitch } from '../../lib/i18n.js';
 
 /**
  * Create the Word tab content
@@ -151,6 +152,10 @@ export function createWordTab(onContentChange, onImagesChange) {
 
       statusContainer.hidden = true;
       success(`Loaded ${file.name}`);
+
+      // Offer to switch the UI language if the document looks like another one
+      // (e.g. importing an already-translated EN doc while the app is in NL).
+      await maybeOfferLanguageSwitch(parseResult.data.detectedLanguage);
     } catch (err) {
       error(`Failed to process document: ${err.message}`);
       statusContainer.hidden = true;

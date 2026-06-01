@@ -70,6 +70,50 @@ export function getSupportedLocales() {
   ];
 }
 
+// Self-contained copy (in the target language) so the prompt reads naturally
+// without needing extra keys in every locale file.
+const LANGUAGE_SWITCH_COPY = {
+  nl: {
+    title: 'Taal aanpassen?',
+    body: 'Dit document lijkt Nederlandstalig, maar de app staat op Engels. Wil je de taal op Nederlands zetten? Dat zorgt o.a. voor een Nederlandse inhoudsopgave.',
+    confirm: 'Op Nederlands zetten',
+    cancel: 'Laten staan',
+  },
+  en: {
+    title: 'Switch language?',
+    body: 'This document looks English, but the app is set to Dutch. Switch the language to English? This also gives you an English table of contents.',
+    confirm: 'Switch to English',
+    cancel: 'Keep current',
+  },
+};
+
+/**
+ * If an imported document's detected language differs from the active UI
+ * language, offer to switch (so the table of contents and PDF metadata match
+ * the document). Returns true if the locale was changed.
+ * @param {'nl'|'en'|null|undefined} detectedLanguage
+ * @returns {Promise<boolean>}
+ */
+export async function maybeOfferLanguageSwitch(detectedLanguage) {
+  if (!detectedLanguage || !SUPPORTED_LOCALES.includes(detectedLanguage)) return false;
+  if (detectedLanguage === getLocale()) return false;
+  const copy = LANGUAGE_SWITCH_COPY[detectedLanguage];
+  if (!copy) return false;
+  // Lazy import to avoid pulling the dialog layer into i18n init.
+  const { confirm } = await import('./dialogs.js');
+  const ok = await confirm({
+    title: copy.title,
+    message: copy.body,
+    confirmText: copy.confirm,
+    cancelText: copy.cancel,
+  });
+  if (ok) {
+    await setLocale(detectedLanguage);
+    return true;
+  }
+  return false;
+}
+
 /**
  * Navigate nested object using dot notation
  * @param {Object} obj - Object to navigate

@@ -5,6 +5,7 @@
 
 import mammoth from 'mammoth';
 import { decodeHtmlEntities } from '../utils/html.js';
+import { extractHeadingNumbers, applyHeadingNumbers } from './docx-numbering.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type MammothOptions = any;
@@ -20,6 +21,8 @@ export interface DocxResult {
   title: string;
   images: DocxImage[];
   warnings: string[];
+  /** Heuristic document language, so the UI can offer to switch on import. */
+  detectedLanguage: 'nl' | 'en' | null;
 }
 
 /**
@@ -54,7 +57,17 @@ export async function parseDocx(buffer: Buffer): Promise<DocxResult> {
   const result = await mammoth.convertToHtml({ buffer }, options);
 
   // Convert HTML to markdown
-  const markdown = htmlToMarkdown(result.value);
+  let markdown = htmlToMarkdown(result.value);
+
+  // Reconstruct Word's heading auto-numbering (mammoth drops it, breaking
+  // in-text references like "see section 2.5"). Must never break the import,
+  // so on any failure we fall back to the unnumbered markdown.
+  try {
+    const headingNumbers = await extractHeadingNumbers(buffer);
+    markdown = applyHeadingNumbers(markdown, headingNumbers);
+  } catch (err) {
+    console.warn('[docx] Heading numbering reconstruction failed, continuing without:', err);
+  }
 
   // Extract title from first heading or first paragraph
   const title = extractTitle(markdown);
@@ -64,7 +77,41 @@ export async function parseDocx(buffer: Buffer): Promise<DocxResult> {
     title,
     images,
     warnings: result.messages.map((m) => m.message),
+    detectedLanguage: detectLanguage(markdown),
   };
+}
+
+// Distinctive function words per language (kept non-overlapping so the counts
+// actually discriminate). Used only for an import-time "switch language?" hint.
+const NL_WORDS = new Set(
+  'de het een en van voor met niet zijn wordt dat ook maar deze naar door bij worden zoals omdat onze je'.split(' ')
+);
+const EN_WORDS = new Set(
+  'the and of to for with not are that this as be you our because which their have between into from'.split(' ')
+);
+
+/**
+ * Cheap language guess from word frequencies. Returns null when the text is
+ * too short or the signal is ambiguous (so the UI stays quiet rather than
+ * guessing wrong).
+ */
+function detectLanguage(markdown: string): 'nl' | 'en' | null {
+  const words = markdown
+    .toLowerCase()
+    .replace(/[^a-zà-ÿ\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length < 30) return null;
+  let nl = 0;
+  let en = 0;
+  for (const w of words) {
+    if (NL_WORDS.has(w)) nl++;
+    if (EN_WORDS.has(w)) en++;
+  }
+  const total = nl + en;
+  if (total < 10) return null;
+  if (Math.max(nl, en) / total < 0.6) return null; // ambiguous
+  return nl > en ? 'nl' : 'en';
 }
 
 /**
@@ -318,7 +365,8 @@ function extractTitle(markdown: string): string {
   // Try to find first heading
   const headingMatch = markdown.match(/^#+ (.+)$/m);
   if (headingMatch && headingMatch[1]) {
-    return headingMatch[1].trim();
+    // Drop any reconstructed heading number ("1." / "2.5") from the title.
+    return headingMatch[1].replace(/^\d+(?:\.\d+)*\.?\s+/, '').trim();
   }
 
   // Fallback to first non-empty line
