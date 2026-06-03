@@ -190,14 +190,11 @@ function htmlToMarkdown(html: string): string {
   });
   md = md.replace(/<img\s+(?:[^>]*?\s)?src="([^"]*)"[^>]*\/?>/gi, '![]($1)');
 
-  // Lists - unordered
-  md = md.replace(/<ul>/gi, '\n');
-  md = md.replace(/<\/ul>/gi, '\n');
-  md = md.replace(/<li>(.*?)<\/li>/gi, '- $1\n');
-
-  // Lists - ordered (simplified)
-  md = md.replace(/<ol>/gi, '\n');
-  md = md.replace(/<\/ol>/gi, '\n');
+  // Lists - ordered (<ol>) become numbered, unordered (<ul>) become bullets,
+  // with nesting preserved. The previous version turned every <li> into a
+  // bullet, so Word numbered lists (e.g. "building block 6") lost their
+  // numbers and any in-text reference to them broke.
+  md = convertHtmlLists(md);
 
   // Paragraphs
   md = md.replace(/<p>(.*?)<\/p>/gi, '$1\n\n');
@@ -225,6 +222,108 @@ function htmlToMarkdown(html: string): string {
   md = md.trim();
 
   return md;
+}
+
+/**
+ * Convert all <ul>/<ol> blocks in an HTML fragment to markdown lists,
+ * preserving ordered-vs-unordered and nesting. Operates on the partially
+ * converted HTML (inline formatting/links are already markdown by this point).
+ */
+function convertHtmlLists(html: string): string {
+  let out = '';
+  let i = 0;
+  while (i < html.length) {
+    const open = /<(ul|ol)\b[^>]*>/i.exec(html.slice(i));
+    if (!open) {
+      out += html.slice(i);
+      break;
+    }
+    const absStart = i + open.index;
+    out += html.slice(i, absStart);
+    const end = matchListEnd(html, absStart);
+    out += '\n' + renderList(html.slice(absStart, end), 0) + '\n';
+    i = end;
+  }
+  return out;
+}
+
+/** Find the index just past the </ul>|</ol> that balances the list opening at `start`. */
+function matchListEnd(s: string, start: number): number {
+  const re = /<(\/?)(?:ul|ol)\b[^>]*>/gi;
+  re.lastIndex = start;
+  let depth = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(s))) {
+    depth += m[1] ? -1 : 1;
+    if (depth === 0) return m.index + m[0].length;
+  }
+  return s.length;
+}
+
+/** Render one balanced <ul>/<ol> block (and its nested lists) to markdown. */
+function renderList(block: string, depth: number): string {
+  const ordered = /^\s*<ol\b/i.test(block);
+  const inner = block
+    .replace(/^\s*<(?:ul|ol)\b[^>]*>/i, '')
+    .replace(/<\/(?:ul|ol)>\s*$/i, '');
+  const indent = '    '.repeat(depth);
+  const lines: string[] = [];
+  let counter = 0;
+  for (const item of splitTopLevelItems(inner)) {
+    counter += 1;
+    const { text, nested } = extractItemContent(item);
+    const marker = ordered ? `${counter}.` : '-';
+    lines.push(`${indent}${marker} ${text}`.trimEnd());
+    for (const nb of nested) lines.push(renderList(nb, depth + 1));
+  }
+  return lines.join('\n');
+}
+
+/** Split a list's inner HTML into its top-level <li> items (nested lists ignored). */
+function splitTopLevelItems(inner: string): string[] {
+  const items: string[] = [];
+  const re = /<(\/?)(ul|ol|li)\b[^>]*>/gi;
+  let depth = 0;
+  let start = -1;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(inner))) {
+    const closing = m[1] === '/';
+    const tag = (m[2] ?? '').toLowerCase();
+    if (tag === 'ul' || tag === 'ol') {
+      depth += closing ? -1 : 1;
+      continue;
+    }
+    // <li>
+    if (depth === 0) {
+      if (!closing) start = m.index + m[0].length;
+      else if (start !== -1) {
+        items.push(inner.slice(start, m.index));
+        start = -1;
+      }
+    }
+  }
+  return items;
+}
+
+/** Separate an <li>'s own inline text from any nested lists it contains. */
+function extractItemContent(item: string): { text: string; nested: string[] } {
+  let inline = '';
+  const nested: string[] = [];
+  let i = 0;
+  while (i < item.length) {
+    const open = /<(ul|ol)\b[^>]*>/i.exec(item.slice(i));
+    if (!open) {
+      inline += item.slice(i);
+      break;
+    }
+    const absStart = i + open.index;
+    inline += item.slice(i, absStart);
+    const end = matchListEnd(item, absStart);
+    nested.push(item.slice(absStart, end));
+    i = end;
+  }
+  const text = inline.replace(/<\/?p\b[^>]*>/gi, ' ').replace(/\s+/g, ' ').trim();
+  return { text, nested };
 }
 
 /**
