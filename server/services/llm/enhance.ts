@@ -3,8 +3,9 @@
  * Markdown enhancement using LLM providers.
  */
 
-import { TOKEN_LIMITS } from '../../config/constants.js';
+import { TOKEN_LIMITS, LIMITS } from '../../config/constants.js';
 import { buildEnhanceSystemPrompt, buildEnhanceUserPrompt, buildDetailedChangesPrompt } from '../../prompts/index.js';
+import { HttpError } from '../../utils/http.js';
 import { callProvider } from './provider.js';
 import { stripBase64Images, restoreBase64Images } from './images.js';
 import type { LlmEnhanceRequest, LlmEnhanceResult, LlmChange, LlmProvider, UILanguage } from './types.js';
@@ -41,10 +42,10 @@ function parseResponse(response: string): LlmEnhanceResult {
     cleanedResponse = codeBlockMatch[1].trim();
   }
 
-  try {
-    // Try to extract JSON from the response
-    const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
+  // Try to extract JSON from the response
+  const jsonMatch = cleanedResponse.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
       const parsed = JSON.parse(jsonMatch[0]);
       const changes = Array.isArray(parsed.changes) ? parsed.changes : [];
       const detailedChanges = Array.isArray(parsed.detailedChanges) ? parsed.detailedChanges : [];
@@ -57,9 +58,22 @@ function parseResponse(response: string): LlmEnhanceResult {
         overallImpression: parsed.overallImpression || undefined,
         coverPage: normalizeCoverPage(parsed.coverPage || undefined),
       };
+    } catch {
+      throw new HttpError(
+        422,
+        'The AI response contained malformed JSON and could not be applied. The document was imported without enhancement; try again or disable AI enhancement.'
+      );
     }
-  } catch {
-    // If JSON parsing fails, return the response as-is (without code fences)
+  }
+
+  // The response starts as JSON but never closes: the model ran out of
+  // output tokens mid-document. Returning it as-is would replace the
+  // user's document with truncated JSON, so fail loudly instead.
+  if (cleanedResponse.startsWith('{')) {
+    throw new HttpError(
+      422,
+      'The AI response was cut off (document too long to enhance in one pass). The document was imported without enhancement.'
+    );
   }
 
   return {
@@ -76,6 +90,17 @@ function parseResponse(response: string): LlmEnhanceResult {
 export async function enhanceMarkdown(request: LlmEnhanceRequest): Promise<LlmEnhanceResult> {
   // Strip base64 images to reduce token count
   const { cleaned, imageMap } = stripBase64Images(request.markdown);
+
+  // The model must return the entire rewritten document within
+  // ENHANCE_MAX_TOKENS of output; longer input guarantees truncation.
+  if (cleaned.length > LIMITS.ENHANCE_MAX_INPUT_CHARS) {
+    throw new HttpError(
+      422,
+      `Document is too long for AI enhancement (${Math.round(cleaned.length / 1000)}k characters, ` +
+        `limit ${Math.round(LIMITS.ENHANCE_MAX_INPUT_CHARS / 1000)}k). ` +
+        'Import it without AI enhancement, or split it into smaller documents.'
+    );
+  }
 
   const systemPrompt = buildEnhanceSystemPrompt({
     fixStructure: request.fixStructure,

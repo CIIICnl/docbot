@@ -5,7 +5,19 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { LLM_MODELS, LLM_ENDPOINTS } from '../../config/constants.js';
+import { HttpError } from '../../utils/http.js';
 import type { LlmProvider, ProviderRequest } from './types.js';
+
+/**
+ * Thrown when the model ran out of output tokens mid-response. Callers that
+ * expect full-document JSON output would otherwise receive a truncated blob.
+ */
+function truncatedOutputError(provider: string, maxTokens: number): HttpError {
+  return new HttpError(
+    422,
+    `The ${provider} response hit the ${maxTokens}-token output limit — the document is too long to process in one pass. Try without AI enhancement, or split the document.`
+  );
+}
 
 /**
  * Check which LLM providers are available
@@ -93,6 +105,11 @@ async function callOpenAI(request: ProviderRequest): Promise<string> {
   }
 
   const data = await response.json();
+
+  if (data.choices?.[0]?.finish_reason === 'length') {
+    throw truncatedOutputError('OpenAI', request.maxTokens);
+  }
+
   const content = data.choices?.[0]?.message?.content;
 
   if (!content) {
@@ -125,12 +142,15 @@ async function callClaude(request: ProviderRequest): Promise<string> {
     })
     .finalMessage();
 
+  if (message.stop_reason === 'max_tokens') {
+    throw truncatedOutputError('Claude', request.maxTokens);
+  }
+
   if (message.stop_reason && message.stop_reason !== 'end_turn') {
     console.warn(
       `[claude] non-terminal stop_reason="${message.stop_reason}" ` +
         `(model=${LLM_MODELS.CLAUDE}, max_tokens=${request.maxTokens}, ` +
-        `output_tokens=${message.usage?.output_tokens}). ` +
-        `If "max_tokens", JSON output was likely truncated and parse will fail.`
+        `output_tokens=${message.usage?.output_tokens}).`
     );
   }
 
@@ -176,6 +196,11 @@ async function callMistral(request: ProviderRequest): Promise<string> {
   }
 
   const data = await response.json();
+
+  if (data.choices?.[0]?.finish_reason === 'length') {
+    throw truncatedOutputError('Mistral', request.maxTokens);
+  }
+
   const content = data.choices?.[0]?.message?.content;
 
   if (!content) {

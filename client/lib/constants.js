@@ -41,4 +41,6 @@ export const SEARCH = {
 export const FILES = {
   SUPPORTED_TEXT_FORMATS: ['.md', '.markdown', '.txt'],
   SUPPORTED_BINARY_FORMATS: ['.docx'],
+  // Keep in sync with MAX_JSON_BODY_BYTES on the server (base64 adds ~33%).
+  MAX_UPLOAD_BYTES: 50 * 1024 * 1024,
 };

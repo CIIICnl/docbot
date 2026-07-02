@@ -13,6 +13,8 @@ export default {
     ok: 'OK',
     loading: 'Loading...',
     actions: 'Actions',
+    fileTooLarge: 'File is {size}, the maximum is {max}. Try compressing the images in the document.',
+    unsupportedFormat: 'Unsupported file format: {name}',
   },
 
   // Navigation

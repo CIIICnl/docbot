@@ -13,6 +13,8 @@ export default {
     ok: 'OK',
     loading: 'Laden...',
     actions: 'Acties',
+    fileTooLarge: 'Bestand is {size}, het maximum is {max}. Tip: comprimeer de afbeeldingen in het document.',
+    unsupportedFormat: 'Niet-ondersteund bestandsformaat: {name}',
   },
 
   // Navigation
