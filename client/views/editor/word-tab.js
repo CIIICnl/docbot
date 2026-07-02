@@ -4,11 +4,12 @@
  */
 
 import { h, empty } from '../../lib/dom.js';
-import { createDropZone, readFileAsArrayBuffer, formatFileSize } from '../../lib/file-upload.js';
+import { createDropZone, readFileAsBase64, formatFileSize } from '../../lib/file-upload.js';
 import { post } from '../../lib/api.js';
 import { success, error, warning } from '../../lib/toast.js';
 import { slIcon, slButton } from '../../lib/shoelace.js';
 import { maybeOfferLanguageSwitch } from '../../lib/i18n.js';
+import { FILES } from '../../lib/constants.js';
 
 /**
  * Create the Word tab content
@@ -17,7 +18,6 @@ import { maybeOfferLanguageSwitch } from '../../lib/i18n.js';
  */
 export function createWordTab(onContentChange, onImagesChange) {
   // State
-  let currentFile = null;
   let extractedImages = [];
 
   // File info display
@@ -58,7 +58,6 @@ export function createWordTab(onContentChange, onImagesChange) {
 
   // Clear the uploaded file
   function clearFile() {
-    currentFile = null;
     extractedImages = [];
 
     fileInfo.hidden = true;
@@ -112,8 +111,6 @@ export function createWordTab(onContentChange, onImagesChange) {
     const file = files[0];
     if (!file) return;
 
-    currentFile = file;
-
     // Update file info
     fileName.textContent = file.name;
     fileSize.textContent = formatFileSize(file.size);
@@ -124,9 +121,7 @@ export function createWordTab(onContentChange, onImagesChange) {
     statusText.textContent = 'Parsing document...';
 
     try {
-      // Read file as array buffer
-      const arrayBuffer = await readFileAsArrayBuffer(file);
-      const base64 = arrayBufferToBase64(arrayBuffer);
+      const base64 = await readFileAsBase64(file);
 
       // Parse the document
       const parseResult = await post('/api/docx/parse', { file: base64 });
@@ -163,21 +158,11 @@ export function createWordTab(onContentChange, onImagesChange) {
     }
   }
 
-  // Convert ArrayBuffer to base64
-  function arrayBufferToBase64(buffer) {
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    for (let i = 0; i < bytes.byteLength; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
-  }
-
   // Create drop zone
   const dropZone = createDropZone({
     accept: ['.docx'],
     mimeTypes: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-    maxSize: 50 * 1024 * 1024, // 50MB
+    maxSize: FILES.MAX_UPLOAD_BYTES,
     multiple: false,
     label: 'Drop Word document here or click to browse',
     icon: 'file-earmark-word',

@@ -30,6 +30,18 @@ export const TOKEN_LIMITS = {
   CHUNK_SIZE: 3000,
 };
 
+// Request/content size limits
+export const LIMITS = {
+  // Covers a 50MB client upload (FILES.MAX_UPLOAD_BYTES) after ~33% base64
+  // inflation plus JSON overhead.
+  MAX_JSON_BODY_BYTES: 80 * 1024 * 1024,
+  // Enhancement asks the model to return the ENTIRE rewritten document
+  // inside ENHANCE_MAX_TOKENS of output. Beyond roughly this many input
+  // characters (base64 images excluded) the output gets truncated
+  // mid-JSON, so reject early with a clear message instead.
+  ENHANCE_MAX_INPUT_CHARS: 100_000,
+};
+
 // Default page settings
 export const PAGE_DEFAULTS = {
   FORMAT: 'A4' as const,

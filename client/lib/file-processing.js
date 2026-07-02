@@ -4,7 +4,9 @@
  */
 
 import { post } from './api.js';
-import { readFileAsText, readFileAsArrayBuffer, arrayBufferToBase64 } from './file-upload.js';
+import { readFileAsText, readFileAsBase64, formatFileSize } from './file-upload.js';
+import { FILES } from './constants.js';
+import { t } from './i18n.js';
 
 /**
  * @typedef {Object} ParseResult
@@ -38,8 +40,14 @@ export function isTextDocument(file) {
  * @returns {Promise<ParseResult>}
  */
 export async function parseWordDocument(file) {
-  const arrayBuffer = await readFileAsArrayBuffer(file);
-  const base64 = arrayBufferToBase64(arrayBuffer);
+  if (file.size > FILES.MAX_UPLOAD_BYTES) {
+    throw new Error(t('common.fileTooLarge', {
+      size: formatFileSize(file.size),
+      max: formatFileSize(FILES.MAX_UPLOAD_BYTES),
+    }));
+  }
+
+  const base64 = await readFileAsBase64(file);
 
   const result = await post('/api/docx/parse', { file: base64 });
 
@@ -86,7 +94,7 @@ export async function parseDocumentFile(file) {
     return parseTextDocument(file);
   }
 
-  throw new Error(`Unsupported file format: ${file.name}`);
+  throw new Error(t('common.unsupportedFormat', { name: file.name }));
 }
 
 /**

@@ -138,20 +138,23 @@ export function success(message, options = {}) {
 
 /**
  * Show a warning toast
+ * Stays a bit longer than the 4s default so it survives a glance away.
  * @param {string} message
  * @param {Omit<ToastOptions, 'variant'>} options
  */
 export function warning(message, options = {}) {
-  return toast(message, { ...options, variant: 'warning' });
+  return toast(message, { duration: 8000, ...options, variant: 'warning' });
 }
 
 /**
  * Show an error toast
+ * Errors don't auto-hide: a missed transient toast reads as "the app did
+ * nothing". The user dismisses it via the close button.
  * @param {string} message
  * @param {Omit<ToastOptions, 'variant'>} options
  */
 export function error(message, options = {}) {
-  return toast(message, { ...options, variant: 'danger' });
+  return toast(message, { duration: Infinity, ...options, variant: 'danger' });
 }
 
 /**
@@ -183,7 +186,7 @@ export function dismiss(id) {
  * Dismiss all toasts
  */
 export function dismissAll() {
-  for (const [id, toast] of activeToasts) {
+  for (const toast of activeToasts.values()) {
     try {
       toast.hide();
     } catch {

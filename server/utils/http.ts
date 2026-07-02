@@ -4,15 +4,56 @@
  */
 
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import { LIMITS } from '../config/constants.js';
+
+/**
+ * Error with an HTTP status code, so route handlers' generic catch →
+ * serverError() path can still produce the right status and message.
+ */
+export class HttpError extends Error {
+  statusCode: number;
+
+  constructor(statusCode: number, message: string) {
+    super(message);
+    this.name = 'HttpError';
+    this.statusCode = statusCode;
+  }
+}
 
 /**
  * Parse JSON request body
  */
-export async function json<T = unknown>(req: IncomingMessage): Promise<T> {
+export async function json<T = unknown>(
+  req: IncomingMessage,
+  maxBytes: number = LIMITS.MAX_JSON_BODY_BYTES
+): Promise<T> {
   const chunks: Buffer[] = [];
+  let received = 0;
+  let tooLarge = false;
 
   for await (const chunk of req) {
+    received += (chunk as Buffer).length;
+    if (received > maxBytes) {
+      // Keep draining (without buffering) instead of destroying the socket:
+      // a reset mid-upload surfaces as a generic network error in the
+      // browser, while a fully-read request lets the 413 JSON reach it.
+      tooLarge = true;
+      chunks.length = 0;
+      // Hard stop for runaway streams well past the limit.
+      if (received > maxBytes * 4) {
+        req.destroy();
+        break;
+      }
+      continue;
+    }
     chunks.push(chunk as Buffer);
+  }
+
+  if (tooLarge) {
+    throw new HttpError(
+      413,
+      `Request body exceeds the ${Math.round(maxBytes / 1024 / 1024)}MB limit`
+    );
   }
 
   const body = Buffer.concat(chunks).toString();
@@ -21,7 +62,11 @@ export async function json<T = unknown>(req: IncomingMessage): Promise<T> {
     return {} as T;
   }
 
-  return JSON.parse(body) as T;
+  try {
+    return JSON.parse(body) as T;
+  } catch {
+    throw new HttpError(400, 'Request body is not valid JSON');
+  }
 }
 
 /**
@@ -90,6 +135,13 @@ export function conflict(res: ServerResponse, message = 'Conflict'): void {
  * Send a 500 Internal Server Error response
  */
 export function serverError(res: ServerResponse, error: Error): void {
+  // HttpErrors are expected client-facing failures (413 too large, 400 bad
+  // JSON, 422 doc too long): keep their status + message, log lightly.
+  if (error instanceof HttpError) {
+    console.warn(`[http] ${error.statusCode}: ${error.message}`);
+    sendJson(res, error.statusCode, { error: error.message });
+    return;
+  }
   console.error('Server error:', error);
   const message = process.env.NODE_ENV === 'development' ? error.message : 'Internal server error';
   sendJson(res, 500, { error: message });
