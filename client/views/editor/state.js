@@ -52,8 +52,9 @@ export function createConverterState() {
     coverPageVersion: '',
     coverPageDate: '',
 
-    // Page break options
-    pageBreakHeadings: false,
+    // Page break options (independent per heading level)
+    pageBreakBeforeH1: false,
+    pageBreakBeforeH2: false,
 
     // Available options
     themes: [],

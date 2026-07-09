@@ -49,9 +49,18 @@ export async function parseWordDocument(file) {
 
   const base64 = await readFileAsBase64(file);
 
-  const result = await post('/api/docx/parse', { file: base64 });
+  // filename is sent purely so the server can log which document a given
+  // parse (or failure) belonged to - the payload is otherwise just base64.
+  const result = await post(
+    '/api/docx/parse',
+    { file: base64, filename: file.name },
+    { timeoutMs: FILES.UPLOAD_TIMEOUT_MS }
+  );
 
   if (!result.ok) {
+    if (result.timedOut) {
+      throw new Error(t('common.uploadTimeout'));
+    }
     throw new Error(result.data?.error || 'Failed to parse Word document');
   }
 

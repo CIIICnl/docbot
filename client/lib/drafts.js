@@ -388,7 +388,10 @@ export async function createDraft({ title, content, settings = {}, aiChanges = n
         version: '',
         date: '',
       },
-      pageBreakHeadings: settings.pageBreakHeadings === true,
+      pageBreakBeforeH1:
+        settings.pageBreakBeforeH1 ?? settings.pageBreakHeadings === true,
+      pageBreakBeforeH2:
+        settings.pageBreakBeforeH2 ?? settings.pageBreakHeadings === true,
     },
     // Store AI changes to display in editor (one-time, cleared after viewing)
     aiChanges: aiChanges || null,

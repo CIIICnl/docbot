@@ -43,4 +43,8 @@ export const FILES = {
   SUPPORTED_BINARY_FORMATS: ['.docx'],
   // Keep in sync with MAX_JSON_BODY_BYTES on the server (base64 adds ~33%).
   MAX_UPLOAD_BYTES: 50 * 1024 * 1024,
+  // Upper bound on a docx upload+parse round-trip. Without this the fetch has
+  // no timeout, so a slow parse or a stalled proxy connection leaves the UI
+  // spinning forever with no error (the "bleef hangen" report).
+  UPLOAD_TIMEOUT_MS: 120 * 1000,
 };

@@ -15,6 +15,7 @@ export default {
     actions: 'Actions',
     fileTooLarge: 'File is {size}, the maximum is {max}. Try compressing the images in the document.',
     unsupportedFormat: 'Unsupported file format: {name}',
+    uploadTimeout: 'The upload took too long and was aborted. Please try again; if it keeps hanging, the document may be too heavy.',
   },
 
   // Navigation
@@ -214,7 +215,8 @@ export default {
     toc: 'ToC',
     pageNumbers: 'Page #',
     coverPage: 'Cover Page',
-    pageBreakHeadings: 'Break H1/H2',
+    pageBreakBeforeH1: 'Break before H1',
+    pageBreakBeforeH2: 'Break before H2',
     deleteLabel: 'Delete',
   },
 
