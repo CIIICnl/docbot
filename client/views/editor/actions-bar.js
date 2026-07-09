@@ -339,7 +339,8 @@ export function createActionsBar({ store, onEnhanceComplete }) {
           date: state.coverPageDate,
           locale: getLocale(),
         },
-        pageBreakHeadings: state.pageBreakHeadings,
+        pageBreakBeforeH1: state.pageBreakBeforeH1,
+        pageBreakBeforeH2: state.pageBreakBeforeH2,
       });
 
       const successKey = format === 'pdf' ? 'toast.pdfExported' : 'toast.htmlExported';

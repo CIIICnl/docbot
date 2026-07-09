@@ -63,7 +63,42 @@ export function slInput(props = {}) {
  * Create an sl-textarea
  */
 export function slTextarea(props = {}) {
-  return sl('sl-textarea', props);
+  const el = sl('sl-textarea', props);
+  injectSelectionStyle(el);
+  return el;
+}
+
+/**
+ * Give the textarea a visible text-selection highlight.
+ *
+ * Shoelace renders its real <textarea> inside a shadow root, so the app's
+ * document-level `::selection` rules never reach it - selected text kept the
+ * near-invisible browser default, making it look as if you couldn't select at
+ * all. Custom properties DO pierce the shadow boundary, so we inject a small
+ * stylesheet that reuses the brand-accent tokens (the intended editor
+ * selection colour). `::selection` and `::-moz-selection` must be separate
+ * rules: a browser that doesn't grok one would otherwise drop both.
+ */
+function injectSelectionStyle(el) {
+  const inject = () => {
+    const root = el.shadowRoot;
+    if (!root) return false;
+    if (root.querySelector('style[data-vk-selection]')) return true;
+    const style = document.createElement('style');
+    style.setAttribute('data-vk-selection', '');
+    style.textContent =
+      'textarea::selection{background:var(--vk-color-brand-accent);color:var(--vk-color-brand-accent-text)}' +
+      'textarea::-moz-selection{background:var(--vk-color-brand-accent);color:var(--vk-color-brand-accent-text)}';
+    root.appendChild(style);
+    return true;
+  };
+
+  if (inject()) return;
+  customElements.whenDefined('sl-textarea').then(() => {
+    // updateComplete resolves once Lit has rendered the shadow root.
+    if (el.updateComplete) el.updateComplete.then(inject);
+    else inject();
+  });
 }
 
 /**

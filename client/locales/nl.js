@@ -15,6 +15,7 @@ export default {
     actions: 'Acties',
     fileTooLarge: 'Bestand is {size}, het maximum is {max}. Tip: comprimeer de afbeeldingen in het document.',
     unsupportedFormat: 'Niet-ondersteund bestandsformaat: {name}',
+    uploadTimeout: 'Het uploaden duurde te lang en is afgebroken. Probeer het opnieuw; blijft het hangen, dan is het document mogelijk te zwaar.',
   },
 
   // Navigation
@@ -215,7 +216,8 @@ export default {
     toc: 'Inhoudsopgave',
     pageNumbers: 'Pagina #',
     coverPage: 'Voorblad',
-    pageBreakHeadings: 'H1/H2 nieuwe pagina',
+    pageBreakBeforeH1: 'H1 nieuwe pagina',
+    pageBreakBeforeH2: 'H2 nieuwe pagina',
     deleteLabel: 'Verwijderen',
   },
 

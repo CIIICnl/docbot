@@ -59,7 +59,8 @@ export function createSaveManager({ store, draftId, autosaveDelay = 1500 }) {
           version: state.coverPageVersion,
           date: state.coverPageDate,
         },
-        pageBreakHeadings: state.pageBreakHeadings,
+        pageBreakBeforeH1: state.pageBreakBeforeH1,
+        pageBreakBeforeH2: state.pageBreakBeforeH2,
       },
     });
 

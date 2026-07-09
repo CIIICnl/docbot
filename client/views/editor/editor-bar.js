@@ -64,12 +64,20 @@ export function createEditorBar({ store, draftTitle, onTitleChange }) {
     updateCoverMetadataVisibility();
   });
 
-  // Page break headings toggle
-  const pageBreakHeadingsSwitch = slSwitch({ checked: store.get('pageBreakHeadings'), size: 'small' });
-  const pageBreakHeadingsLabel = h('label', { class: 'input-toggle-label' }, [pageBreakHeadingsSwitch, ' ' + t('input.pageBreakHeadings')]);
+  // Page break toggles - independent per heading level, so you can start each
+  // H1 on a new page without also breaking before every H2.
+  const pageBreakH1Switch = slSwitch({ checked: store.get('pageBreakBeforeH1'), size: 'small' });
+  const pageBreakH1Label = h('label', { class: 'input-toggle-label' }, [pageBreakH1Switch, ' ' + t('input.pageBreakBeforeH1')]);
 
-  pageBreakHeadingsSwitch.addEventListener('sl-change', (e) => {
-    store.set({ pageBreakHeadings: e.target.checked });
+  pageBreakH1Switch.addEventListener('sl-change', (e) => {
+    store.set({ pageBreakBeforeH1: e.target.checked });
+  });
+
+  const pageBreakH2Switch = slSwitch({ checked: store.get('pageBreakBeforeH2'), size: 'small' });
+  const pageBreakH2Label = h('label', { class: 'input-toggle-label' }, [pageBreakH2Switch, ' ' + t('input.pageBreakBeforeH2')]);
+
+  pageBreakH2Switch.addEventListener('sl-change', (e) => {
+    store.set({ pageBreakBeforeH2: e.target.checked });
   });
 
   // Cover page metadata fields
@@ -146,7 +154,8 @@ export function createEditorBar({ store, draftTitle, onTitleChange }) {
         tocLabel,
         pageNumLabel,
         coverPageLabel,
-        pageBreakHeadingsLabel,
+        pageBreakH1Label,
+        pageBreakH2Label,
       ]),
     ]),
     coverMetadataRow,

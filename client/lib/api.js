@@ -10,7 +10,7 @@
  * @returns {Promise<{ok: boolean, status: number, data: any}>}
  */
 export async function api(endpoint, options = {}) {
-  const { body, ...rest } = options;
+  const { body, timeoutMs, ...rest } = options;
 
   const fetchOptions = {
     headers: {
@@ -22,6 +22,19 @@ export async function api(endpoint, options = {}) {
 
   if (body) {
     fetchOptions.body = JSON.stringify(body);
+  }
+
+  // Optional client-side timeout. Opt-in per request (via timeoutMs) so
+  // long-running calls like LLM enhancement keep their unbounded default.
+  let timer = null;
+  let timedOut = false;
+  if (timeoutMs) {
+    const controller = new AbortController();
+    fetchOptions.signal = controller.signal;
+    timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
   }
 
   try {
@@ -43,13 +56,23 @@ export async function api(endpoint, options = {}) {
       status: response.status,
       data,
     };
-  } catch (error) {
+  } catch {
+    if (timedOut) {
+      return {
+        ok: false,
+        status: 0,
+        timedOut: true,
+        data: { error: 'Request timed out' },
+      };
+    }
     // Network error
     return {
       ok: false,
       status: 0,
       data: { error: 'Network error' },
     };
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 
@@ -68,8 +91,8 @@ export function get(endpoint) {
  * @param {any} body
  * @returns {Promise<{ok: boolean, status: number, data: any}>}
  */
-export function post(endpoint, body) {
-  return api(endpoint, { method: 'POST', body });
+export function post(endpoint, body, options = {}) {
+  return api(endpoint, { method: 'POST', body, ...options });
 }
 
 /**

@@ -73,7 +73,12 @@ export async function renderEditor(container, { draftId, navigate }) {
     coverPageSubtitle: draft.settings?.coverPageOptions?.subtitle || '',
     coverPageVersion: draft.settings?.coverPageOptions?.version || '',
     coverPageDate: draft.settings?.coverPageOptions?.date || '',
-    pageBreakHeadings: draft.settings?.pageBreakHeadings === true,
+    // Migrate the legacy combined `pageBreakHeadings` flag: an old draft that
+    // had it on maps to both H1 and H2 breaking.
+    pageBreakBeforeH1:
+      draft.settings?.pageBreakBeforeH1 ?? draft.settings?.pageBreakHeadings === true,
+    pageBreakBeforeH2:
+      draft.settings?.pageBreakBeforeH2 ?? draft.settings?.pageBreakHeadings === true,
   });
 
   // Create save manager
@@ -95,7 +100,8 @@ export async function renderEditor(container, { draftId, navigate }) {
       'coverPageSubtitle',
       'coverPageVersion',
       'coverPageDate',
-      'pageBreakHeadings',
+      'pageBreakBeforeH1',
+      'pageBreakBeforeH2',
     ];
     const changed = saveableFields.some((key) => state[key] !== prev[key]);
     if (changed) {

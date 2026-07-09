@@ -21,6 +21,7 @@ import {
 
 interface ParseDocxRequest {
   file: string; // base64 encoded
+  filename?: string; // original name, for logging/diagnostics only
 }
 
 interface EnhanceRequest {
@@ -64,6 +65,12 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
 
   // POST /api/docx/parse - Parse a Word document
   if (path === '/api/docx/parse' && req.method === 'POST') {
+    // Per-request diagnostics: docbot had no logging on this endpoint, so a
+    // user's failed/hanging upload left no server-side trace at all. One line
+    // on entry + one on completion makes the next failure reproducible (which
+    // file, how big, how many images, how long, and the outcome).
+    const started = Date.now();
+    let filename = '(unknown)';
     try {
       const body = await json<ParseDocxRequest>(req);
 
@@ -72,8 +79,16 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
         return true;
       }
 
+      if (typeof body.filename === 'string' && body.filename.trim()) {
+        filename = body.filename.trim();
+      }
+
       // Decode base64 to buffer
       const buffer = Buffer.from(body.file, 'base64');
+
+      console.log(
+        `[docx] parse start file="${filename}" base64Len=${body.file.length} decodedBytes=${buffer.length}`
+      );
 
       // Parse the document
       const result = await parseDocx(buffer);
@@ -130,6 +145,11 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
         }
       }
 
+      console.log(
+        `[docx] parse ok file="${filename}" images=${uploadedImages.length}/${result.images.length} ` +
+          `warnings=${result.warnings.length}+${mediaWarnings.length}media durationMs=${Date.now() - started}`
+      );
+
       ok(res, {
         markdown,
         title: result.title,
@@ -140,6 +160,10 @@ export async function handleDocx(ctx: ApiContext): Promise<boolean> {
 
       return true;
     } catch (error) {
+      console.error(
+        `[docx] parse FAILED file="${filename}" durationMs=${Date.now() - started}:`,
+        error
+      );
       serverError(res, error as Error);
       return true;
     }

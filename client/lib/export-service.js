@@ -43,7 +43,7 @@ const EXPORT_FORMATS = {
  * @param {Object} options.coverPageOptions - Cover page options (subtitle, version, date)
  * @returns {Promise<Object>} Export result with success flag
  */
-export async function exportDocument({ format, content, title, themeId, generateToc, pageNumbers, coverPage, coverPageOptions, pageBreakHeadings }) {
+export async function exportDocument({ format, content, title, themeId, generateToc, pageNumbers, coverPage, coverPageOptions, pageBreakBeforeH1, pageBreakBeforeH2 }) {
   const formatConfig = EXPORT_FORMATS[format];
   if (!formatConfig) {
     throw new Error(`Unknown export format: ${format}`);
@@ -62,7 +62,8 @@ export async function exportDocument({ format, content, title, themeId, generate
       pageNumbers: format === 'pdf' ? pageNumbers : false,
       coverPage: format === 'pdf' ? coverPage : false,
       coverPageOptions: format === 'pdf' ? coverPageOptions : undefined,
-      pageBreakHeadings: format === 'pdf' ? pageBreakHeadings : false,
+      pageBreakBeforeH1: format === 'pdf' ? pageBreakBeforeH1 : false,
+      pageBreakBeforeH2: format === 'pdf' ? pageBreakBeforeH2 : false,
       title,
     },
   });
