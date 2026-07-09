@@ -27,29 +27,27 @@ To inspect/redeploy by hand: `ssh root@51.15.131.87`, then
 `docker ps --filter label=coolify.resourceName=docbot`. Redeploy from
 the Coolify UI/API, not `docker compose` (there is no compose file there).
 
-## Media storage (IMPORTANT - ephemeral by default)
+## Media storage (Scaleway S3 on prod)
 
 Uploaded images (docx figures, beeldbank picks) are stored via the media
 provider selected in `server/media/config.ts`. Mode comes from
 `MEDIA_STORAGE_MODE` (`auto` | `scaleway` | `local`); `auto` uses Scaleway
 only when `SCW_ACCESS_KEY/SECRET_KEY/BUCKET` are set, else falls back to
-the **local filesystem** at `/app/server/uploads` inside the container.
+the **local filesystem** at `/app/server/uploads` inside the container
+(ephemeral - no volume mounted, wiped on every redeploy).
 
-On prod (as of 2026-06-01) none of those are set, so docbot logs
-`[media] Using local filesystem provider` and writes to
-`/app/server/uploads` with **no volume mounted** (`docker inspect … .Mounts`
-is empty). Every Coolify redeploy creates a fresh container, so all
-previously-uploaded media is lost. Saved markdown keeps its
-`docbot://media/<key>` refs; on re-render `resolveMediaUrl` calls
-`provider.exists(key)` → false → the ref is left literal → the image
-renders blank. This is why images vanish from re-rendered documents.
+**Prod runs Scaleway since 2026-06-01** and media survives redeploys:
+`MEDIA_STORAGE_MODE=scaleway`, bucket `dreamslides-media` (region
+`fr-par`, shared with slidecreator/beeldbank), `SCW_KEY_PREFIX=docbot/`,
+creds via `SCW_*` env vars on the Coolify resource. Verified 2026-07-09
+with a list+put from inside the prod container (75 objects, uploads from
+that same day present). The `[media] Using Scaleway S3 provider` log line
+only appears on first media use (lazy singleton), so its absence at
+startup means nothing.
 
-Fix (pick one): give the app a **persistent volume** mounted at
-`/app/server/uploads` (or set `UPLOADS_DIR` to a mounted path) via Coolify
-persistent storage; **or** switch to Scaleway by setting
-`MEDIA_STORAGE_MODE=scaleway` + `SCW_*` creds (durable, survives server
-moves). Note the prod env currently has a typo'd `STORAGE_MODE` that the
-media code does not read - the correct key is `MEDIA_STORAGE_MODE`.
+Unrelated lookalike: the prod env also has `STORAGE_MODE=postgres` -
+that's **document** storage (drafts in Postgres), not media; the media
+code doesn't read it.
 
 ## Shared knowledge base
 
