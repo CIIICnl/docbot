@@ -11,9 +11,12 @@ import { getBeeldbankPickerUrl } from '../../lib/config.js';
 import { success, error, warning } from '../../lib/toast.js';
 import { t } from '../../lib/i18n.js';
 import { formatFileSize } from '../../lib/file-upload.js';
+import {
+  uploadImageFile,
+  ACCEPTED_IMAGE_TYPES as ACCEPTED_TYPES,
+  MAX_IMAGE_BYTES,
+} from '../../lib/media-upload.js';
 
-const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml'];
-const MAX_IMAGE_BYTES = 25 * 1024 * 1024;
 const MEDIA_URL_RE = /docbot:\/\/media\/[^\s)"'>]+/g;
 
 // Cache resolved presigned URLs so we don't ping /api/media on every refresh
@@ -130,22 +133,6 @@ async function resolvePreviewUrl(url) {
     return result.data.url;
   }
   return null;
-}
-
-async function uploadImageFile(file) {
-  const response = await fetch(
-    `/api/media/upload?filename=${encodeURIComponent(file.name)}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': file.type || 'application/octet-stream' },
-      body: file,
-    }
-  );
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(body?.error || `Upload failed (${response.status})`);
-  }
-  return response.json();
 }
 
 function pickImageFile() {

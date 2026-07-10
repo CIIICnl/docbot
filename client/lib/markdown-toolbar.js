@@ -4,8 +4,11 @@
  */
 
 import { h } from './dom.js';
-import { prompt } from './dialogs.js';
+import { prompt, imagePrompt } from './dialogs.js';
 import { t } from './i18n.js';
+import { uploadImageFile, ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES } from './media-upload.js';
+import { error, info, dismiss } from './toast.js';
+import { formatFileSize } from './file-upload.js';
 
 /**
  * @typedef {Object} MarkdownToolbarOptions
@@ -385,30 +388,62 @@ export class MarkdownToolbar {
   }
 
   /**
-   * Insert an image with dialog
+   * Insert an image: either upload a local file (to docbot media storage) or
+   * reference a URL. Previously URL-only, which read as "you can't upload from
+   * your laptop".
    */
   async insertImage() {
     const inner = this.getInnerTextarea();
     if (!inner) return;
 
-    // Store selection before dialog
+    // Store selection before the dialog (unchanged while dialogs are open).
     const start = inner.selectionStart;
     const end = inner.selectionEnd;
     const selectedText = inner.value.substring(start, end);
 
-    const url = await prompt({
+    const choice = await imagePrompt({
       title: t('toolbar.image'),
-      label: t('toolbar.imageUrlLabel'),
-      placeholder: 'https://',
+      uploadText: t('toolbar.imageUpload'),
+      orText: t('toolbar.imageOr'),
+      urlLabel: t('toolbar.imageUrlLabel'),
+      urlPlaceholder: 'https://',
+      confirmText: t('toolbar.imageInsert'),
+      cancelText: t('toolbar.imageCancel'),
+      accept: ACCEPTED_IMAGE_TYPES.join(','),
     });
+    if (!choice) return;
 
-    if (!url) return;
+    let url;
+    let defaultAlt = selectedText || 'image';
+
+    if (choice.file) {
+      const file = choice.file;
+      if (file.size > MAX_IMAGE_BYTES) {
+        error(t('toolbar.imageTooLarge', { max: formatFileSize(MAX_IMAGE_BYTES) }));
+        return;
+      }
+      info(t('toolbar.imageUploading'), { id: 'toolbar-image-upload', duration: Infinity });
+      try {
+        const data = await uploadImageFile(file);
+        url = data.mediaUrl;
+        defaultAlt = selectedText || file.name.replace(/\.[^.]+$/, '') || 'image';
+      } catch (err) {
+        dismiss('toolbar-image-upload');
+        error(t('toolbar.imageUploadFailed', { reason: err.message }));
+        return;
+      }
+      dismiss('toolbar-image-upload');
+    } else if (choice.url) {
+      url = choice.url;
+    } else {
+      return;
+    }
 
     const altText = selectedText || await prompt({
       title: t('toolbar.image'),
       label: t('toolbar.altTextLabel'),
-      value: 'image',
-    }) || 'image';
+      value: defaultAlt,
+    }) || defaultAlt;
 
     const markdown = `![${altText}](${url})`;
 

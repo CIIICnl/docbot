@@ -509,6 +509,13 @@ export default {
     urlLabel: 'URL',
     imageUrlLabel: 'Image URL',
     altTextLabel: 'Alt Text',
+    imageUpload: 'Upload from computer',
+    imageOr: 'or',
+    imageInsert: 'Insert',
+    imageCancel: 'Cancel',
+    imageUploading: 'Uploading image…',
+    imageUploadFailed: 'Upload failed: {reason}',
+    imageTooLarge: 'Image is larger than {max}',
   },
 
   // Placeholders
