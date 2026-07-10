@@ -507,6 +507,13 @@ export default {
     urlLabel: 'URL',
     imageUrlLabel: 'Afbeelding URL',
     altTextLabel: 'Alt tekst',
+    imageUpload: 'Upload van computer',
+    imageOr: 'of',
+    imageInsert: 'Invoegen',
+    imageCancel: 'Annuleren',
+    imageUploading: 'Afbeelding uploaden…',
+    imageUploadFailed: 'Uploaden mislukt: {reason}',
+    imageTooLarge: 'Afbeelding is groter dan {max}',
   },
 
   // Placeholders
