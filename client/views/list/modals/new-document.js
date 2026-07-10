@@ -325,6 +325,7 @@ export async function openNewDocumentModal({
 
     let title = '';
     let content = '';
+    let detectedLanguage = null;
 
     // Gather input based on mode
     if (mode === 'empty') {
@@ -342,7 +343,9 @@ export async function openNewDocumentModal({
 
       setBusy(true);
       try {
-        content = await readFileContent(selectedFile);
+        const parsed = await readFileContent(selectedFile);
+        content = parsed.markdown;
+        detectedLanguage = parsed.detectedLanguage ?? null;
       } catch (err) {
         error(t('newDocument.errorReadFile', { error: err.message }));
         setBusy(false);
@@ -401,6 +404,16 @@ export async function openNewDocumentModal({
     // Close modal if not already closed (Notion closes it early)
     if (mode !== 'notion') {
       modalApi.close();
+    }
+
+    // Only now that the creation modal is gone is it safe to offer the UI
+    // language switch. Offering it earlier (inside readFileContent, while the
+    // modal was still open and the button busy) mounted the sl-dialog behind
+    // the modal - z-index 700 vs 1100 - so it was invisible and unclickable,
+    // the await never resolved, and the upload spun forever for anyone whose
+    // UI locale differed from the document's language.
+    if (detectedLanguage) {
+      await maybeOfferLanguageSwitch(detectedLanguage);
     }
 
     // Store AI changes to pass to editor
@@ -547,10 +560,11 @@ export async function openNewDocumentModal({
   /**
    * Read file content (handles both text and docx)
    */
+  // Returns the full parse result. The caller decides when to act on
+  // detectedLanguage: the language-switch offer must wait until the creation
+  // modal is closed, otherwise its dialog is trapped behind the modal.
   async function readFileContent(file) {
-    const result = await parseDocumentFile(file);
-    await maybeOfferLanguageSwitch(result.detectedLanguage);
-    return result.markdown;
+    return parseDocumentFile(file);
   }
 
   // ========== Load themes and check Notion ==========

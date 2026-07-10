@@ -196,6 +196,16 @@
   --sl-button-font-size-small: var(--vk-text-sm);
   --sl-button-font-size-medium: var(--vk-text-sm);
   --sl-button-font-size-large: var(--vk-text-base);
+
+  /* ============================================
+   * Z-INDEX OVERRIDES
+   * Shoelace dialogs default to z-index 700, below our own modals
+   * (.modal-backdrop 1000 / .modal 1100). A confirm/prompt shown while an app
+   * modal is open would then mount BEHIND it - invisible and unclickable, so
+   * its await never resolves and the UI hangs. Lift sl-dialog above the modal
+   * (but below loading/toast at 10000+) so dialogs are always reachable.
+   * ============================================ */
+  --sl-z-index-dialog: 1200;
 }
 
 /* ============================================
