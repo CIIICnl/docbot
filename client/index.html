@@ -27,9 +27,13 @@
       document.documentElement.dataset.theme = theme;
     })();
   </script>
+  <!-- Gedeelde CIIIC-navigatiebalk (ciiic-shell), served vanaf het portaal. -->
+  <script type="module" src="https://tools.ciiic.nl/ciiic-shell.js"></script>
 </head>
 <body>
   <a href="#main" class="skip-link">Skip to main content</a>
+
+  <ciiic-shell current="docs" sticky></ciiic-shell>
 
   <div id="app"></div>
 
