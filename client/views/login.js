@@ -161,14 +161,23 @@ export async function renderLogin(root) {
       width: 100%;
       padding: 0.7rem 1rem;
       margin-bottom: var(--sl-spacing-small);
-      background: var(--color-lime, #b6f500);
-      color: #0a0a0a;
+      background: var(--color-lime, #dbff00);
+      color: var(--color-ink, #141414);
       border-radius: 8px;
       font-weight: 600;
+      letter-spacing: 0.01em;
       text-decoration: none;
+      transition: background 0.15s ease, transform 0.05s ease;
     }
     .login-sso:hover {
-      opacity: 0.9;
+      background: var(--color-lime-dark, #c9ec00);
+    }
+    .login-sso:active {
+      transform: translateY(1px);
+    }
+    .login-sso:focus-visible {
+      outline: 2px solid var(--color-ink, #141414);
+      outline-offset: 2px;
     }
     .login-submit {
       margin-top: var(--sl-spacing-small);
