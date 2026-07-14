@@ -34,7 +34,22 @@ export async function renderLogin(root) {
     ]),
 
     // CIIIC single sign-on (ZITADEL) — links to the server OIDC kickoff.
-    h('a', { class: 'login-sso', href: '/auth/login' }, ['Inloggen met CIIIC']),
+    // /auth/login is a SERVER route; the SPA router (client/lib/router.js)
+    // intercepts same-origin <a> clicks and would treat it as a (nonexistent)
+    // client route → "Page Not Found". Force a real navigation past the router.
+    h(
+      'a',
+      {
+        class: 'login-sso',
+        href: '/auth/login',
+        onclick: (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          window.location.assign('/auth/login');
+        },
+      },
+      ['Inloggen met CIIIC']
+    ),
     h('sl-divider', {}),
 
     h('form', { class: 'login-form', onsubmit: handleSubmit }, [
