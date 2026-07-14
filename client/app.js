@@ -187,15 +187,23 @@ import { enableSync, syncFromServer, isSyncEnabled } from './lib/drafts.js';
   route('/', async () => {
     if (!(await requireAuth())) return;
 
-    // Sync from server in background if database mode is enabled
-    if (isSyncEnabled()) {
-      syncFromServer().catch((err) => {
-        console.warn('[app] Failed to sync from server:', err);
-      });
-    }
-
     const content = h('div', {});
     renderShell(content, { activeNav: 'documents' });
+
+    // Pull the latest documents from the server BEFORE rendering the list.
+    // renderList reads synchronously from the local (localStorage) store, so
+    // on a fresh session that store is empty and an un-awaited background sync
+    // rendered "geen documenten" until a manual re-navigation (e.g. clicking
+    // the logo). The shell is already painted above, so awaiting here only
+    // delays the list body, not the whole page.
+    if (isSyncEnabled()) {
+      try {
+        await syncFromServer();
+      } catch (err) {
+        console.warn('[app] Failed to sync from server:', err);
+      }
+    }
+
     return renderList(content, { navigate, api: { get, post } });
   });
 
