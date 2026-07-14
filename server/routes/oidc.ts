@@ -65,7 +65,14 @@ export async function handleOidc({
   res: ServerResponse;
   url: URL;
 }): Promise<boolean> {
-  const origin = `${url.protocol}//${url.host}`;
+  // Behind Coolify's Traefik proxy the internal request is http (TLS ends at
+  // the proxy), so url.protocol is "http". Trust X-Forwarded-Proto/Host so the
+  // redirect_uri matches the https URI registered on the ZITADEL client.
+  const fwdProto = (String(req.headers['x-forwarded-proto'] ?? '').split(',')[0] ?? '').trim();
+  const fwdHost = (String(req.headers['x-forwarded-host'] ?? '').split(',')[0] ?? '').trim();
+  const proto = fwdProto || url.protocol.replace(/:$/, '');
+  const host = fwdHost || url.host;
+  const origin = `${proto}://${host}`;
 
   if (url.pathname === '/auth/login' && req.method === 'GET') {
     if (!oidcConfigured()) return redirect(res, '/login?oidc=unconfigured');
