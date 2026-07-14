@@ -260,7 +260,7 @@ export function getUserFromRequest(req: IncomingMessage): User | null {
   };
 }
 
-function isHttpsRequest(req: IncomingMessage): boolean {
+export function isHttpsRequest(req: IncomingMessage): boolean {
   const xf = String(
     req.headers?.['x-forwarded-proto'] || ''
   ).toLowerCase();
@@ -423,6 +423,37 @@ export async function verifyLoginAsync(
 
   // Fall back to environment-based authentication
   return verifyLogin(emailRaw, passwordRaw);
+}
+
+/**
+ * Build a session user for an already-verified email (no password check), used
+ * by trusted external sign-in paths such as OIDC/ZITADEL after the IdP has
+ * verified the user. Returns null when the email is not a database user in the
+ * shared `users` table — external auth does not auto-provision accounts.
+ *
+ * Mirrors getUserFromRequestAsync's version key (`password_changed_at` only)
+ * so the minted sb_session validates on the very next request.
+ */
+export async function createSessionUserForEmail(
+  emailRaw: string,
+  ctx?: DbContext
+): Promise<UserWithVersion | null> {
+  const email = normalizeEmail(emailRaw);
+  if (!email || !isDatabaseAvailable()) return null;
+
+  const dbUser = await getDatabaseUser(email, ctx);
+  if (!dbUser || dbUser.auth_source !== 'database') return null;
+
+  const adminEmail = getAdminEmail();
+  const role =
+    dbUser.role === 'admin' || email === adminEmail ? 'admin' : 'user';
+  const v = dbUser.password_changed_at
+    ? base64url(
+        crypto.createHash('sha256').update(String(dbUser.password_changed_at)).digest()
+      ).slice(0, 12)
+    : 'db';
+
+  return { email, role, name: dbUser.name || '', isAdmin: role === 'admin', v };
 }
 
 /**

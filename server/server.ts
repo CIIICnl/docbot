@@ -5,6 +5,7 @@
 
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { handleApi } from './routes/api/index.js';
+import { handleOidc } from './routes/oidc.js';
 import { serveStatic } from './routes/static.js';
 import { loadEnv, getConfig } from './config/env.js';
 import { initializeDatabase } from './db/client.js';
@@ -24,6 +25,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse): Promise
   }
 
   try {
+    // OIDC (ZITADEL) login routes — run before static/api dispatch.
+    if (url.pathname.startsWith('/auth/')) {
+      if (await handleOidc({ req, res, url })) return;
+    }
+
     // API routes
     if (url.pathname.startsWith('/api/')) {
       await handleApi({ req, res, url });

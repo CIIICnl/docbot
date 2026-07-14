@@ -33,6 +33,10 @@ export async function renderLogin(root) {
       h('h2', { class: 'login-title' }, [t('login.title')]),
     ]),
 
+    // CIIIC single sign-on (ZITADEL) — links to the server OIDC kickoff.
+    h('a', { class: 'login-sso', href: '/auth/login' }, ['Inloggen met CIIIC']),
+    h('sl-divider', {}),
+
     h('form', { class: 'login-form', onsubmit: handleSubmit }, [
       h('sl-input', {
         id: 'email',
@@ -134,6 +138,22 @@ export async function renderLogin(root) {
       display: flex;
       flex-direction: column;
       gap: var(--sl-spacing-medium);
+    }
+    .login-sso {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 0.7rem 1rem;
+      margin-bottom: var(--sl-spacing-small);
+      background: var(--color-lime, #b6f500);
+      color: #0a0a0a;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .login-sso:hover {
+      opacity: 0.9;
     }
     .login-submit {
       margin-top: var(--sl-spacing-small);
