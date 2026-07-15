@@ -4,9 +4,21 @@
  */
 
 import { h } from '../lib/dom.js';
-import { login, me, devLogin, isDevBypassAvailable } from '../lib/auth.js';
+import { login, me, devLogin, isDevBypassAvailable, getAuthConfig } from '../lib/auth.js';
 import { navigate } from '../lib/router.js';
 import { t } from '../lib/i18n.js';
+
+const CIIIC_LOGIN_SRC = 'https://tools.ciiic.nl/ciiic-login.js';
+
+// Load the shared login-card web component (served from the CIIIC tools portal)
+// once. Post-cutover the login page is ONLY this card — no password/magic-link.
+function ensureCiiicLoginScript() {
+  if (document.querySelector(`script[src="${CIIIC_LOGIN_SRC}"]`)) return;
+  const s = document.createElement('script');
+  s.type = 'module';
+  s.src = CIIIC_LOGIN_SRC;
+  document.head.appendChild(s);
+}
 
 export async function renderLogin(root) {
   const url = new URL(location.href);
@@ -24,6 +36,19 @@ export async function renderLogin(root) {
     }
   } catch {
     // ignore
+  }
+
+  // Hard auth-cutover: the only login method is "Inloggen met CIIIC" (ZITADEL).
+  // Render the shared card and stop — no password, magic-link, or dev-bypass UI.
+  const config = await getAuthConfig();
+  if (config.cutoverEnabled) {
+    ensureCiiicLoginScript();
+    const card = document.createElement('ciiic-login');
+    card.setAttribute('app', 'Docs');
+    card.setAttribute('next', returnTo);
+    root.innerHTML = '';
+    root.appendChild(card);
+    return;
   }
 
   const container = h('div', { class: 'login-container' });
