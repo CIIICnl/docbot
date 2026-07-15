@@ -18,7 +18,7 @@ import { handleMedia } from './media.js';
 import { handleCollaboration } from './collaboration.js';
 import { handleEvents } from './events.js';
 import { notFound, unauthorized } from '../../utils/http.js';
-import { authEnabled, getUserFromRequestAsync, type User } from '../../auth/auth.js';
+import { authEnabled, authCutoverEnabled, getUserFromRequestAsync, type User } from '../../auth/auth.js';
 import { normalizeEmail } from '../../storage/password-utils.js';
 
 export interface ApiContext {
@@ -32,7 +32,28 @@ export interface ApiContext {
  * Main API handler
  * Routes requests to appropriate handlers.
  */
+// Hard cutover (traject 04): the legacy password + magic-link paths are gone
+// (410). Only ZITADEL/OIDC (via /auth/*) remains. /me, /logout, /config stay live.
+const CUTOVER_DISABLED_ENDPOINTS = new Set([
+  '/api/auth/login',
+  '/api/auth/dev-login',
+  '/api/auth/magic-link',
+  '/api/auth/magic-link/verify',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/reset-password/validate',
+  '/api/auth/change-password',
+]);
+
 export async function handleApi(ctx: ApiContext): Promise<void> {
+  if (authCutoverEnabled() && CUTOVER_DISABLED_ENDPOINTS.has(ctx.url.pathname)) {
+    ctx.res.writeHead(410, { 'Content-Type': 'application/json' });
+    ctx.res.end(
+      JSON.stringify({ error: 'Deze inlogmethode is uitgeschakeld. Log in via CIIIC.' })
+    );
+    return;
+  }
+
   // Auth routes (must be accessible without auth)
   if (await handleAuth(ctx)) return;
 

@@ -16,7 +16,46 @@ import {
   type DbContext,
 } from '../storage/password-utils.js';
 
-const COOKIE_NAME = 'sb_session';
+const LEGACY_COOKIE_NAME = 'sb_session';
+const CUTOVER_COOKIE_NAME = 'doc_session';
+
+/**
+ * Hard auth-cutover flag (traject 04). Default OFF. When ON, docbot mints and
+ * reads its OWN host-only cookie (`doc_session`, no `Domain=.ciiic.nl`) instead
+ * of the shared `sb_session`, and the legacy password/magic-link login is
+ * disabled. Same AUTH_SECRET + HMAC payload format, only the cookie name/domain
+ * change. See jaap-work/docs/roadmap/04-cutover-runbook.md.
+ */
+export function authCutoverEnabled(): boolean {
+  const v = String(process.env.AUTH_CUTOVER || '')
+    .trim()
+    .toLowerCase();
+  return v === '1' || v === 'true' || v === 'yes';
+}
+
+/** Session cookie name for the current mode (own host-only cookie post-cutover). */
+function sessionCookieName(): string {
+  return authCutoverEnabled() ? CUTOVER_COOKIE_NAME : LEGACY_COOKIE_NAME;
+}
+
+/**
+ * Expire the stale shared `sb_session` (Domain=.ciiic.nl) at cutover so the
+ * browser stops sending it next to the new host-only cookie — a same-name
+ * collision would otherwise risk a lock-out (runbook §lock-out).
+ */
+function buildLegacyClearCookie(req: IncomingMessage): string {
+  const parts = [
+    `${LEGACY_COOKIE_NAME}=`,
+    'Path=/',
+    'HttpOnly',
+    'SameSite=Lax',
+    'Max-Age=0',
+  ];
+  const domain = String(process.env.COOKIE_DOMAIN || '').trim();
+  if (domain) parts.push(`Domain=${domain}`);
+  if (isHttpsRequest(req)) parts.push('Secure');
+  return parts.join('; ');
+}
 
 export interface User {
   email: string;
@@ -209,7 +248,7 @@ export function getUserFromRequest(req: IncomingMessage): User | null {
   if (devAuthBypassEnabled()) return devBypassUser();
   const secret = getSecret();
   const cookies = parseCookies(req.headers?.cookie);
-  const token = cookies[COOKIE_NAME];
+  const token = cookies[sessionCookieName()];
   if (!token) return null;
 
   const [payloadB64, sig] = String(token).split('.');
@@ -292,25 +331,31 @@ export function setSessionCookie(
   const sig = sign(secret, payloadB64);
   const token = `${payloadB64}.${sig}`;
 
+  const cutover = authCutoverEnabled();
   const parts = [
-    `${COOKIE_NAME}=${encodeURIComponent(token)}`,
+    `${sessionCookieName()}=${encodeURIComponent(token)}`,
     'Path=/',
     'HttpOnly',
     'SameSite=Lax',
     `Max-Age=${Math.floor((exp - Date.now()) / 1000)}`,
   ];
 
-  // Add cookie domain for cross-subdomain SSO
-  const domain = getCookieDomain();
+  // Post-cutover: host-only cookie (no Domain). Pre-cutover: shared subdomain SSO.
+  const domain = cutover ? null : getCookieDomain();
   if (domain) parts.push(`Domain=${domain}`);
 
   if (isHttpsRequest(req)) parts.push('Secure');
-  res.setHeader('Set-Cookie', parts.join('; '));
+
+  const cookies = [parts.join('; ')];
+  // At cutover, also expire the old shared cookie so it can't shadow the new one.
+  if (cutover) cookies.push(buildLegacyClearCookie(req));
+  res.setHeader('Set-Cookie', cookies);
 }
 
 export function clearSessionCookie(req: IncomingMessage, res: ServerResponse): void {
+  const cutover = authCutoverEnabled();
   const parts = [
-    `${COOKIE_NAME}=`,
+    `${sessionCookieName()}=`,
     'Path=/',
     'HttpOnly',
     'SameSite=Lax',
@@ -318,11 +363,15 @@ export function clearSessionCookie(req: IncomingMessage, res: ServerResponse): v
   ];
 
   // Include domain when clearing to match the original cookie
-  const domain = getCookieDomain();
+  const domain = cutover ? null : getCookieDomain();
   if (domain) parts.push(`Domain=${domain}`);
 
   if (isHttpsRequest(req)) parts.push('Secure');
-  res.setHeader('Set-Cookie', parts.join('; '));
+
+  const cookies = [parts.join('; ')];
+  // Post-cutover, also clear any lingering shared sb_session.
+  if (cutover) cookies.push(buildLegacyClearCookie(req));
+  res.setHeader('Set-Cookie', cookies);
 }
 
 export function verifyLogin(emailRaw: string, passwordRaw: string): UserWithVersion | null {
@@ -475,7 +524,7 @@ export async function getUserFromRequestAsync(
 
   const secret = getSecret();
   const cookies = parseCookies(req.headers?.cookie);
-  const token = cookies[COOKIE_NAME];
+  const token = cookies[sessionCookieName()];
   if (!token) return null;
 
   const [payloadB64, sig] = String(token).split('.');

@@ -7,6 +7,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { json, ok, unauthorized } from '../../utils/http.js';
 import {
   authEnabled,
+  authCutoverEnabled,
   clearSessionCookie,
   devAuthBypassEnabled,
   devBypassUser,
@@ -82,6 +83,7 @@ export async function handleAuth({ req, res, url }: AuthContext): Promise<boolea
       authEnabled: authEnabled(),
       databaseEnabled: isDatabaseAvailable(),
       devBypassEnabled: devAuthBypassEnabled(),
+      cutoverEnabled: authCutoverEnabled(),
     });
     return true;
   }

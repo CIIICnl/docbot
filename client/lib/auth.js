@@ -97,6 +97,23 @@ export async function devLogin() {
 }
 
 /**
+ * Fetch public auth config (authEnabled, devBypassEnabled, cutoverEnabled).
+ */
+let cachedConfig = null;
+export async function getAuthConfig() {
+  if (cachedConfig) return cachedConfig;
+  try {
+    const res = await fetch('/api/auth/config', {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (res.ok) cachedConfig = await res.json();
+  } catch {
+    // ignore
+  }
+  return cachedConfig || { authEnabled: false, devBypassEnabled: false, cutoverEnabled: false };
+}
+
+/**
  * Check if dev bypass is available
  */
 export async function isDevBypassAvailable() {
