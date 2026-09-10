@@ -49,6 +49,19 @@ Unrelated lookalike: the prod env also has `STORAGE_MODE=postgres` -
 that's **document** storage (drafts in Postgres), not media; the media
 code doesn't read it.
 
+## Werkwijze
+
+Deze repo volgt de universele werkwijze (skill `werkwijze` in `~/.claude`):
+
+- **Nu**: `docs/plans/TODO.md` — claimbord + open werk, budget < 300 regels.
+- **Briefs**: `docs/plans/briefs/<slug>.md`; uitgevoerd → `docs/plans/done/`.
+- **Handoff**: `/handoff` leest `docs/plans/HANDOFF.md`; elke werk-afrondende sessie overschrijft 'm en sluit af met de sluitregel.
+- **Rollen**: Fable brieft en beslist; Opus voert één brief per sessie uit en merget nooit de eigen PR. Welk model een review-en-merge-sessie krijgt volgt uit `werkwijze` § Modelkeuze per sessie — niet hier vastleggen.
+- **Ritmes**: `merge-housekeeping` per gedelegeerde merge; `reorg-audit` bij de drift-drempel; `tighten-scan` op aanvraag.
+- **Reference** (hoe het werkt, niet wat verandert): `docs/reference/`.
+
+Afwijkingen van de universele werkwijze: één. Dit is een **publieke** repo (`CIIICnl/docbot`, `isPrivate: false`), maar `docs/plans/` staat gewoon in-repo en getrackt in plaats van in een private planning-sibling. Reden: gekozen tijdens de headless uitrol op 2026-09-10, waar niemand de vraag kon beantwoorden; in-repo is de variant die niets kan verliezen. Wil je het deckyard-model (symlink naar een private sibling + gitignore), dan is dat een losse ingreep - kijk dan eerst of er in de plans niets staat dat niet publiek mag.
+
 ## Shared knowledge base
 
 Cross-project CIIIC background lives in the **[CIIIC-KB](../CIIIC-KB/)**

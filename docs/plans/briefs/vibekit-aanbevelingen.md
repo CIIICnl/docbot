@@ -1,3 +1,7 @@
+> Status: aanzet - 2026-09-10 - TODO-item 2 - hangt samen met `../done/decisions.md` (esbuild-bundelstap).
+>
+> Herkomst-document uit de bouw van docbot op de vibekit-basis, op 2026-09-10 uit de repo-root gemigreerd (`VIBEKIT_RECOMMENDATIONS.md`). Het kritieke punt hieronder (Shoelace bare imports) is opgelost: `scripts/build-client.js` bundelt met esbuild. De overige punten zijn nooit beslist en gaan deels over het vibekit-template, niet over docbot zelf - dat onderscheid maken is precies het werk van TODO-item 2.
+
 # Vibekit Improvement Recommendations
 
 Issues discovered while building DreamDocs on the vibekit foundation.
