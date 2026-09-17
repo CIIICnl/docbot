@@ -10,15 +10,21 @@ Regels (volledig: skill `werkwijze`): _In progress_ is een claimbord, max 3 clai
 
 ### 1. AUTH_CUTOVER aanzetten op productie
 
-De harde auth-cutover zit sinds #16 in de code achter `AUTH_CUTOVER` (default OFF, `server/auth/auth.ts:30`). Vlag ON schakelt docbot naar host-only `doc_session`, zet de oude login-routes op 410 en laat alleen de `<ciiic-login app=Docs>`-kaart staan. Prod draait nog OFF, dus het eindbeeld van traject 04 is nog niet bereikt. Vraagt een brief: volgorde, wie er hinder van heeft (ciiicbot en ciiic-dashboard gebruiken `DOCBOT_INTERNAL_TOKEN`, niet de cookie, maar dat moet geverifieerd) en het terugdraaipad.
+Brief: `briefs/auth-cutover-prod.md` (uitvoeringsklaar 2026-09-17; wacht op Jaap voor het venster en drie keuzes, zie § Wacht op Jaap daar). Geen code: env-var op de Coolify-resource `docbot` plus redeploy. Afnemers via `DOCBOT_INTERNAL_TOKEN` (ciiicbot, ciiic-dashboard, ciiic-mcp) zijn geverifieerd en hebben geen hinder; de enige hinder is dat een docs-login het gedeelde `sb_session` laat verlopen zolang slides, beeldbank en ai nog niet om zijn.
 
-Klaar als: `AUTH_CUTOVER=true` staat op de Coolify-resource `docbot`, inloggen op docs.ciiic.nl gaat via de CIIIC-kaart, de oude login-routes geven 410, en niemand is buitengesloten.
+Klaar als: `AUTH_CUTOVER=true` staat op de Coolify-resource `docbot` en is gedeployed, `/api/auth/config` geeft `cutoverEnabled:true`, de oude login-routes geven 410, inloggen gaat via de CIIIC-kaart met een host-only `doc_session`, de bearer-paden werken nog, en niemand van het kernteam is buitengesloten.
 
 ### 2. Beoordelen wat er van de vibekit-aanbevelingen nog geldt **[delegeerbaar]**
 
 `briefs/vibekit-aanbevelingen.md` is het herkomst-document van de vibekit-basis waarop docbot is gebouwd. Het kritieke punt (Shoelace bare imports) is opgelost met de esbuild-bundelstap in `scripts/build-client.js`. De rest is nooit beslist: dode demo-code, form-helpers, dubbele path-matching, client zonder TypeScript.
 
 Klaar als: per aanbeveling in de brief staat "geldt nog / opgelost / niet doen (reden)"; wat blijft staan is een eigen TODO-item geworden, en de brief is naar `done/` verplaatst.
+
+### 3. Legacy login-code verwijderen na de familie-brede cutover
+
+Wacht op item 1 én op de flip van slides (de laatste van de familie, `../jaap-work/docs/roadmap/04-cutover-runbook.md`). Daarna is de vlag dood gewicht: het `sb_session`-pad in `server/auth/auth.ts`, de wachtwoord-, magic-link- en reset-routes (`server/routes/api/auth.ts`, `magic-link.ts`, `password-reset.ts`) en het oude formulier in `client/views/login.js`. Nog geen brief; pas schrijven als item 1 geland is.
+
+Klaar als: `AUTH_CUTOVER` en `sb_session` komen niet meer voor in `server/` en `client/`, de acht 410-routes bestaan niet meer, `README.md` § Auth en `.env.example` beschrijven alleen de ZITADEL-login, en de build en de checks zijn groen.
 
 ## Recently done
 

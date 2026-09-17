@@ -1,22 +1,24 @@
-# Uitwerksessie — brief voor de auth-cutover op productie
+# Uitvoersessie - AUTH_CUTOVER aanzetten op productie
 
-Fable
+uitvoer
 
 ## Stand bij vertrek
 
-2026-09-17, avond. `main` staat op `cb26b7a`: een tussensessie heeft alleen de _meta-briefing van ciiic-translation-rules afgehandeld (lockfile naar `ciiic-translation-rules@1.3.0`, gedeployed). De opdracht hieronder is nog ongedaan en blijft ongewijzigd staan. Geen open PR's, claimbord leeg, `TODO.md` heeft nog dezelfde twee items.
+2026-09-17, avond. `main` staat op de merge van `brief/auth-cutover-prod` (planning-docs, geen code). Geen open PR's, claimbord leeg. `TODO.md` heeft drie items; item 1 verwijst naar `docs/plans/briefs/auth-cutover-prod.md`, item 3 is nieuw (legacy-code weg ná de familie-brede flip). Productie draait de vlag-code al met `AUTH_CUTOVER` uit (`/api/auth/config` geeft `cutoverEnabled:false`); slides, beeldbank en ai staan ook nog uit. `.claude/settings.local.json` is lokaal gewijzigd en hoort niet in een commit.
 
 ## Opdracht
 
-1. Lees TODO-item 1 (`docs/plans/TODO.md`) en de auth-paragraaf van `README.md`. Breng in kaart wat `AUTH_CUTOVER=true` feitelijk verandert: `server/auth/auth.ts:30` en alles wat op `config.cutoverEnabled` hangt in `client/lib/auth.js` en `client/views/login.js`.
-2. Verifieer wie er van docbot-auth afhangt en langs welke weg. `DOCBOT_INTERNAL_TOKEN` (ciiicbot, ciiic-dashboard) loopt buiten de cookie om; stel vast of dat na de cutover nog steeds zo is, en of er iets is dat wél op `sb_session` leunt.
-3. Schrijf `docs/plans/briefs/auth-cutover-prod.md` volgens de briefvorm uit `werkwijze`: doel, context met `file:regel`, genummerde scope, buiten scope, en een afvinkbare acceptatie. Neem het terugdraaipad op (vlag terug naar OFF: wat is er dan kapot, wat niet) en de volgorde waarin de vlag en een eventuele redeploy aan moeten.
-4. Zet TODO-item 1 om naar een verwijzing naar die brief en zet de statusregel bovenaan de brief (`Status: uitvoeringsklaar | wacht op Jaap` + datum + TODO-adres).
-5. Overschrijf dit bestand (`docs/plans/HANDOFF.md`) met de opdracht voor de volgende sessie en commit dat mee.
+1. Lees `docs/plans/briefs/auth-cutover-prod.md` helemaal, daarna het blok "Extra van Jaap" hieronder. De brief heeft drie keuzes onder § Wacht op Jaap (venster, alleen of samen, rollback-test). Staat er hieronder geen antwoord op alle drie, dan voer je alleen scope-stap 1 (pre-flight) en scope-stap 5 (README-alinea) uit, op een branch `feat/auth-cutover-prod`, en meld je in de PR-body en in je antwoord dat de flip wacht op die antwoorden. Niet flippen zonder antwoord.
+2. Zijn de drie keuzes beantwoord: voer de scope van de brief uit in de volgorde die daar staat (pre-flight, vlag zetten, redeploy, verifiëren 3a t/m 3e, alleen bij rood terugdraaien). Stap 3d vraagt Jaap zelf (2FA-login via de kaart); vraag hem daar op dat moment om en ga niet verder zonder die check. Coolify via skill `ciiic-coolify`; het service-token voor stap 3e alleen uit de Coolify-env lezen, nooit in een bestand, log of PR zetten.
+3. Eén PR op `feat/auth-cutover-prod` met de README-alinea (scope-stap 5) en, als de flip is gedaan, de write-up in `docs/plans/done/2026-09.md`, item 1 afgevinkt in `TODO.md` en het nummer in `done/register.md`. Zet de meetresultaten van stap 3a t/m 3e letterlijk in de PR-body (statuscodes, de twee `Set-Cookie`-regels zonder de tokenwaarde). Eigen PR nooit mergen.
+4. Journal-entry in `JAAP-KB/journal/` met de regel `KB-suggestie: CIIIC-KB applications/docbot.md § Auth - beschrijft sb_session/Domain=.ciiic.nl, na de flip is dat doc_session host-only`.
+5. Overschrijf dit bestand (`docs/plans/HANDOFF.md`) met de opdracht voor de volgende sessie: de review-en-merge-sessie voor de PR uit stap 3 (rol `stuur`), met het doorgeefblok hieronder erin, en commit dat mee op de branch.
 
 ## Doorgeefblok
 
-- TODO-item 2 (vibekit-aanbevelingen beoordelen) wacht; delegeerbaar zodra item 1 een brief heeft.
+- Als Jaap bij keuze 2 "samen" kiest: beeldbank en ciiicbot hebben elk een eigen sessie nodig voor dezelfde flip in hun repo (spaak → briefing of Jaap start daar); slides als laatste. Dat is niet het werk van deze sessie.
+- TODO-item 2 (vibekit-aanbevelingen beoordelen) is delegeerbaar en wacht op een eigen uitvoersessie.
+- TODO-item 3 (legacy-code verwijderen) wacht op item 1 én de slides-flip; nog geen brief.
 
 ## Terugkeer-check
 
