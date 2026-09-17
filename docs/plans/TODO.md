@@ -22,4 +22,4 @@ Klaar als: per aanbeveling in de brief staat "geldt nog / opgelost / niet doen (
 
 ## Recently done
 
-(nog niets - de lijst begint bij het aansluiten op de werkwijze, 2026-09-10)
+- 2026-09-17 - `ciiic-translation-rules` van 1.0.0 naar 1.3.0 in de lockfile (`cb26b7a`), na _meta-briefing van ciiic-translation-rules. Alleen de lockfile hing vast; de range `^1.0.0` dekte 1.3.0 al.

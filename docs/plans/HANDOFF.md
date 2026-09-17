@@ -4,7 +4,7 @@ Fable
 
 ## Stand bij vertrek
 
-2026-09-10, ochtend. `main` staat op `6005f2c` (deploy-instructie bijgewerkt naar de Coolify-box). Geen open PR's. Claimbord leeg. Deze repo is vandaag aangesloten op de universele werkwijze; `docs/plans/` is nieuw en `TODO.md` bevat twee items.
+2026-09-17, avond. `main` staat op `cb26b7a`: een tussensessie heeft alleen de _meta-briefing van ciiic-translation-rules afgehandeld (lockfile naar `ciiic-translation-rules@1.3.0`, gedeployed). De opdracht hieronder is nog ongedaan en blijft ongewijzigd staan. Geen open PR's, claimbord leeg, `TODO.md` heeft nog dezelfde twee items.
 
 ## Opdracht
 
