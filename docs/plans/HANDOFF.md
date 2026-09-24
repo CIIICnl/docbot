@@ -17,6 +17,7 @@ uitvoer
 ## Doorgeefblok
 
 - Als Jaap bij keuze 2 "samen" kiest: beeldbank en ciiicbot hebben elk een eigen sessie nodig voor dezelfde flip in hun repo (spaak → briefing of Jaap start daar); slides als laatste. Dat is niet het werk van deze sessie.
+- Los van deze opdracht (2026-09-24): PR #17 (Notion-afbeeldingen rehosten) is gemerged en gedeployd (`fd62a0b`), maar de productiecheck uit de _meta-briefing `2026-09-23--from-ciiic-handboek--to-docbot--notion-afbeeldingen-rehosten` is nog niet gedaan: op docs.ciiic.nl een Notion-pagina met geüploade afbeelding importeren, controleren dat de markdown `docbot://media/` bevat en geen `amazonaws`, na >1 uur de PDF exporteren. Daarna de briefing sluiten met bewijs.
 - TODO-item 2 (vibekit-aanbevelingen beoordelen) is delegeerbaar en wacht op een eigen uitvoersessie.
 - TODO-item 3 (legacy-code verwijderen) wacht op item 1 én de slides-flip; nog geen brief.
 

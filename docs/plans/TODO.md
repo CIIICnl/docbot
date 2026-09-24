@@ -28,4 +28,5 @@ Klaar als: `AUTH_CUTOVER` en `sb_session` komen niet meer voor in `server/` en `
 
 ## Recently done
 
+- 2026-09-24 - Notion-import rehost `file`-afbeeldingen en cover naar media-storage (PR #17, `fd62a0b`, gedeployd), na _meta-briefing van ciiic-handboek. Productiecheck met een echte Notion-pagina staat nog open; de briefing blijft open tot die gedaan is.
 - 2026-09-17 - `ciiic-translation-rules` van 1.0.0 naar 1.3.0 in de lockfile (`cb26b7a`), na _meta-briefing van ciiic-translation-rules. Alleen de lockfile hing vast; de range `^1.0.0` dekte 1.3.0 al.
