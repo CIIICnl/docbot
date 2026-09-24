@@ -5,6 +5,8 @@
 
 import { Client } from '@notionhq/client';
 import type { NotionPageResult } from '../types/index.js';
+import { getMediaProvider, isMediaAvailable, type MediaProvider } from '../media/index.js';
+import { getDefaultOrganizationId } from '../config/database.js';
 
 // Notion client instance (lazy initialized)
 let notionClient: Client | null = null;
@@ -66,7 +68,9 @@ export function extractPageId(urlOrId: string): string | null {
 export async function fetchNotionPage(urlOrId: string): Promise<NotionPageResult> {
   const client = getClient();
   if (!client) {
-    throw new Error('Notion integration is not configured. Set NOTION_API_KEY environment variable.');
+    throw new Error(
+      'Notion integration is not configured. Set NOTION_API_KEY environment variable.'
+    );
   }
 
   const pageId = extractPageId(urlOrId);
@@ -84,14 +88,115 @@ export async function fetchNotionPage(urlOrId: string): Promise<NotionPageResult
   const blocks = await fetchAllBlocks(client, pageId);
 
   // Convert blocks to markdown
-  const markdown = blocksToMarkdown(blocks);
+  let markdown = blocksToMarkdown(blocks);
+  let cover = extractCover(page);
+
+  // Notion hands out uploaded files as signed S3 URLs that expire after an
+  // hour. Copy them into our own media storage so a saved document still has
+  // its images when it is exported later (same approach as the DOCX import).
+  const fileUrls = collectNotionFileUrls(blocks, page);
+  if (fileUrls.length > 0) {
+    if (isMediaAvailable()) {
+      const replacements = await rehostFiles(fileUrls, getMediaProvider());
+      for (const [original, mediaUrl] of replacements) {
+        markdown = markdown.split(original).join(mediaUrl);
+        if (cover === original) cover = mediaUrl;
+      }
+    } else {
+      console.warn(
+        `[notion] media storage unavailable; ${fileUrls.length} Notion file URL(s) left as-is (they expire after ~1h)`
+      );
+    }
+  }
 
   return {
     title,
     markdown,
     icon: extractIcon(page),
-    cover: extractCover(page),
+    cover,
   };
+}
+
+/**
+ * Collect the signed (expiring) URLs of Notion-hosted files: image blocks of
+ * type `file` and a `file` cover. External URLs don't expire and are skipped.
+ */
+export function collectNotionFileUrls(blocks: any[], page?: any): string[] {
+  const urls = new Set<string>();
+
+  const walk = (list: any[]): void => {
+    for (const block of list) {
+      if (block.type === 'image' && block.image?.type === 'file' && block.image.file?.url) {
+        urls.add(block.image.file.url);
+      }
+      if (block.children) walk(block.children);
+    }
+  };
+  walk(blocks);
+
+  if (page?.cover?.type === 'file' && page.cover.file?.url) {
+    urls.add(page.cover.file.url);
+  }
+
+  return [...urls];
+}
+
+/**
+ * Download each URL and store it via the media provider. Returns a map of
+ * original URL -> docbot://media/ URL for the files that were stored and
+ * read back; a failed file keeps its original URL (logged, not fatal).
+ */
+export async function rehostFiles(
+  urls: string[],
+  provider: MediaProvider,
+  fetchFn: typeof fetch = fetch
+): Promise<Map<string, string>> {
+  const orgId = getDefaultOrganizationId();
+  const replacements = new Map<string, string>();
+
+  for (const url of urls) {
+    const name = fileNameFromUrl(url);
+    try {
+      const response = await fetchFn(url);
+      if (!response.ok) {
+        throw new Error(`download failed: HTTP ${response.status}`);
+      }
+      const data = Buffer.from(await response.arrayBuffer());
+      const headerType = response.headers.get('content-type')?.split(';')[0]?.trim();
+      const contentType =
+        headerType && headerType !== 'application/octet-stream'
+          ? headerType
+          : provider.getContentType(name);
+
+      const key = provider.generateKey(orgId, name);
+      await provider.upload(key, data, { contentType });
+      if (!(await provider.exists(key))) {
+        throw new Error('upload reported success but object is not retrievable (read-back failed)');
+      }
+
+      replacements.set(url, `docbot://media/${key}`);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error(`[notion] rehost FAILED for "${name}" (provider=${provider.name}): ${msg}`);
+    }
+  }
+
+  console.log(
+    `[notion] rehosted ${replacements.size}/${urls.length} Notion file(s) (provider=${provider.name})`
+  );
+  return replacements;
+}
+
+/**
+ * Original file name from a Notion file URL (last path segment, no query).
+ */
+function fileNameFromUrl(url: string): string {
+  try {
+    const segment = new URL(url).pathname.split('/').pop();
+    return segment ? decodeURIComponent(segment) : 'image';
+  } catch {
+    return 'image';
+  }
 }
 
 /**
@@ -158,7 +263,7 @@ async function fetchAllBlocks(client: Client, blockId: string): Promise<any[]> {
     });
 
     blocks.push(...response.results);
-    cursor = response.has_more ? response.next_cursor ?? undefined : undefined;
+    cursor = response.has_more ? (response.next_cursor ?? undefined) : undefined;
   } while (cursor);
 
   // Fetch children for blocks that have them
