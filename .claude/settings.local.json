@@ -34,8 +34,15 @@
       "Bash(/opt/homebrew/opt/postgresql@16/bin/psql:*)",
       "Bash(kill:*)",
       "Bash(xargs:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(git switch *)",
+      "Bash(npm update *)"
     ],
     "defaultMode": "acceptEdits"
-  }
+  },
+  "enabledMcpjsonServers": [
+    "ciiic-payload",
+    "ciiic-beeldbank",
+    "ciiic-slides"
+  ]
 }
