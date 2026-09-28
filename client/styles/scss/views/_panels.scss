@@ -175,6 +175,19 @@
 /* Images panel */
 .images-panel {
   min-width: 0;
+
+  // The panel is narrow (~280px); let the buttons drop to their own row
+  // instead of overflowing the panel edge.
+  .panel-header {
+    flex-wrap: wrap;
+    row-gap: var(--vk-space-1);
+  }
+}
+
+.images-panel-actions {
+  display: flex;
+  gap: var(--vk-space-2);
+  margin-left: auto;
 }
 
 .images-panel-count {

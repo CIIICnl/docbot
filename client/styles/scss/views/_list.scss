@@ -199,11 +199,15 @@
 }
 
 // Editor page
+// Height comes from the flex chain in layout/_shell.scss (body → #app →
+// shell → main), so the CIIIC bar above #app is accounted for without
+// hard-coding its height.
 .editor-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--vk-header-height) - var(--vk-space-6) * 2);
+  flex: 1;
   min-height: 500px;
+  width: 100%;
   max-width: 1800px;
   margin: 0 auto;
   gap: var(--sl-spacing-small);
