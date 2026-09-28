@@ -28,5 +28,6 @@ Klaar als: `AUTH_CUTOVER` en `sb_session` komen niet meer voor in `server/` en `
 
 ## Recently done
 
+- 2026-09-28 - Editor past in de viewport inclusief de CIIIC-balk (flex-keten body → `.editor-page` i.p.v. `calc(100vh - …)`), knoppen Beeldbank/Toevoegen in het paneel Afbeeldingen wrappen binnen het paneel (`3aebd81`, `21340a4`, gedeployd), na _meta-briefing van ciiic-handboek. Op productie gemeten bij 1440x900, 1600x960 en 1280x720; briefing gesloten, terugbriefing naar ciiic-handboek om `docs-overzicht` opnieuw op te nemen.
 - 2026-09-24 - Notion-import rehost `file`-afbeeldingen en cover naar media-storage (PR #17, `fd62a0b`, gedeployd), na _meta-briefing van ciiic-handboek. Op productie geverifieerd met een Notion-import (`docbot://media/`-URL); briefing gesloten.
 - 2026-09-17 - `ciiic-translation-rules` van 1.0.0 naar 1.3.0 in de lockfile (`cb26b7a`), na _meta-briefing van ciiic-translation-rules. Alleen de lockfile hing vast; de range `^1.0.0` dekte 1.3.0 al.
