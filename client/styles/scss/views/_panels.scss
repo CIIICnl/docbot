@@ -184,9 +184,11 @@
   }
 }
 
-.images-panel-actions {
+.images-panel-header-actions {
   display: flex;
-  gap: var(--vk-space-2);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--vk-space-1);
   margin-left: auto;
 }
 

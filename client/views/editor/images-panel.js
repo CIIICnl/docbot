@@ -246,7 +246,7 @@ export function createImagesPanel({ store, setMarkdown }) {
       slIcon({ name: 'images', className: 'panel-icon' }),
       h('span', { class: 'panel-title' }, [t('images.title')]),
       h('span', { class: 'panel-subtitle text-muted images-panel-count' }, ['']),
-      h('div', { class: 'images-panel-actions' }, [beeldbankBtn, addBtn]),
+      h('div', { class: 'images-panel-header-actions' }, [beeldbankBtn, addBtn]),
       addInput,
     ]),
     h('div', { class: 'images-panel-body' }, [emptyState, list]),
