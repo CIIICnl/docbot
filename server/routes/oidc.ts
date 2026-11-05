@@ -17,6 +17,7 @@ import {
   buildAuthorizeUrl,
   exchangeCode,
   fetchUserinfo,
+  isEmailVerified,
   oidcConfigured,
   pkceChallenge,
   randomUrlSafe,
@@ -116,6 +117,7 @@ export async function handleOidc({
     }
 
     let email: string | undefined;
+    let emailVerified = false;
     try {
       const tokens = await exchangeCode({
         code,
@@ -124,11 +126,13 @@ export async function handleOidc({
       });
       const info = await fetchUserinfo(tokens.access_token);
       email = info?.email;
+      emailVerified = isEmailVerified(info ?? {});
     } catch {
       return redirect(res, '/login?oidc=exchange', clears);
     }
 
     if (!email) return redirect(res, '/login?oidc=noemail', clears);
+    if (!emailVerified) return redirect(res, '/login?oidc=unverified', clears);
 
     let user;
     try {

@@ -111,6 +111,15 @@ export async function exchangeCode(opts: {
   return (await res.json()) as { access_token: string; id_token?: string };
 }
 
+/**
+ * Het mailadres is de sleutel naar het account, dus alleen een door ZITADEL
+ * bevestigd adres telt. Na een eigen adreswijziging laat userinfo de claim weg,
+ * ook voor een code die eerder is uitgegeven; de loginschermen vangen dat niet.
+ */
+export function isEmailVerified(info: { email_verified?: unknown }): boolean {
+  return info.email_verified === true;
+}
+
 export async function fetchUserinfo(
   accessToken: string
 ): Promise<{ email?: string; email_verified?: boolean; name?: string }> {
