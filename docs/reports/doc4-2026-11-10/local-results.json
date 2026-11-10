@@ -1,0 +1,98 @@
+[
+  {
+    "locale": "nl",
+    "viewport": {
+      "width": 320,
+      "height": 800
+    },
+    "zoom": 1,
+    "innerWidth": 320,
+    "innerHeight": 800,
+    "dpr": 1,
+    "scrollWidth": 320,
+    "text": "Je mailadres is niet bevestigd. Log opnieuw in en bevestig het met de code uit je mail.",
+    "messageRect": {
+      "x": 49,
+      "y": 151,
+      "width": 222,
+      "height": 63
+    },
+    "textFits": true,
+    "messageVisible": true,
+    "cardScrollWidth": 222,
+    "cardClientWidth": 222,
+    "screenshot": ".scratch/doc4/local-nl-320-100.png"
+  },
+  {
+    "locale": "nl",
+    "viewport": {
+      "width": 1280,
+      "height": 1600
+    },
+    "zoom": 2,
+    "innerWidth": 640,
+    "innerHeight": 800,
+    "dpr": 2,
+    "scrollWidth": 640,
+    "text": "Je mailadres is niet bevestigd. Log opnieuw in en bevestig het met de code uit je mail.",
+    "messageRect": {
+      "x": 145,
+      "y": 151,
+      "width": 350,
+      "height": 42
+    },
+    "textFits": true,
+    "messageVisible": true,
+    "cardScrollWidth": 350,
+    "cardClientWidth": 350,
+    "screenshot": ".scratch/doc4/local-nl-1280-200.png"
+  },
+  {
+    "locale": "en",
+    "viewport": {
+      "width": 320,
+      "height": 800
+    },
+    "zoom": 1,
+    "innerWidth": 320,
+    "innerHeight": 800,
+    "dpr": 1,
+    "scrollWidth": 320,
+    "text": "Your email address is not verified. Log in again and verify it with the code from your email.",
+    "messageRect": {
+      "x": 49,
+      "y": 151,
+      "width": 222,
+      "height": 63
+    },
+    "textFits": true,
+    "messageVisible": true,
+    "cardScrollWidth": 222,
+    "cardClientWidth": 222,
+    "screenshot": ".scratch/doc4/local-en-320-100.png"
+  },
+  {
+    "locale": "en",
+    "viewport": {
+      "width": 1280,
+      "height": 1600
+    },
+    "zoom": 2,
+    "innerWidth": 640,
+    "innerHeight": 800,
+    "dpr": 2,
+    "scrollWidth": 640,
+    "text": "Your email address is not verified. Log in again and verify it with the code from your email.",
+    "messageRect": {
+      "x": 145,
+      "y": 151,
+      "width": 350,
+      "height": 42
+    },
+    "textFits": true,
+    "messageVisible": true,
+    "cardScrollWidth": 350,
+    "cardClientWidth": 350,
+    "screenshot": ".scratch/doc4/local-en-1280-200.png"
+  }
+]

@@ -38,6 +38,7 @@ export default {
     devLogin: 'Dev login...',
     errorRequired: 'Vul e-mail en wachtwoord in',
     errorFailed: 'Inloggen mislukt',
+    emailUnverified: 'Je mailadres is niet bevestigd. Log opnieuw in en bevestig het met de code uit je mail.',
     devLoginFailed: 'Dev login mislukt',
     forgotPassword: 'Wachtwoord vergeten?',
     orMagicLink: 'Of log in met een magic link',
