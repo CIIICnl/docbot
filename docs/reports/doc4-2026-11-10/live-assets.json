@@ -1,0 +1,20 @@
+[
+  {
+    "url": "https://docs.ciiic.nl/dist/app.js",
+    "lastModified": "Tue, 10 Nov 2026 10:21:42 GMT",
+    "sha256": "bf9305e177c12fb95b72c3f6f9b6c56fa1e65c450b74d208a0d04388ad3e4668",
+    "matchesLocalBuild": true
+  },
+  {
+    "url": "https://docs.ciiic.nl/dist/en-LI7C45IA.js",
+    "lastModified": "Tue, 10 Nov 2026 10:21:42 GMT",
+    "sha256": "e68f1413db035424a850c4a9fbd37c69e87db14302d828f1557fb4720396fc1e",
+    "matchesLocalBuild": true
+  },
+  {
+    "url": "https://docs.ciiic.nl/dist/nl-E2ZEB2HE.js",
+    "lastModified": "Tue, 10 Nov 2026 10:21:42 GMT",
+    "sha256": "d68d4fd0fd905b8968aa9b7853ebec3525f039a00079f15939135cba664f1207",
+    "matchesLocalBuild": true
+  }
+]
