@@ -58,6 +58,10 @@ export async function renderLogin(root) {
       h('h2', { class: 'login-title' }, [t('login.title')]),
     ]),
 
+    url.searchParams.get('oidc') === 'unverified'
+      ? h('p', { class: 'login-status', role: 'alert' }, [t('login.emailUnverified')])
+      : null,
+
     // CIIIC single sign-on (ZITADEL) — links to the server OIDC kickoff.
     // /auth/login is a SERVER route; the SPA router (client/lib/router.js)
     // intercepts same-origin <a> clicks and would treat it as a (nonexistent)

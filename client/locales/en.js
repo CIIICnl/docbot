@@ -38,6 +38,7 @@ export default {
     devLogin: 'Dev login...',
     errorRequired: 'Please enter email and password',
     errorFailed: 'Login failed',
+    emailUnverified: 'Your email address is not verified. Log in again and verify it with the code from your email.',
     devLoginFailed: 'Dev login failed',
     forgotPassword: 'Forgot password?',
     orMagicLink: 'Or sign in with a magic link',
